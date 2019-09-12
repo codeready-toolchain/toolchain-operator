@@ -1,15 +1,14 @@
-module github.com/alexeykazakov/toolchain-operator
+module github.com/codeready-toolchain/toolchain-operator
 
 require (
-	github.com/NYTimes/gziphandler v1.0.1 // indirect
+	github.com/codeready-toolchain/api v0.0.0-20190910110833-66e1ab342d1e
 	github.com/operator-framework/operator-sdk v0.10.1-0.20190828001532-447f0b776ef1
 	github.com/spf13/pflag v1.0.3
 	k8s.io/api v0.0.0-20190612125737-db0771252981
 	k8s.io/apimachinery v0.0.0-20190612125636-6a5db36e93ad
 	k8s.io/client-go v11.0.0+incompatible
-	k8s.io/kube-openapi v0.0.0-20190603182131-db7b694dc208 // indirect
 	sigs.k8s.io/controller-runtime v0.1.12
-	sigs.k8s.io/controller-tools v0.1.10
+	sigs.k8s.io/controller-tools v0.1.12
 )
 
 // Pinned to kubernetes-1.13.4

@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/alexeykazakov/toolchain-operator/pkg/controller/toolchaincluster"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/toolchaincluster"
 )
 
 func init() {

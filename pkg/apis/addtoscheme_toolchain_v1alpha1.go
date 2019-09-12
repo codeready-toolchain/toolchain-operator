@@ -1,7 +1,7 @@
 package apis
 
 import (
-	"github.com/alexeykazakov/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 )
 
 func init() {

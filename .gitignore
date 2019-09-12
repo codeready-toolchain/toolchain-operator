@@ -82,3 +82,6 @@ tags
 /out/
 .idea_modules/
 atlassian-ide-plugin.xml
+
+/vendor
+/out
