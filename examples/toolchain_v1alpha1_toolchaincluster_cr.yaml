@@ -1,0 +1,7 @@
+apiVersion: toolchain.dev.openshift.com/v1alpha1
+kind: ToolchainCluster
+metadata:
+  name: example-toolchaincluster
+spec:
+  # Add fields here
+  size: 3
