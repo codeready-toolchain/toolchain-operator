@@ -1,4 +1,4 @@
-package toolchaincluster
+package installation
 
 import (
 	"context"
@@ -19,14 +19,14 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
-var log = logf.Log.WithName("controller_toolchaincluster")
+var log = logf.Log.WithName("controller_installation")
 
 /**
 * USER ACTION REQUIRED: This is a scaffold file intended for the user to modify with their own Controller
 * business logic.  Delete these comments after modifying this file.*
  */
 
-// Add creates a new ToolchainCluster Controller and adds it to the Manager. The Manager will set fields on the Controller
+// Add creates a new Installation Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
@@ -34,28 +34,28 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &ReconcileToolchainCluster{client: mgr.GetClient(), scheme: mgr.GetScheme()}
+	return &ReconcileInstallation{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
-	c, err := controller.New("toolchaincluster-controller", mgr, controller.Options{Reconciler: r})
+	c, err := controller.New("installation-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
 		return err
 	}
 
-	// Watch for changes to primary resource ToolchainCluster
-	err = c.Watch(&source.Kind{Type: &toolchainv1alpha1.ToolchainCluster{}}, &handler.EnqueueRequestForObject{})
+	// Watch for changes to primary resource Installation
+	err = c.Watch(&source.Kind{Type: &toolchainv1alpha1.Installation{}}, &handler.EnqueueRequestForObject{})
 	if err != nil {
 		return err
 	}
 
 	// TODO(user): Modify this to be the types you create that are owned by the primary resource
-	// Watch for changes to secondary resource Pods and requeue the owner ToolchainCluster
+	// Watch for changes to secondary resource Pods and requeue the owner Installation
 	err = c.Watch(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
 		IsController: true,
-		OwnerType:    &toolchainv1alpha1.ToolchainCluster{},
+		OwnerType:    &toolchainv1alpha1.Installation{},
 	})
 	if err != nil {
 		return err
@@ -64,30 +64,30 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	return nil
 }
 
-// blank assignment to verify that ReconcileToolchainCluster implements reconcile.Reconciler
-var _ reconcile.Reconciler = &ReconcileToolchainCluster{}
+// blank assignment to verify that ReconcileInstallation implements reconcile.Reconciler
+var _ reconcile.Reconciler = &ReconcileInstallation{}
 
-// ReconcileToolchainCluster reconciles a ToolchainCluster object
-type ReconcileToolchainCluster struct {
+// ReconcileInstallation reconciles a Installation object
+type ReconcileInstallation struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
 	client client.Client
 	scheme *runtime.Scheme
 }
 
-// Reconcile reads that state of the cluster for a ToolchainCluster object and makes changes based on the state read
-// and what is in the ToolchainCluster.Spec
+// Reconcile reads that state of the cluster for a Installation object and makes changes based on the state read
+// and what is in the Installation.Spec
 // TODO(user): Modify this Reconcile function to implement your Controller logic.  This example creates
 // a Pod as an example
 // Note:
 // The Controller will requeue the Request to be processed again if the returned error is non-nil or
 // Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
-func (r *ReconcileToolchainCluster) Reconcile(request reconcile.Request) (reconcile.Result, error) {
+func (r *ReconcileInstallation) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
-	reqLogger.Info("Reconciling ToolchainCluster")
+	reqLogger.Info("Reconciling Installation")
 
-	// Fetch the ToolchainCluster instance
-	instance := &toolchainv1alpha1.ToolchainCluster{}
+	// Fetch the Installation instance
+	instance := &toolchainv1alpha1.Installation{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
 	if err != nil {
 		if errors.IsNotFound(err) {
@@ -103,7 +103,7 @@ func (r *ReconcileToolchainCluster) Reconcile(request reconcile.Request) (reconc
 	// Define a new Pod object
 	pod := newPodForCR(instance)
 
-	// Set ToolchainCluster instance as the owner and controller
+	// Set Installation instance as the owner and controller
 	if err := controllerutil.SetControllerReference(instance, pod, r.scheme); err != nil {
 		return reconcile.Result{}, err
 	}
@@ -130,7 +130,7 @@ func (r *ReconcileToolchainCluster) Reconcile(request reconcile.Request) (reconc
 }
 
 // newPodForCR returns a busybox pod with the same name/namespace as the cr
-func newPodForCR(cr *toolchainv1alpha1.ToolchainCluster) *corev1.Pod {
+func newPodForCR(cr *toolchainv1alpha1.Installation) *corev1.Pod {
 	labels := map[string]string{
 		"app": cr.Name,
 	}
