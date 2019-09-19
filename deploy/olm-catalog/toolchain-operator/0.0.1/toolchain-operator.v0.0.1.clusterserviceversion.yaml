@@ -2,21 +2,38 @@ apiVersion: operators.coreos.com/v1alpha1
 kind: ClusterServiceVersion
 metadata:
   annotations:
+    alm-examples: '[{"apiVersion":"toolchain.openshift.dev/v1alpha1","kind":"Installation","metadata":{"name":"example-installation"},"spec":{"size":3}}]'
     capabilities: Basic Install
   name: toolchain-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
   customresourcedefinitions:
-    required:
-    - description: OpenShift Pipelines is a cloud-native CI/CD solution for building
-        pipelines using Tekton concepts which run natively on OpenShift and Kubernetes.
-      displayName: OpenShift Pipelines Config
-      kind: Config
-      name: config.operator.tekton.dev
+    owned:
+    - description: CodeReady Toolchain
+      displayName: CodeReady Toolchain Installation
+      kind: Installation
+      name: installation.openshift.dev
+#      specDescriptors:
+#      - description: Namespace where OpenShift Pipelines is installed
+#        displayName: Target Namespace
+#        path: targetNamespace
+#        x-descriptors:
+#        - urn:alm:descriptor:com.tectonic.ui:label
+#      statusDescriptors:
+#      - description: Status of OpenShift Pipelines Installation
+#        displayName: Installation Status
+#        path: conditions[0].code
+#        x-descriptors:
+#        - urn:alm:descriptor:com.tectonic.ui:label
+#      - description: Version of OpenShift Pipelines installed
+#        displayName: OpenShift Pipelines Version
+#        path: conditions[0].version
+#        x-descriptors:
+#        - urn:alm:descriptor:com.tectonic.ui:label
       version: v1alpha1
-  description: Placeholder description
-  displayName: Toolchain Operator
+  description: CodeReady Toolchain Operator
+  displayName: CodeReady Toolchain Operator
   install:
     spec:
       deployments:
@@ -102,12 +119,18 @@ spec:
           - replicasets
           verbs:
           - get
+        - apiGroups:
+          - toolchain.openshift.dev
+          resources:
+          - '*'
+          verbs:
+          - '*'
         serviceAccountName: toolchain-operator
     strategy: deployment
   installModes:
   - supported: true
     type: OwnNamespace
-  - supported: true
+  - supported: false
     type: SingleNamespace
   - supported: false
     type: MultiNamespace
