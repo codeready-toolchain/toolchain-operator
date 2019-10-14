@@ -1,0 +1,80 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: installconfigs.toolchain.openshift.dev
+spec:
+  group: toolchain.openshift.dev
+  names:
+    kind: InstallConfig
+    listKind: InstallConfigList
+    plural: installconfigs
+    singular: installconfig
+  scope: Namespaced
+  subresources:
+    status: {}
+  validation:
+    openAPIV3Schema:
+      properties:
+        apiVersion:
+          description: 'APIVersion defines the versioned schema of this representation
+            of an object. Servers should convert recognized schemas to the latest
+            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources'
+          type: string
+        kind:
+          description: 'Kind is a string value representing the REST resource this
+            object represents. Servers may infer this from the endpoint the client
+            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds'
+          type: string
+        metadata:
+          type: object
+        spec:
+          properties:
+            cheOperatorSpec:
+              description: The configuration required for che operator
+              properties:
+                namespace:
+                  description: The namespace where you want to run che operator
+                  type: string
+              required:
+              - namespace
+              type: object
+          required:
+          - cheOperatorSpec
+          type: object
+        status:
+          properties:
+            conditions:
+              description: 'Conditions is an array of current InstallConfig conditions
+                Supported condition types: CreatedCheSubscription, FailedToCreateCheSubscription
+                +patchMergeKey=type +patchStrategy=merge'
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transit from one status to
+                      another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: Human readable message indicating details about last
+                      transition.
+                    type: string
+                  reason:
+                    description: (brief) reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of condition
+                    type: string
+                required:
+                - type
+                - status
+                type: object
+              type: array
+          type: object
+  version: v1alpha1
+  versions:
+  - name: v1alpha1
+    served: true
+    storage: true
