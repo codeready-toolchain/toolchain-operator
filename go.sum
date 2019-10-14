@@ -448,8 +448,9 @@ github.com/operator-framework/operator-registry v1.0.1/go.mod h1:1xEdZjjUg2hPEd5
 github.com/operator-framework/operator-registry v1.0.4/go.mod h1:hve6YwcjM2nGVlscLtNsp9sIIBkNZo6jlJgzWw7vP9s=
 github.com/operator-framework/operator-registry v1.1.1/go.mod h1:7D4WEwL+EKti5npUh4/u64DQhawCBRugp8Ql20duUb4=
 github.com/operator-framework/operator-registry v1.4.0/go.mod h1:3nJcOSX6TKPpAbmGOAVvDxakZWgccyF0WgiJsKjPAzQ=
-github.com/operator-framework/operator-sdk v0.11.0 h1:tQumPT2UjD6uhggfAerRbPt+rWOPKC80DmgKUEqeGYo=
-github.com/operator-framework/operator-sdk v0.11.0/go.mod h1:Oo+O2br5qR6XSLWY/GgIvTvpsEKtzeWp+I3rHF0WIq8=
+github.com/operator-framework/operator-sdk v0.8.2-0.20190522220659-031d71ef8154/go.mod h1:iVyukRkam5JZa8AnjYf+/G3rk7JI1+M6GsU0sq0B9NA=
+github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5 h1:bKBv4ECinhcZVmuvGp7pk4Gu6O6Un/VucmQeJW5MQ2w=
+github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5/go.mod h1:Oo+O2br5qR6XSLWY/GgIvTvpsEKtzeWp+I3rHF0WIq8=
 github.com/otiai10/copy v1.0.1/go.mod h1:8bMCJrAqOtN/d9oyh5HR7HhLQMvcGMpGdwRDYsfOCHc=
 github.com/otiai10/curr v0.0.0-20150429015615-9b4961190c95/go.mod h1:9qAhocn7zKJG+0mI8eUu6xqkFDYS2kb2saOteoSB3cE=
 github.com/otiai10/curr v0.0.0-20190513014714-f5a3d24e5776/go.mod h1:3HNVkVOU7vZeFXocWuvtcS0XSFLcf2XUSDHkq9t1jU4=
