@@ -119,19 +119,19 @@ func (r *ReconcileInstallConfig) EnsureCheSubscription(logger logr.Logger, insta
 }
 
 func (r *ReconcileInstallConfig) ensureCheNamespace(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (string, error) {
-	cheNamespace := installConfig.Spec.CheOperatorSpec.Namespace
+	cheOpNamespace := installConfig.Spec.CheOperatorSpec.Namespace
 	ns := &v1.Namespace{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheNamespace}, ns)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, ns)
 	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Creating a namespace for che operator", "Namespace", cheNamespace)
-		namespace := che.Namespace(cheNamespace)
+		logger.Info("Creating a namespace for che operator", "Namespace", cheOpNamespace)
+		namespace := che.Namespace(cheOpNamespace)
 		if err := controllerutil.SetControllerReference(installConfig, namespace, r.scheme); err != nil {
-			return cheNamespace, err
+			return cheOpNamespace, err
 		}
-		return cheNamespace, r.client.Create(context.TODO(), namespace)
+		return cheOpNamespace, r.client.Create(context.TODO(), namespace)
 	}
 
-	return cheNamespace, err
+	return cheOpNamespace, err
 }
 
 func (r *ReconcileInstallConfig) createCheOperatorGroup(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) error {
@@ -154,8 +154,8 @@ func (r *ReconcileInstallConfig) createCheSubscription(logger logr.Logger, ns st
 	if err := controllerutil.SetControllerReference(installConfig, cheSub, r.scheme); err != nil {
 		return err
 	}
-	found := &olmv1alpha1.Subscription{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheSub.GetName(), Namespace: cheSub.GetNamespace()}, found)
+	sub := &olmv1alpha1.Subscription{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheSub.GetName(), Namespace: cheSub.GetNamespace()}, sub)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Creating subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
 		return r.client.Create(context.TODO(), cheSub)
