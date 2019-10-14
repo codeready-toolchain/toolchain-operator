@@ -11,17 +11,17 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.Installation":       schema_pkg_apis_toolchain_v1alpha1_Installation(ref),
-		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallationSpec":   schema_pkg_apis_toolchain_v1alpha1_InstallationSpec(ref),
-		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallationStatus": schema_pkg_apis_toolchain_v1alpha1_InstallationStatus(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfig":       schema_pkg_apis_toolchain_v1alpha1_InstallConfig(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigSpec":   schema_pkg_apis_toolchain_v1alpha1_InstallConfigSpec(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigStatus": schema_pkg_apis_toolchain_v1alpha1_InstallConfigStatus(ref),
 	}
 }
 
-func schema_pkg_apis_toolchain_v1alpha1_Installation(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_toolchain_v1alpha1_InstallConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "Installation is the Schema for the installations API",
+				Description: "InstallConfig is the Schema for the installconfigs API",
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -44,42 +44,72 @@ func schema_pkg_apis_toolchain_v1alpha1_Installation(ref common.ReferenceCallbac
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallationSpec"),
+							Ref: ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigSpec"),
 						},
 					},
 					"status": {
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallationStatus"),
+							Ref: ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigStatus"),
 						},
 					},
 				},
 			},
 		},
 		Dependencies: []string{
-			"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallationSpec", "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallationStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+			"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigSpec", "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 	}
 }
 
-func schema_pkg_apis_toolchain_v1alpha1_InstallationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_toolchain_v1alpha1_InstallConfigSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InstallationSpec defines the desired state of Installation",
-				Properties:  map[string]spec.Schema{},
+				Description: "InstallConfigSpec defines the desired state of InstallConfig",
+				Properties: map[string]spec.Schema{
+					"cheOperatorSpec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "The configuration required for che operator",
+							Ref:         ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.CheOperator"),
+						},
+					},
+				},
+				Required: []string{"cheOperatorSpec"},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.CheOperator"},
 	}
 }
 
-func schema_pkg_apis_toolchain_v1alpha1_InstallationStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_toolchain_v1alpha1_InstallConfigStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "InstallationStatus defines the observed state of Installation",
-				Properties:  map[string]spec.Schema{},
+				Description: "InstallConfigStatus defines the observed state of InstallConfig",
+				Properties: map[string]spec.Schema{
+					"conditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-patch-merge-key": "type",
+								"x-kubernetes-patch-strategy":  "merge",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Conditions is an array of current InstallConfig conditions Supported condition types: CreatedCheSubscription, FailedToCreateCheSubscription",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1.Condition"),
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
-		Dependencies: []string{},
+		Dependencies: []string{
+			"github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1.Condition"},
 	}
 }
