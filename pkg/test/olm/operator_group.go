@@ -2,7 +2,7 @@ package olm
 
 import (
 	"context"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/utils/che"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	testwait "github.com/codeready-toolchain/toolchain-operator/test/wait"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	"github.com/stretchr/testify/assert"

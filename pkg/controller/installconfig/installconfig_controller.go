@@ -7,10 +7,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/utils/che"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	errs "github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -28,11 +29,8 @@ import (
 
 const (
 	// Status condition reasons
-	FailedToCreateCheSubscription = "FailedToCreateCheSubscription"
-	CreatedCheSubscription        = "CreatedCheSubscription"
-
-	ConditionFailed  toolchainv1alpha1.ConditionType = "Failed"
-	ConditionCreated toolchainv1alpha1.ConditionType = "Created"
+	FailedToCreateCheSubscriptionReason = "FailedToCreateCheSubscription"
+	CreatedCheSubscriptionReason        = "CreatedCheSubscription"
 )
 
 var log = logf.Log.WithName("controller_installconfig")
@@ -98,24 +96,37 @@ func (r *ReconcileInstallConfig) Reconcile(request reconcile.Request) (reconcile
 	}
 
 	if err := r.EnsureCheSubscription(reqLogger, installConfig); err != nil {
-		reqLogger.Error(err, "failed to create subscription for che", "Che.Namespace", installConfig.Spec.CheOperatorSpec.Namespace)
-		return r.StatusUpdate(reqLogger, installConfig, r.setStatusCheSubscriptionFailed, err.Error())
+		return reconcile.Result{}, err
 	}
 
-	return r.StatusUpdate(reqLogger, installConfig, r.setStatusCheSubscriptionCreated, "che operator subscription created")
+	return r.StatusUpdate(reqLogger, installConfig, r.setStatusReady, "che operator subscription created")
+}
+
+// wrapErrorWithStatusUpdate wraps the error and update the install config status. If the update failed then logs the error.
+func (r *ReconcileInstallConfig) wrapErrorWithStatusUpdate(logger logr.Logger, installConfig *v1alpha1.InstallConfig, statusUpdater func(installConfig *v1alpha1.InstallConfig, message string) error, err error, format string, args ...interface{}) error {
+	if err == nil {
+		return nil
+	}
+	if err := statusUpdater(installConfig, err.Error()); err != nil {
+		logger.Error(err, "status update failed")
+	}
+	return errs.Wrapf(err, format, args...)
 }
 
 func (r *ReconcileInstallConfig) EnsureCheSubscription(logger logr.Logger, installConfig *v1alpha1.InstallConfig) error {
 	ns, err := r.ensureCheNamespace(logger, installConfig)
 	if err != nil {
-		return err
+		return r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", installConfig.Spec.CheOperatorSpec.Namespace)
 	}
 
-	if err := r.createCheOperatorGroup(logger, ns, installConfig); err != nil {
-		return err
+	if err := r.ensureCheOperatorGroup(logger, ns, installConfig); err != nil {
+		return r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create operatorgroup in namespace %s", ns)
 	}
 
-	return r.createCheSubscription(logger, ns, installConfig)
+	if err := r.createCheSubscription(logger, ns, installConfig); err != nil {
+		return r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", ns)
+	}
+	return nil
 }
 
 func (r *ReconcileInstallConfig) ensureCheNamespace(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (string, error) {
@@ -124,7 +135,7 @@ func (r *ReconcileInstallConfig) ensureCheNamespace(logger logr.Logger, installC
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, ns)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Creating a namespace for che operator", "Namespace", cheOpNamespace)
-		namespace := che.Namespace(cheOpNamespace)
+		namespace := che.NewNamespace(cheOpNamespace)
 		if err := controllerutil.SetControllerReference(installConfig, namespace, r.scheme); err != nil {
 			return cheOpNamespace, err
 		}
@@ -134,8 +145,8 @@ func (r *ReconcileInstallConfig) ensureCheNamespace(logger logr.Logger, installC
 	return cheOpNamespace, err
 }
 
-func (r *ReconcileInstallConfig) createCheOperatorGroup(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) error {
-	operatorGroup := che.OperatorGroup(ns)
+func (r *ReconcileInstallConfig) ensureCheOperatorGroup(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) error {
+	operatorGroup := che.NewOperatorGroup(ns)
 	if err := controllerutil.SetControllerReference(installConfig, operatorGroup, r.scheme); err != nil {
 		return err
 	}
@@ -150,7 +161,7 @@ func (r *ReconcileInstallConfig) createCheOperatorGroup(logger logr.Logger, ns s
 }
 
 func (r *ReconcileInstallConfig) createCheSubscription(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) error {
-	cheSub := che.Subscription(ns)
+	cheSub := che.NewSubscription(ns)
 	if err := controllerutil.SetControllerReference(installConfig, cheSub, r.scheme); err != nil {
 		return err
 	}
@@ -188,14 +199,13 @@ func (r *ReconcileInstallConfig) setStatusCheSubscriptionFailed(installConfig *v
 	return r.updateStatusConditions(
 		installConfig,
 		toolchainv1alpha1.Condition{
-			Type:    ConditionFailed,
 			Status:  v1.ConditionFalse,
-			Reason:  FailedToCreateCheSubscription,
+			Reason:  FailedToCreateCheSubscriptionReason,
 			Message: message,
 		})
 }
 
-func (r *ReconcileInstallConfig) setStatusCheSubscriptionCreated(installConfig *v1alpha1.InstallConfig, message string) error {
+func (r *ReconcileInstallConfig) setStatusReady(installConfig *v1alpha1.InstallConfig, message string) error {
 	return r.updateStatusConditions(
 		installConfig,
 		CheSubscriptionCreated(message))
@@ -203,9 +213,9 @@ func (r *ReconcileInstallConfig) setStatusCheSubscriptionCreated(installConfig *
 
 func CheSubscriptionCreated(message string) toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{
-		Type:    ConditionCreated,
+		Type:    toolchainv1alpha1.ConditionReady,
 		Status:  v1.ConditionTrue,
-		Reason:  CreatedCheSubscription,
+		Reason:  CreatedCheSubscriptionReason,
 		Message: message,
 	}
 }

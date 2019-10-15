@@ -33,7 +33,7 @@ spec:
               description: The configuration required for che operator
               properties:
                 namespace:
-                  description: The namespace where you want to run che operator
+                  description: The namespace where the Che operator will be installed
                   type: string
               required:
               - namespace

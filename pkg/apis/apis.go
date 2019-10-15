@@ -11,7 +11,8 @@ import (
 
 // AddToScheme adds all Resources to the Scheme
 func AddToScheme(s *runtime.Scheme) error {
-	// add olm Subscription Schema
+	// add olm Subscription Schema from olmv1alpha1
+	// add olm OperatorGroup Schema from olmv1
 	addToSchemes := append(apis.AddToSchemes, olmv1alpha1.AddToScheme, olmv1.AddToScheme, v1alpha1.SchemeBuilder.AddToScheme)
 
 	return addToSchemes.AddToScheme(s)

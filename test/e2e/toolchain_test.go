@@ -4,12 +4,12 @@ import (
 	"context"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/installconfig"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/utils/che"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -21,8 +21,8 @@ func TestToolchain(t *testing.T) {
 	ctx, await := InitOperator(t)
 	defer ctx.Cleanup()
 	cheOperatorNs := toolchain.GenerateName("che-op")
-	cheOg := che.OperatorGroup(cheOperatorNs)
-	cheSub := che.Subscription(cheOperatorNs)
+	cheOg := che.NewOperatorGroup(cheOperatorNs)
+	cheSub := che.NewSubscription(cheOperatorNs)
 	installcfg := NewInstallConfig(await.Namespace, cheOperatorNs)
 	f := framework.Global
 

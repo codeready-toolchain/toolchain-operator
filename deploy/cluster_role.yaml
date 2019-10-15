@@ -8,11 +8,19 @@ rules:
   resources:
   - subscriptions
   - operatorgroups
-  - catalogsources
-  - clusterserviceversions
   verbs:
   - get
   - create
+  - list
+  - watch
+- apiGroups:
+  - operators.coreos.com
+  resources:
+  - catalogsources
+  - clusterserviceversions
+  - installplans
+  verbs:
+  - get
   - list
   - watch
 - apiGroups:
@@ -30,7 +38,6 @@ rules:
   - customresourcedefinitions
   verbs:
   - get
-  - create
   - list
   - watch
 - apiGroups:

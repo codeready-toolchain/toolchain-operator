@@ -3,10 +3,10 @@ package installconfig
 import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/utils/che"
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,8 +25,8 @@ func TestInstallConfigController(t *testing.T) {
 	t.Run("reconcile with installconfig", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
-		cheOg := che.OperatorGroup(cheOperatorNs)
-		cheSub := che.Subscription(cheOperatorNs)
+		cheOg := che.NewOperatorGroup(cheOperatorNs)
+		cheSub := che.NewSubscription(cheOperatorNs)
 		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
 		cl, r := configureClient(t, cheOperatorNs, installConfig)
 
@@ -57,8 +57,8 @@ func TestInstallConfigController(t *testing.T) {
 	t.Run("do not reconcile without installconfig", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
-		cheOg := che.OperatorGroup(cheOperatorNs)
-		cheSub := che.Subscription(cheOperatorNs)
+		cheOg := che.NewOperatorGroup(cheOperatorNs)
+		cheSub := che.NewSubscription(cheOperatorNs)
 		cl, r := configureClient(t, cheOperatorNs)
 
 		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
@@ -87,10 +87,10 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOperatorNs := GenerateName("che-op")
 		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
 		cl, r := configureClient(t, cheOperatorNs, installConfig)
-		cheOg := che.OperatorGroup(cheOperatorNs)
+		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
-		err := r.createCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
 		//then
 		assert.NoError(t, err)
@@ -105,10 +105,10 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOperatorNs := GenerateName("che-op")
 		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
 		cl, r := configureClient(t, cheOperatorNs, installConfig)
-		cheOg := che.OperatorGroup(cheOperatorNs)
+		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// create for the first time
-		err := r.createCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 		assert.NoError(t, err)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 			Exists().
@@ -116,7 +116,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 			HasSpec(cheOg.Spec)
 
 		// when
-		err = r.createCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		err = r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
 		// then
 		assert.NoError(t, err)
@@ -134,7 +134,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheOperatorNs := GenerateName("che-op")
 		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
 		cl, r := configureClient(t, cheOperatorNs, installConfig)
-		cheSub := che.Subscription(cheOperatorNs)
+		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
 		err := r.createCheSubscription(testLogger(), cheOperatorNs, installConfig)
@@ -151,7 +151,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheOperatorNs := GenerateName("che-op")
 		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
 		cl, r := configureClient(t, cheOperatorNs, installConfig)
-		cheSub := che.Subscription(cheOperatorNs)
+		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// create for the first time
 		err := r.createCheSubscription(testLogger(), cheOperatorNs, installConfig)

@@ -13,7 +13,7 @@ type InstallConfigSpec struct {
 }
 
 type CheOperator struct {
-	// The namespace where you want to run che operator
+	// The namespace where the Che operator will be installed
 	Namespace string `json:"namespace"`
 }
 

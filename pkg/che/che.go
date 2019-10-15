@@ -8,8 +8,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//Subscription for eclipse Che operator
-func Subscription(ns string) *olmv1alpha1.Subscription {
+//NewSubscription for eclipse Che operator
+func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	return &olmv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "eclipse-che",
@@ -30,7 +30,7 @@ func Labels() map[string]string {
 	return map[string]string{"provider": "toolchain-operator"}
 }
 
-func Namespace(name string) *v1.Namespace {
+func NewNamespace(name string) *v1.Namespace {
 	return &v1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   name,
@@ -39,7 +39,7 @@ func Namespace(name string) *v1.Namespace {
 	}
 }
 
-func OperatorGroup(ns string) *olmv1.OperatorGroup {
+func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 	return &olmv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:    ns,
