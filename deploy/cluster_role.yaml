@@ -38,3 +38,10 @@ rules:
   - installconfigs/finalizers
   verbs:
   - update
+- apiGroups:
+  - toolchain.openshift.dev
+  resources:
+  - installconfigs
+  - installconfigs/status
+  verbs:
+  - '*'
