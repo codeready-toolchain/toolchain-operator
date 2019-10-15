@@ -32,26 +32,93 @@ func TestInstallConfigController(t *testing.T) {
 
 		request := newReconcileRequest(installConfig)
 
-		// when
-		_, err := r.Reconcile(request)
+		t.Run("should create ns and requeue", func(t *testing.T) {
+			// when
+			result, err := r.Reconcile(request)
 
-		// then
-		assert.NoError(t, err)
-		AssertThatNamespace(t, cheOperatorNs, cl).
-			Exists().
-			HasLabels(che.Labels())
+			// then
+			assert.NoError(t, err)
 
-		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-			Exists().
-			HasSize(1).
-			HasSpec(cheOg.Spec)
+			assert.True(t, result.Requeue)
+			AssertThatNamespace(t, cheOperatorNs, cl).
+				Exists().
+				HasLabels(che.Labels())
 
-		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-			Exists().
-			HasSpec(cheSub.Spec)
+			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+				DoesNotExist()
 
-		AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
-			HasConditions(CheSubscriptionCreated("che operator subscription created"))
+			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+				DoesNotExist()
+		})
+
+		t.Run("should create operator group and requeue", func(t *testing.T) {
+			// when
+			result, err := r.Reconcile(request)
+
+			// then
+			assert.NoError(t, err)
+
+			assert.True(t, result.Requeue)
+			AssertThatNamespace(t, cheOperatorNs, cl).
+				Exists().
+				HasLabels(che.Labels())
+
+			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+				Exists().
+				HasSize(1).
+				HasSpec(cheOg.Spec)
+
+			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+				DoesNotExist()
+		})
+
+		t.Run("should create subscription and requeue", func(t *testing.T) {
+			// when
+			result, err := r.Reconcile(request)
+
+			// then
+			assert.NoError(t, err)
+
+			assert.True(t, result.Requeue)
+			AssertThatNamespace(t, cheOperatorNs, cl).
+				Exists().
+				HasLabels(che.Labels())
+
+			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+				Exists().
+				HasSize(1).
+				HasSpec(cheOg.Spec)
+
+			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+				Exists().
+				HasSpec(cheSub.Spec)
+		})
+
+		t.Run("should not requeue", func(t *testing.T) {
+			// when
+			result, err := r.Reconcile(request)
+
+			// then
+			assert.NoError(t, err)
+
+			assert.False(t, result.Requeue)
+			AssertThatNamespace(t, cheOperatorNs, cl).
+				Exists().
+				HasLabels(che.Labels())
+
+			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+				Exists().
+				HasSize(1).
+				HasSpec(cheOg.Spec)
+
+			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+				Exists().
+				HasSpec(cheSub.Spec)
+
+			AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
+				HasConditions(CheSubscriptionCreated("che operator subscription created"))
+		})
+
 	})
 
 	t.Run("do not reconcile without installconfig", func(t *testing.T) {
@@ -90,10 +157,12 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
-		err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
 		//then
 		assert.NoError(t, err)
+
+		assert.True(t, ogCreated)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 			Exists().
 			HasSize(1).
@@ -108,18 +177,23 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// create for the first time
-		err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+
 		assert.NoError(t, err)
+
+		assert.True(t, ogCreated)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 			Exists().
 			HasSize(1).
 			HasSpec(cheOg.Spec)
 
 		// when
-		err = r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		ogCreated, err = r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
 		// then
 		assert.NoError(t, err)
+
+		assert.False(t, ogCreated)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 			Exists().
 			HasSize(1).
@@ -137,10 +211,12 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
-		err := r.createCheSubscription(testLogger(), cheOperatorNs, installConfig)
+		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
 
 		// then
 		assert.NoError(t, err)
+
+		assert.True(t, subCreated)
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			Exists().
 			HasSpec(cheSub.Spec)
@@ -154,17 +230,21 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// create for the first time
-		err := r.createCheSubscription(testLogger(), cheOperatorNs, installConfig)
+		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
 		assert.NoError(t, err)
+
+		assert.True(t, subCreated)
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			Exists().
 			HasSpec(cheSub.Spec)
 
 		// when
-		err = r.createCheSubscription(testLogger(), cheOperatorNs, installConfig)
+		subCreated, err = r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
 
 		// then
 		assert.NoError(t, err)
+
+		assert.False(t, subCreated)
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			Exists().
 			HasSpec(cheSub.Spec)
@@ -180,10 +260,12 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		cl, r := configureClient(t, cheOperatorNs, installConfig)
 
 		// when
-		_, err := r.ensureCheNamespace(testLogger(), installConfig)
+		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
 
 		// then
 		assert.NoError(t, err)
+
+		assert.True(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
 			HasLabels(che.Labels())
@@ -196,17 +278,21 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		cl, r := configureClient(t, cheOperatorNs, installConfig)
 
 		// create for the first time
-		_, err := r.ensureCheNamespace(testLogger(), installConfig)
+		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
 		assert.NoError(t, err)
+
+		assert.True(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
 			HasLabels(che.Labels())
 
 		// when
-		_, err = r.ensureCheNamespace(testLogger(), installConfig)
+		nsCreated, err = r.ensureCheNamespace(testLogger(), installConfig)
 
 		// then
 		assert.NoError(t, err)
+
+		assert.False(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
 			HasLabels(che.Labels())

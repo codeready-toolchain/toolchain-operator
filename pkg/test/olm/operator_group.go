@@ -71,6 +71,7 @@ func (a *OperatorGroupAssertion) HasSize(size int) *OperatorGroupAssertion {
 func (a *OperatorGroupAssertion) HasSpec(ogSpec olmv1.OperatorGroupSpec) *OperatorGroupAssertion {
 	err := a.loadOperatorGroupAssertion()
 	require.NoError(a.t, err)
+	require.Len(a.t, a.ogList, 1)
 	assert.EqualValues(a.t, a.ogList[0].Spec, ogSpec)
 	return a
 }

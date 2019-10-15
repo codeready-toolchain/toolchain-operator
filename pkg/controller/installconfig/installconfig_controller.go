@@ -95,8 +95,10 @@ func (r *ReconcileInstallConfig) Reconcile(request reconcile.Request) (reconcile
 		return reconcile.Result{}, err
 	}
 
-	if err := r.EnsureCheSubscription(reqLogger, installConfig); err != nil {
+	if isResourceCreated, err := r.EnsureCheSubscription(reqLogger, installConfig); err != nil {
 		return reconcile.Result{}, err
+	} else if isResourceCreated {
+		return reconcile.Result{Requeue: true}, nil
 	}
 
 	return r.StatusUpdate(reqLogger, installConfig, r.setStatusReady, "che operator subscription created")
@@ -113,65 +115,83 @@ func (r *ReconcileInstallConfig) wrapErrorWithStatusUpdate(logger logr.Logger, i
 	return errs.Wrapf(err, format, args...)
 }
 
-func (r *ReconcileInstallConfig) EnsureCheSubscription(logger logr.Logger, installConfig *v1alpha1.InstallConfig) error {
-	ns, err := r.ensureCheNamespace(logger, installConfig)
-	if err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", installConfig.Spec.CheOperatorSpec.Namespace)
+func (r *ReconcileInstallConfig) EnsureCheSubscription(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (bool, error) {
+	ns := installConfig.Spec.CheOperatorSpec.Namespace
+	if nsCreated, err := r.ensureCheNamespace(logger, installConfig); err != nil {
+		return nsCreated, r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", ns)
+	} else if nsCreated {
+		return nsCreated, nil
 	}
 
-	if err := r.ensureCheOperatorGroup(logger, ns, installConfig); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create operatorgroup in namespace %s", ns)
+	if ogCreated, err := r.ensureCheOperatorGroup(logger, ns, installConfig); err != nil {
+		return ogCreated, r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create operatorgroup in namespace %s", ns)
+	} else if ogCreated {
+		return ogCreated, nil
 	}
 
-	if err := r.createCheSubscription(logger, ns, installConfig); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", ns)
+	if subCreated, err := r.ensureCheSubscription(logger, ns, installConfig); err != nil {
+		return subCreated, r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", ns)
+	} else if subCreated {
+		return subCreated, nil
 	}
-	return nil
+	return false, nil
 }
 
-func (r *ReconcileInstallConfig) ensureCheNamespace(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (string, error) {
+func (r *ReconcileInstallConfig) ensureCheNamespace(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (bool, error) {
 	cheOpNamespace := installConfig.Spec.CheOperatorSpec.Namespace
+	nsCreated := false
 	ns := &v1.Namespace{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, ns)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Creating a namespace for che operator", "Namespace", cheOpNamespace)
 		namespace := che.NewNamespace(cheOpNamespace)
 		if err := controllerutil.SetControllerReference(installConfig, namespace, r.scheme); err != nil {
-			return cheOpNamespace, err
+			return nsCreated, err
 		}
-		return cheOpNamespace, r.client.Create(context.TODO(), namespace)
+		if err := r.client.Create(context.TODO(), namespace); err != nil {
+			return nsCreated, err
+		}
+		return true, nil
 	}
 
-	return cheOpNamespace, err
+	return nsCreated, err
 }
 
-func (r *ReconcileInstallConfig) ensureCheOperatorGroup(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) error {
+func (r *ReconcileInstallConfig) ensureCheOperatorGroup(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) (bool, error) {
 	operatorGroup := che.NewOperatorGroup(ns)
+	ogCreated := false
 	if err := controllerutil.SetControllerReference(installConfig, operatorGroup, r.scheme); err != nil {
-		return err
+		return ogCreated, err
 	}
 
 	ogList := &olmv1.OperatorGroupList{}
 	err := r.client.List(context.TODO(), ogList, client.InNamespace(ns), client.MatchingLabels(che.Labels()))
 	if err == nil && len(ogList.Items) == 0 {
 		logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", operatorGroup.Namespace)
-		return r.client.Create(context.TODO(), operatorGroup)
+		if err := r.client.Create(context.TODO(), operatorGroup); err != nil {
+			return ogCreated, err
+		}
+		return true, nil
 	}
-	return err
+	return ogCreated, err
 }
 
-func (r *ReconcileInstallConfig) createCheSubscription(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) error {
+func (r *ReconcileInstallConfig) ensureCheSubscription(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) (bool, error) {
 	cheSub := che.NewSubscription(ns)
+	subCreated := false
 	if err := controllerutil.SetControllerReference(installConfig, cheSub, r.scheme); err != nil {
-		return err
+		return subCreated, err
 	}
 	sub := &olmv1alpha1.Subscription{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheSub.GetName(), Namespace: cheSub.GetNamespace()}, sub)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Creating subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
-		return r.client.Create(context.TODO(), cheSub)
+		if err := r.client.Create(context.TODO(), cheSub); err != nil {
+			return subCreated, err
+		}
+		return true, nil
 	}
-	return nil
+	return subCreated, err
 }
 
 func (r *ReconcileInstallConfig) StatusUpdate(logger logr.Logger, installConfig *v1alpha1.InstallConfig, statusUpdater func(installConfig *v1alpha1.InstallConfig, message string) error, msg string) (reconcile.Result, error) {
@@ -179,7 +199,6 @@ func (r *ReconcileInstallConfig) StatusUpdate(logger logr.Logger, installConfig 
 		logger.Error(err, "unable to update status")
 		return reconcile.Result{
 			RequeueAfter: time.Second,
-			Requeue:      true,
 		}, nil
 	}
 	return reconcile.Result{}, nil
