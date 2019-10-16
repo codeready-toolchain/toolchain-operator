@@ -6,6 +6,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/installconfig"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
@@ -14,10 +15,19 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
+	"os"
 	"testing"
 )
 
 func TestToolchain(t *testing.T) {
+	testType := os.Getenv(test.TestType)
+	defer func() {
+		err := os.Setenv(test.TestType, testType)
+		require.NoError(t, err, "failed to restore env variable %s=%s", test.TestType, testType)
+	}()
+	err := os.Setenv(test.TestType, test.INTEGRATION)
+	require.NoError(t, err, "failed to set env variable %s=%s", test.TestType, test.INTEGRATION)
+
 	ctx, await := InitOperator(t)
 	defer ctx.Cleanup()
 	cheOperatorNs := toolchain.GenerateName("che-op")

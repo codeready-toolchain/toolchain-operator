@@ -7,8 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,7 +39,7 @@ func AssertThatNamespace(t *testing.T, name string, client client.Reader) *Names
 }
 
 func (a *NamespaceAssertion) DoesNotExist() *NamespaceAssertion {
-	err := wait.Poll(testwait.RetryInterval, testwait.Timeout, func() (done bool, err error) {
+	err := testwait.PollOnceOrUntilCondition(func() (done bool, err error) {
 		err = a.loadNamespaceAssertion()
 		if err != nil {
 			if errors.IsNotFound(err) {
@@ -53,7 +51,6 @@ func (a *NamespaceAssertion) DoesNotExist() *NamespaceAssertion {
 		a.t.Logf("waiting for namespace '%s', status: '%s' to be deleted", a.namespace.Name, a.namespace.Status)
 		return false, nil
 	})
-
 	require.Error(a.t, err)
 	assert.IsType(a.t, metav1.StatusReasonNotFound, errors.ReasonForError(err))
 	return a

@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/apimachinery/pkg/util/wait"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
@@ -40,7 +39,7 @@ func AssertThatOperatorGroup(t *testing.T, ns, name string, client client.Reader
 }
 
 func (a *OperatorGroupAssertion) DoesNotExist() *OperatorGroupAssertion {
-	err := wait.Poll(testwait.RetryInterval, testwait.Timeout, func() (done bool, err error) {
+	err := testwait.PollOnceOrUntilCondition(func() (done bool, err error) {
 		err = a.loadOperatorGroupAssertion()
 		if len(a.ogList) == 0 {
 			a.t.Logf("operatorgroup deleted")

@@ -3,8 +3,6 @@ package olm
 import (
 	"context"
 	testwait "github.com/codeready-toolchain/toolchain-operator/test/wait"
-	"k8s.io/apimachinery/pkg/util/wait"
-
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -41,7 +39,7 @@ func AssertThatSubscription(t *testing.T, ns, name string, client client.Reader)
 }
 
 func (a *SubscriptionAssertion) DoesNotExist() *SubscriptionAssertion {
-	err := wait.Poll(testwait.RetryInterval, testwait.Timeout, func() (done bool, err error) {
+	err := testwait.PollOnceOrUntilCondition(func() (done bool, err error) {
 		err = a.loadSubscriptionAssertion()
 		if err != nil {
 			if errors.IsNotFound(err) {

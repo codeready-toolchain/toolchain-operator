@@ -4,10 +4,12 @@ import (
 	"context"
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 	"time"
@@ -98,4 +100,13 @@ func (a *ToolchainAwaitility) WaitForICConditions(name string, waitCond ...Insta
 		}
 		return true, nil
 	})
+}
+
+func PollOnceOrUntilCondition(condition func() (done bool, err error)) error {
+	tt := os.Getenv(test.TestType)
+	if tt == test.INTEGRATION {
+		return wait.Poll(RetryInterval, Timeout, condition)
+	}
+	_, err := condition()
+	return err
 }
