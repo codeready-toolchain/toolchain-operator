@@ -25,8 +25,8 @@ func TestToolchain(t *testing.T) {
 		err := os.Setenv(test.TestType, testType)
 		require.NoError(t, err, "failed to restore env variable %s=%s", test.TestType, testType)
 	}()
-	err := os.Setenv(test.TestType, test.INTEGRATION)
-	require.NoError(t, err, "failed to set env variable %s=%s", test.TestType, test.INTEGRATION)
+	err := os.Setenv(test.TestType, test.E2e)
+	require.NoError(t, err, "failed to set env variable %s=%s", test.TestType, test.E2e)
 
 	ctx, await := InitOperator(t)
 	defer ctx.Cleanup()

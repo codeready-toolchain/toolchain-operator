@@ -104,7 +104,7 @@ func (a *ToolchainAwaitility) WaitForICConditions(name string, waitCond ...Insta
 
 func PollOnceOrUntilCondition(condition func() (done bool, err error)) error {
 	tt := os.Getenv(test.TestType)
-	if tt == test.INTEGRATION {
+	if tt == test.E2e {
 		return wait.Poll(RetryInterval, Timeout, condition)
 	}
 	_, err := condition()
