@@ -1,34 +1,23 @@
 module github.com/codeready-toolchain/toolchain-operator
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/codeready-toolchain/api v0.0.0-20191009081803-8f4e395353de
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
-	github.com/docker/docker v0.0.0-20180612054059-a9fbbdc8dd87 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.3
-	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
-	github.com/grpc-ecosystem/go-grpc-middleware v1.1.0 // indirect
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible // indirect
-	github.com/openshift/client-go v0.0.0-20190923180330-3b6373338c9b // indirect
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190718033018-874b1785500e
-	github.com/operator-framework/operator-registry v1.4.0 // indirect
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/pkg/errors v0.8.1
-	github.com/shurcooL/sanitized_anchor_name v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
-	gotest.tools v2.2.0+incompatible // indirect
+	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
+	google.golang.org/grpc v1.23.0 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
 	k8s.io/apimachinery v0.0.0
-	k8s.io/apiserver v0.0.0 // indirect
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/code-generator v0.0.0 // indirect
-	k8s.io/component-base v0.0.0 // indirect
-	k8s.io/kube-aggregator v0.0.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
-	k8s.io/kubernetes v1.16.0 // indirect
 	sigs.k8s.io/controller-runtime v0.2.2
 )
 
