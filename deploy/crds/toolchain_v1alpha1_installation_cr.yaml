@@ -1,7 +1,0 @@
-apiVersion: toolchain.openshift.dev/v1alpha1
-kind: Installation
-metadata:
-  name: example-installation
-spec:
-  # Add fields here
-  size: 3
