@@ -54,4 +54,4 @@ deploy-rbac:
 .PHONY: deploy-crd
 ## Deploy CRD
 deploy-crd:
-	$(Q)-oc apply -f deploy/crds/toolchain_v1alpha1_installation.yaml
+	$(Q)-oc apply -f deploy/crds/toolchain_v1alpha1_installconfig_crd.yaml
