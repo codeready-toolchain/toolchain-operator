@@ -40,7 +40,7 @@ func TestInstallConfigController(t *testing.T) {
 			result, err := r.Reconcile(request)
 
 			// then
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.True(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
@@ -59,7 +59,7 @@ func TestInstallConfigController(t *testing.T) {
 			result, err := r.Reconcile(request)
 
 			// then
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.True(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
@@ -80,7 +80,7 @@ func TestInstallConfigController(t *testing.T) {
 			result, err := r.Reconcile(request)
 
 			// then
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.True(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
@@ -102,7 +102,7 @@ func TestInstallConfigController(t *testing.T) {
 			result, err := r.Reconcile(request)
 
 			// then
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			assert.False(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
@@ -136,7 +136,7 @@ func TestInstallConfigController(t *testing.T) {
 		_, err := r.Reconcile(request)
 
 		// then
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			DoesNotExist()
 
@@ -166,7 +166,7 @@ func TestInstallConfigController(t *testing.T) {
 			_, err := r.Reconcile(request)
 
 			// then
-			assert.Error(t, err)
+			require.Error(t, err)
 
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				DoesNotExist()
@@ -198,14 +198,14 @@ func TestInstallConfigController(t *testing.T) {
 
 			// first reconcile for ns creation
 			result, err := r.Reconcile(request)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.True(t, result.Requeue)
 
 			// when
 			_, err = r.Reconcile(request)
 
 			// then
-			assert.Error(t, err)
+			require.Error(t, err)
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
 				HasLabels(che.Labels())
@@ -237,12 +237,12 @@ func TestInstallConfigController(t *testing.T) {
 
 			// first reconcile for ns creation
 			result, err := r.Reconcile(request)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.True(t, result.Requeue)
 
 			// second reconcile for og creation
 			result, err = r.Reconcile(request)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.True(t, result.Requeue)
 
 			// when
@@ -281,7 +281,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
 		//then
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, ogCreated)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
@@ -300,7 +300,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		// create for the first time
 		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, ogCreated)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
@@ -312,7 +312,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		ogCreated, err = r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
 		// then
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.False(t, ogCreated)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
@@ -336,7 +336,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
 
 		//then
-		assert.EqualError(t, err, errMsg)
+		require.EqualError(t, err, errMsg)
 
 		assert.False(t, ogCreated)
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
@@ -357,7 +357,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
 
 		// then
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, subCreated)
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
@@ -380,7 +380,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
 
 		// then
-		assert.EqualError(t, err, errMsg)
+		require.EqualError(t, err, errMsg)
 
 		assert.False(t, subCreated)
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
@@ -396,7 +396,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 
 		// create for the first time
 		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, subCreated)
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
@@ -407,7 +407,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		subCreated, err = r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
 
 		// then
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.False(t, subCreated)
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
@@ -428,7 +428,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
 
 		// then
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
@@ -444,7 +444,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 
 		// create for the first time
 		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.True(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
@@ -455,7 +455,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		nsCreated, err = r.ensureCheNamespace(testLogger(), installConfig)
 
 		// then
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		assert.False(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
@@ -477,7 +477,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
 
 		// then
-		assert.EqualError(t, err, errMsg)
+		require.EqualError(t, err, errMsg)
 
 		assert.False(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
