@@ -15,7 +15,7 @@ import (
 
 type SubscriptionAssertion struct {
 	subscription   *olmv1alpha1.Subscription
-	client         client.Reader
+	client         client.Client
 	namespacedName types.NamespacedName
 	t              *testing.T
 }
@@ -30,7 +30,7 @@ func (a *SubscriptionAssertion) loadSubscriptionAssertion() error {
 	return err
 }
 
-func AssertThatSubscription(t *testing.T, ns, name string, client client.Reader) *SubscriptionAssertion {
+func AssertThatSubscription(t *testing.T, ns, name string, client client.Client) *SubscriptionAssertion {
 	return &SubscriptionAssertion{
 		client:         client,
 		namespacedName: types.NamespacedName{Namespace: ns, Name: name},

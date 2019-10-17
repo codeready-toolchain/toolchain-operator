@@ -217,11 +217,15 @@ func (r *ReconcileInstallConfig) updateStatusConditions(installConfig *v1alpha1.
 func (r *ReconcileInstallConfig) setStatusCheSubscriptionFailed(installConfig *v1alpha1.InstallConfig, message string) error {
 	return r.updateStatusConditions(
 		installConfig,
-		toolchainv1alpha1.Condition{
-			Status:  v1.ConditionFalse,
-			Reason:  FailedToCreateCheSubscriptionReason,
-			Message: message,
-		})
+		CheSubscriptionFailed(message))
+}
+
+func CheSubscriptionFailed(message string) toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Status:  v1.ConditionFalse,
+		Reason:  FailedToCreateCheSubscriptionReason,
+		Message: message,
+	}
 }
 
 func (r *ReconcileInstallConfig) setStatusReady(installConfig *v1alpha1.InstallConfig, message string) error {

@@ -14,7 +14,7 @@ import (
 
 type OperatorGroupAssertion struct {
 	ogList         []olmv1.OperatorGroup
-	client         client.Reader
+	client         client.Client
 	namespacedName types.NamespacedName
 	t              *testing.T
 }
@@ -30,7 +30,7 @@ func (a *OperatorGroupAssertion) loadOperatorGroupAssertion() error {
 	return err
 }
 
-func AssertThatOperatorGroup(t *testing.T, ns, name string, client client.Reader) *OperatorGroupAssertion {
+func AssertThatOperatorGroup(t *testing.T, ns, name string, client client.Client) *OperatorGroupAssertion {
 	return &OperatorGroupAssertion{
 		client:         client,
 		namespacedName: types.NamespacedName{Namespace: ns, Name: name},
