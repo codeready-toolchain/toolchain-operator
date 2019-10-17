@@ -25,7 +25,7 @@ const (
 type ToolchainAwaitility struct {
 	T         *testing.T
 	Namespace string
-	Client    client.Client
+	Client    client.Reader
 }
 
 // WaitForInstallConfig waits until there is InstallConfig with the given name available

@@ -15,7 +15,7 @@ import (
 
 type NamespaceAssertion struct {
 	namespace      *v1.Namespace
-	client         client.Client
+	client         client.Reader
 	namespacedName types.NamespacedName
 	t              *testing.T
 }
@@ -30,7 +30,7 @@ func (a *NamespaceAssertion) loadNamespaceAssertion() error {
 	return err
 }
 
-func AssertThatNamespace(t *testing.T, name string, client client.Client) *NamespaceAssertion {
+func AssertThatNamespace(t *testing.T, name string, client client.Reader) *NamespaceAssertion {
 	return &NamespaceAssertion{
 		client:         client,
 		namespacedName: types.NamespacedName{Name: name},
