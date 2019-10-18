@@ -3,6 +3,7 @@ package installconfig
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
@@ -166,7 +167,7 @@ func TestInstallConfigController(t *testing.T) {
 			_, err := r.Reconcile(request)
 
 			// then
-			require.Error(t, err)
+			assert.EqualError(t, err, fmt.Sprintf("failed to create namespace %s: %s", cheOperatorNs, errMsg))
 
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				DoesNotExist()
@@ -205,7 +206,8 @@ func TestInstallConfigController(t *testing.T) {
 			_, err = r.Reconcile(request)
 
 			// then
-			require.Error(t, err)
+			assert.EqualError(t, err, fmt.Sprintf("failed to create operatorgroup in namespace %s: %s", cheOperatorNs, errMsg))
+
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
 				HasLabels(che.Labels())
@@ -249,7 +251,7 @@ func TestInstallConfigController(t *testing.T) {
 			_, err = r.Reconcile(request)
 
 			// then
-			assert.Error(t, err)
+			assert.EqualError(t, err, fmt.Sprintf("failed to create che subscription in namespace %s: %s", cheOperatorNs, errMsg))
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
 				HasLabels(che.Labels())
