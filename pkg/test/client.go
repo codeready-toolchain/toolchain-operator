@@ -59,7 +59,7 @@ func (c *FakeClient) List(ctx context.Context, list runtime.Object, opts ...clie
 
 func (c *FakeClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 	if c.MockCreate != nil {
-		return c.MockCreate(ctx, obj)
+		return c.MockCreate(ctx, obj, opts...)
 	}
 	return c.Client.Create(ctx, obj, opts...)
 }

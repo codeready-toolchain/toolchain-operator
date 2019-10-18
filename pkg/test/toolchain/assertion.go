@@ -12,7 +12,7 @@ import (
 
 type InstallConfigAssertion struct {
 	installConfig  *v1alpha1.InstallConfig
-	client         client.Reader
+	client         client.Client
 	namespacedName types.NamespacedName
 	t              *testing.T
 }
@@ -27,7 +27,7 @@ func (a *InstallConfigAssertion) loadInstallConfigAssertion() error {
 	return err
 }
 
-func AssertThatInstallConfig(t *testing.T, ns, name string, client client.Reader) *InstallConfigAssertion {
+func AssertThatInstallConfig(t *testing.T, ns, name string, client client.Client) *InstallConfigAssertion {
 	return &InstallConfigAssertion{
 		client:         client,
 		namespacedName: types.NamespacedName{ns, name},
