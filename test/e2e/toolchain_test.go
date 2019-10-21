@@ -5,7 +5,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/installconfig"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
@@ -33,6 +33,8 @@ func TestToolchain(t *testing.T) {
 	cheOperatorNs := toolchain.GenerateName("che-op")
 	cheOg := che.NewOperatorGroup(cheOperatorNs)
 	cheSub := che.NewSubscription(cheOperatorNs)
+	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
+
 	installcfg := NewInstallConfig(await.Namespace, cheOperatorNs)
 	f := framework.Global
 
@@ -46,7 +48,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForInstallConfig(installcfg.Name)
 		require.NoError(t, err)
 
-		err = await.WaitForICConditions(installcfg.Name, wait.UntilHasStatusCondition(installconfig.CheSubscriptionCreated("che operator subscription created")))
+		err = await.WaitForICConditions(installcfg.Name, wait.UntilHasStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
 		require.NoError(t, err)
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
@@ -61,6 +63,10 @@ func TestToolchain(t *testing.T) {
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
 			Exists().
 			HasSpec(cheSub.Spec)
+
+		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
+			Exists().
+			HasSpec(tektonSub.Spec)
 	})
 
 	t.Run("should remove operatorgroup and subscription for che with installconfig deletion", func(t *testing.T) {
@@ -81,6 +87,9 @@ func TestToolchain(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
+			DoesNotExist()
+
+		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
 			DoesNotExist()
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).

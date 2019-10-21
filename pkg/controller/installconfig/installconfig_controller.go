@@ -4,10 +4,9 @@ import (
 	"context"
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -16,21 +15,16 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	errorsutil "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
-)
-
-const (
-	// Status condition reasons
-	FailedToCreateCheSubscriptionReason = "FailedToCreateCheSubscription"
-	CreatedCheSubscriptionReason        = "CreatedCheSubscription"
 )
 
 var log = logf.Log.WithName("controller_installconfig")
@@ -81,27 +75,33 @@ func (r *ReconcileInstallConfig) Reconcile(request reconcile.Request) (reconcile
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling InstallConfig")
 
-	// Fetch the InstallConfig instance
 	installConfig := &v1alpha1.InstallConfig{}
 	err := r.client.Get(context.TODO(), request.NamespacedName, installConfig)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
-		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
+	var errors []error
 	if isResourceCreated, err := r.EnsureCheSubscription(reqLogger, installConfig); err != nil {
-		return reconcile.Result{}, err
+		errors = append(errors, err)
 	} else if isResourceCreated {
 		return reconcile.Result{Requeue: true}, nil
 	}
 
-	return r.StatusUpdate(reqLogger, installConfig, r.setStatusReady, "che operator subscription created")
+	if isResourceCreated, err := r.EnsureTektonSubscription(reqLogger, installConfig); err != nil {
+		errors = append(errors, err)
+	} else if isResourceCreated {
+		return reconcile.Result{Requeue: true}, nil
+	}
+
+	if len(errors) > 0 {
+		return reconcile.Result{}, errorsutil.NewAggregate(errors)
+	}
+
+	return reconcile.Result{}, nil
 }
 
 // wrapErrorWithStatusUpdate wraps the error and update the install config status. If the update failed then logs the error.
@@ -113,6 +113,17 @@ func (r *ReconcileInstallConfig) wrapErrorWithStatusUpdate(logger logr.Logger, i
 		logger.Error(err, "status update failed")
 	}
 	return errs.Wrapf(err, format, args...)
+}
+
+func (r *ReconcileInstallConfig) EnsureTektonSubscription(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (bool, error) {
+	tektonSubNamespace := tekton.SubscriptionNamespace
+	if subCreated, err := r.ensureTektonSubscription(logger, tektonSubNamespace, installConfig); err != nil {
+		return subCreated, r.wrapErrorWithStatusUpdate(logger, installConfig, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
+	} else if subCreated {
+		return subCreated, nil
+	}
+
+	return false, r.StatusUpdate(logger, installConfig, r.setStatusTektonSubscriptionReady, tekton.SubscriptionSuccess)
 }
 
 func (r *ReconcileInstallConfig) EnsureCheSubscription(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (bool, error) {
@@ -134,7 +145,8 @@ func (r *ReconcileInstallConfig) EnsureCheSubscription(logger logr.Logger, insta
 	} else if subCreated {
 		return subCreated, nil
 	}
-	return false, nil
+
+	return false, r.StatusUpdate(logger, installConfig, r.setStatusCheSubscriptionReady, che.SubscriptionSuccess)
 }
 
 func (r *ReconcileInstallConfig) ensureCheNamespace(logger logr.Logger, installConfig *v1alpha1.InstallConfig) (bool, error) {
@@ -194,14 +206,30 @@ func (r *ReconcileInstallConfig) ensureCheSubscription(logger logr.Logger, ns st
 	return subCreated, err
 }
 
-func (r *ReconcileInstallConfig) StatusUpdate(logger logr.Logger, installConfig *v1alpha1.InstallConfig, statusUpdater func(installConfig *v1alpha1.InstallConfig, message string) error, msg string) (reconcile.Result, error) {
+func (r *ReconcileInstallConfig) ensureTektonSubscription(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) (bool, error) {
+	tektonSub := tekton.NewSubscription(ns)
+	subCreated := false
+	if err := controllerutil.SetControllerReference(installConfig, tektonSub, r.scheme); err != nil {
+		return subCreated, err
+	}
+	sub := &olmv1alpha1.Subscription{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: tektonSub.GetName(), Namespace: tektonSub.GetNamespace()}, sub)
+	if err != nil && errors.IsNotFound(err) {
+		logger.Info("Creating subscription for tekton", "Subscription.Namespace", tektonSub.Namespace, "Subscription.Name", tektonSub.Name)
+		if err := r.client.Create(context.TODO(), tektonSub); err != nil {
+			return subCreated, err
+		}
+		return true, nil
+	}
+	return subCreated, err
+}
+
+func (r *ReconcileInstallConfig) StatusUpdate(logger logr.Logger, installConfig *v1alpha1.InstallConfig, statusUpdater func(installConfig *v1alpha1.InstallConfig, message string) error, msg string) error {
 	if err := statusUpdater(installConfig, msg); err != nil {
 		logger.Error(err, "unable to update status")
-		return reconcile.Result{
-			RequeueAfter: time.Second,
-		}, nil
+		return errs.Wrapf(err, "failed to update status")
 	}
-	return reconcile.Result{}, nil
+	return nil
 }
 
 func (r *ReconcileInstallConfig) updateStatusConditions(installConfig *v1alpha1.InstallConfig, newConditions ...toolchainv1alpha1.Condition) error {
@@ -215,30 +243,17 @@ func (r *ReconcileInstallConfig) updateStatusConditions(installConfig *v1alpha1.
 }
 
 func (r *ReconcileInstallConfig) setStatusCheSubscriptionFailed(installConfig *v1alpha1.InstallConfig, message string) error {
-	return r.updateStatusConditions(
-		installConfig,
-		CheSubscriptionFailed(message))
+	return r.updateStatusConditions(installConfig, che.SubscriptionFailed(message))
 }
 
-func CheSubscriptionFailed(message string) toolchainv1alpha1.Condition {
-	return toolchainv1alpha1.Condition{
-		Status:  v1.ConditionFalse,
-		Reason:  FailedToCreateCheSubscriptionReason,
-		Message: message,
-	}
+func (r *ReconcileInstallConfig) setStatusTektonSubscriptionFailed(installConfig *v1alpha1.InstallConfig, message string) error {
+	return r.updateStatusConditions(installConfig, tekton.SubscriptionFailed(message))
 }
 
-func (r *ReconcileInstallConfig) setStatusReady(installConfig *v1alpha1.InstallConfig, message string) error {
-	return r.updateStatusConditions(
-		installConfig,
-		CheSubscriptionCreated(message))
+func (r *ReconcileInstallConfig) setStatusCheSubscriptionReady(installConfig *v1alpha1.InstallConfig, message string) error {
+	return r.updateStatusConditions(installConfig, che.SubscriptionCreated(message))
 }
 
-func CheSubscriptionCreated(message string) toolchainv1alpha1.Condition {
-	return toolchainv1alpha1.Condition{
-		Type:    toolchainv1alpha1.ConditionReady,
-		Status:  v1.ConditionTrue,
-		Reason:  CreatedCheSubscriptionReason,
-		Message: message,
-	}
+func (r *ReconcileInstallConfig) setStatusTektonSubscriptionReady(installConfig *v1alpha1.InstallConfig, message string) error {
+	return r.updateStatusConditions(installConfig, tekton.SubscriptionCreated(message))
 }

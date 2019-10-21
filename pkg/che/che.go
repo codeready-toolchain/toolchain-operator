@@ -1,6 +1,8 @@
 package che
 
 import (
+	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 
@@ -8,11 +10,16 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	SubscriptionName    = "eclipse-che"
+	SubscriptionSuccess = "che operator subscription created"
+)
+
 //NewSubscription for eclipse Che operator
 func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	return &olmv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "eclipse-che",
+			Name:      SubscriptionName,
 			Namespace: ns,
 			Labels:    Labels(),
 		},
@@ -51,4 +58,12 @@ func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 			TargetNamespaces: []string{ns},
 		},
 	}
+}
+
+func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
+	return v1alpha1.SubscriptionFailed(v1alpha1.CheNotReady, v1alpha1.FailedToCreateCheSubscriptionReason, message)
+}
+
+func SubscriptionCreated(message string) toolchainv1alpha1.Condition {
+	return v1alpha1.SubscriptionCreated(v1alpha1.CheReady, v1alpha1.CreatedCheSubscriptionReason, message)
 }
