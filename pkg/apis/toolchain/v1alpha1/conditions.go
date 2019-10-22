@@ -7,16 +7,12 @@ import (
 
 const (
 	// status condition type
-	CheReady       toolchainv1alpha1.ConditionType = "CheReady"
-	CheNotReady    toolchainv1alpha1.ConditionType = "CheNotReady"
-	TektonReady    toolchainv1alpha1.ConditionType = "TektonReady"
-	TektonNotReady toolchainv1alpha1.ConditionType = "TektonNotReady"
+	CheReady    toolchainv1alpha1.ConditionType = "CheReady"
+	TektonReady toolchainv1alpha1.ConditionType = "TektonReady"
 
 	// Status condition reasons
-	FailedToCreateCheSubscriptionReason    = "FailedToCreateCheSubscription"
-	FailedToCreateTektonSubscriptionReason = "FailedToCreateTektonSubscription"
-	CreatedCheSubscriptionReason           = "CreatedCheSubscription"
-	CreatedTektonSubscriptionReason        = "CreatedTektonSubscription"
+	FailedToInstallReason = "FailedToInstall"
+	InstalledReason       = "Installed"
 )
 
 func SubscriptionCreated(conditionType toolchainv1alpha1.ConditionType, reason, message string) toolchainv1alpha1.Condition {

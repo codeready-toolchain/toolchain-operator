@@ -61,9 +61,9 @@ func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 }
 
 func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionFailed(v1alpha1.CheNotReady, v1alpha1.FailedToCreateCheSubscriptionReason, message)
+	return v1alpha1.SubscriptionFailed(v1alpha1.CheReady, v1alpha1.FailedToInstallReason, message)
 }
 
 func SubscriptionCreated(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionCreated(v1alpha1.CheReady, v1alpha1.CreatedCheSubscriptionReason, message)
+	return v1alpha1.SubscriptionCreated(v1alpha1.CheReady, v1alpha1.InstalledReason, message)
 }

@@ -37,9 +37,9 @@ func Labels() map[string]string {
 }
 
 func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionFailed(v1alpha1.TektonNotReady, v1alpha1.FailedToCreateTektonSubscriptionReason, message)
+	return v1alpha1.SubscriptionFailed(v1alpha1.TektonReady, v1alpha1.FailedToInstallReason, message)
 }
 
 func SubscriptionCreated(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionCreated(v1alpha1.TektonReady, v1alpha1.CreatedTektonSubscriptionReason, message)
+	return v1alpha1.SubscriptionCreated(v1alpha1.TektonReady, v1alpha1.InstalledReason, message)
 }
