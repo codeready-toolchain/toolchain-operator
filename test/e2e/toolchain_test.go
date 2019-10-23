@@ -5,12 +5,12 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/installconfig"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
@@ -30,9 +30,11 @@ func TestToolchain(t *testing.T) {
 
 	ctx, await := InitOperator(t)
 	defer ctx.Cleanup()
-	cheOperatorNs := toolchain.GenerateName("che-op")
+	cheOperatorNs := GenerateName("che-op")
 	cheOg := che.NewOperatorGroup(cheOperatorNs)
 	cheSub := che.NewSubscription(cheOperatorNs)
+	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
+
 	installcfg := NewInstallConfig(await.Namespace, cheOperatorNs)
 	f := framework.Global
 
@@ -46,12 +48,12 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForInstallConfig(installcfg.Name)
 		require.NoError(t, err)
 
-		err = await.WaitForICConditions(installcfg.Name, wait.UntilHasStatusCondition(installconfig.CheSubscriptionCreated("che operator subscription created")))
+		err = await.WaitForICConditions(installcfg.Name, wait.UntilHasStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
 		require.NoError(t, err)
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
 			Exists().
-			HasLabels(che.Labels())
+			HasLabels(toolchain.Labels())
 
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
 			Exists().
@@ -61,6 +63,10 @@ func TestToolchain(t *testing.T) {
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
 			Exists().
 			HasSpec(cheSub.Spec)
+
+		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
+			Exists().
+			HasSpec(tektonSub.Spec)
 	})
 
 	t.Run("should remove operatorgroup and subscription for che with installconfig deletion", func(t *testing.T) {
@@ -81,6 +87,9 @@ func TestToolchain(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
+			DoesNotExist()
+
+		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
 			DoesNotExist()
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
