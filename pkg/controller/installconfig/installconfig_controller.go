@@ -7,6 +7,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -177,7 +178,7 @@ func (r *ReconcileInstallConfig) ensureCheOperatorGroup(logger logr.Logger, ns s
 	}
 
 	ogList := &olmv1.OperatorGroupList{}
-	err := r.client.List(context.TODO(), ogList, client.InNamespace(ns), client.MatchingLabels(che.Labels()))
+	err := r.client.List(context.TODO(), ogList, client.InNamespace(ns), client.MatchingLabels(toolchain.Labels()))
 	if err == nil && len(ogList.Items) == 0 {
 		logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", operatorGroup.Namespace)
 		if err := r.client.Create(context.TODO(), operatorGroup); err != nil {
@@ -198,6 +199,9 @@ func (r *ReconcileInstallConfig) ensureCheSubscription(logger logr.Logger, ns st
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheSub.GetName(), Namespace: cheSub.GetNamespace()}, sub)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Creating subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
+		if err := controllerutil.SetControllerReference(installConfig, cheSub, r.scheme); err != nil {
+			return subCreated, err
+		}
 		if err := r.client.Create(context.TODO(), cheSub); err != nil {
 			return subCreated, err
 		}
@@ -209,13 +213,13 @@ func (r *ReconcileInstallConfig) ensureCheSubscription(logger logr.Logger, ns st
 func (r *ReconcileInstallConfig) ensureTektonSubscription(logger logr.Logger, ns string, installConfig *v1alpha1.InstallConfig) (bool, error) {
 	tektonSub := tekton.NewSubscription(ns)
 	subCreated := false
-	if err := controllerutil.SetControllerReference(installConfig, tektonSub, r.scheme); err != nil {
-		return subCreated, err
-	}
 	sub := &olmv1alpha1.Subscription{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: tektonSub.GetName(), Namespace: tektonSub.GetNamespace()}, sub)
 	if err != nil && errors.IsNotFound(err) {
 		logger.Info("Creating subscription for tekton", "Subscription.Namespace", tektonSub.Namespace, "Subscription.Name", tektonSub.Name)
+		if err := controllerutil.SetControllerReference(installConfig, tektonSub, r.scheme); err != nil {
+			return subCreated, err
+		}
 		if err := r.client.Create(context.TODO(), tektonSub); err != nil {
 			return subCreated, err
 		}

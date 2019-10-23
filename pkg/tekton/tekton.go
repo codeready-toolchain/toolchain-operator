@@ -2,6 +2,7 @@ package tekton
 
 import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
@@ -20,7 +21,7 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      SubscriptionName,
 			Namespace: ns,
-			Labels:    Labels(),
+			Labels:    toolchain.Labels(),
 		},
 		Spec: &olmv1alpha1.SubscriptionSpec{
 			Channel:                "dev-preview",
@@ -30,10 +31,6 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 			CatalogSourceNamespace: "openshift-marketplace",
 		},
 	}
-}
-
-func Labels() map[string]string {
-	return map[string]string{"provider": "toolchain-operator"}
 }
 
 func SubscriptionFailed(message string) toolchainv1alpha1.Condition {

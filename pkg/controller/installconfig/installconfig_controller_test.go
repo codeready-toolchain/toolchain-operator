@@ -12,6 +12,7 @@ import (
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -48,7 +49,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.True(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				DoesNotExist()
@@ -70,7 +71,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.True(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				Exists().
@@ -94,7 +95,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.True(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				Exists().
@@ -120,7 +121,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.True(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				Exists().
@@ -146,7 +147,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.False(t, result.Requeue)
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				Exists().
@@ -273,7 +274,7 @@ func TestInstallConfigController(t *testing.T) {
 
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				DoesNotExist()
@@ -326,7 +327,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.EqualError(t, err, fmt.Sprintf("failed to create che subscription in namespace %s: %s", cheOperatorNs, errMsg))
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				Exists().
@@ -381,7 +382,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.EqualError(t, err, fmt.Sprintf("failed to create tekton subscription in namespace %s: %s", tektonSub.Namespace, errMsg))
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				Exists().
@@ -431,7 +432,7 @@ func TestInstallConfigController(t *testing.T) {
 			assert.EqualError(t, err, fmt.Sprintf("[failed to create che subscription in namespace %s: %s, failed to create tekton subscription in namespace %s: %s]", cheSub.Namespace, errMsg, tektonSub.Namespace, errMsg))
 			AssertThatNamespace(t, cheOperatorNs, cl).
 				Exists().
-				HasLabels(che.Labels())
+				HasLabels(toolchain.Labels())
 
 			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 				Exists().
@@ -689,7 +690,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		assert.True(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
-			HasLabels(che.Labels())
+			HasLabels(toolchain.Labels())
 	})
 
 	t.Run("should not fail if ns exists", func(t *testing.T) {
@@ -705,7 +706,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		assert.True(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
-			HasLabels(che.Labels())
+			HasLabels(toolchain.Labels())
 
 		// when
 		nsCreated, err = r.ensureCheNamespace(testLogger(), installConfig)
@@ -716,7 +717,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		assert.False(t, nsCreated)
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
-			HasLabels(che.Labels())
+			HasLabels(toolchain.Labels())
 	})
 
 	t.Run("should fail to create ns", func(t *testing.T) {

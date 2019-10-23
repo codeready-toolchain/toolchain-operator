@@ -2,7 +2,7 @@ package olm
 
 import (
 	"context"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	testwait "github.com/codeready-toolchain/toolchain-operator/test/wait"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	"github.com/stretchr/testify/assert"
@@ -24,7 +24,7 @@ func (a *OperatorGroupAssertion) loadOperatorGroupAssertion() error {
 		return nil
 	}
 	ogList := &olmv1.OperatorGroupList{}
-	err := a.client.List(context.TODO(), ogList, client.InNamespace(a.namespacedName.Namespace), client.MatchingLabels(che.Labels()))
+	err := a.client.List(context.TODO(), ogList, client.InNamespace(a.namespacedName.Namespace), client.MatchingLabels(toolchain.Labels()))
 
 	a.ogList = ogList.Items
 	return err
