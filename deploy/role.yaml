@@ -55,7 +55,7 @@ rules:
 - apiGroups:
   - toolchain.openshift.dev
   resources:
-  - installconfigs
-  - installconfigs/status
+  - cheinstallations
+  - cheinstallations/status
   verbs:
   - '*'

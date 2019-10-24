@@ -10,34 +10,34 @@ import (
 	"testing"
 )
 
-type InstallConfigAssertion struct {
-	installConfig  *v1alpha1.InstallConfig
+type CheInstallationAssertion struct {
+	cheInstallation  *v1alpha1.CheInstallation
 	client         client.Client
 	namespacedName types.NamespacedName
 	t              *testing.T
 }
 
-func (a *InstallConfigAssertion) loadInstallConfigAssertion() error {
-	if a.installConfig != nil {
+func (a *CheInstallationAssertion) loadCheInstallationAssertion() error {
+	if a.cheInstallation != nil {
 		return nil
 	}
-	ic := &v1alpha1.InstallConfig{}
+	ic := &v1alpha1.CheInstallation{}
 	err := a.client.Get(context.TODO(), a.namespacedName, ic)
-	a.installConfig = ic
+	a.cheInstallation = ic
 	return err
 }
 
-func AssertThatInstallConfig(t *testing.T, ns, name string, client client.Client) *InstallConfigAssertion {
-	return &InstallConfigAssertion{
+func AssertThatCheInstallation(t *testing.T, ns, name string, client client.Client) *CheInstallationAssertion {
+	return &CheInstallationAssertion{
 		client:         client,
 		namespacedName: types.NamespacedName{ns, name},
 		t:              t,
 	}
 }
 
-func (a *InstallConfigAssertion) HasConditions(expected ...toolchainv1alpha1.Condition) *InstallConfigAssertion {
-	err := a.loadInstallConfigAssertion()
+func (a *CheInstallationAssertion) HasConditions(expected ...toolchainv1alpha1.Condition) *CheInstallationAssertion {
+	err := a.loadCheInstallationAssertion()
 	require.NoError(a.t, err)
-	AssertConditionsMatch(a.t, a.installConfig.Status.Conditions, expected...)
+	AssertConditionsMatch(a.t, a.cheInstallation.Status.Conditions, expected...)
 	return a
 }

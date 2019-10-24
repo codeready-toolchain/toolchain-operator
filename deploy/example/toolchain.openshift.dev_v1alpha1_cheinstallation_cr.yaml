@@ -1,0 +1,7 @@
+apiVersion: toolchain.openshift.dev/v1alpha1
+kind: CheInstallation
+metadata:
+  name: toolchain-cheinstallation
+spec:
+  cheOperatorSpec:
+    namespace: your-che-operator-namespace

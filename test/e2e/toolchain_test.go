@@ -35,20 +35,20 @@ func TestToolchain(t *testing.T) {
 	cheSub := che.NewSubscription(cheOperatorNs)
 	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
 
-	installcfg := NewInstallConfig(await.Namespace, cheOperatorNs)
+	cheInstallation := NewCheInstallation(await.Namespace, cheOperatorNs)
 	f := framework.Global
 
 	t.Run("should create operator group and subscription for che with installconfig", func(t *testing.T) {
 		// when
-		err := f.Client.Create(context.TODO(), installcfg, cleanupOptions(ctx))
+		err := f.Client.Create(context.TODO(), cheInstallation, cleanupOptions(ctx))
 
 		// then
-		require.NoError(t, err, "failed to create toolchain InstallConfig")
+		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForInstallConfig(installcfg.Name)
+		err = await.WaitForCheInstallation(cheInstallation.Name)
 		require.NoError(t, err)
 
-		err = await.WaitForICConditions(installcfg.Name, wait.UntilHasStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
 		require.NoError(t, err)
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
@@ -71,16 +71,16 @@ func TestToolchain(t *testing.T) {
 
 	t.Run("should remove operatorgroup and subscription for che with installconfig deletion", func(t *testing.T) {
 		// given
-		installConfig, err := await.GetInstallConfig(installcfg.Name)
+		cheInstallation, err := await.GetCheInstallation(cheInstallation.Name)
 		require.NoError(t, err)
 
 		// when
-		err = f.Client.Delete(context.TODO(), installConfig)
+		err = f.Client.Delete(context.TODO(), cheInstallation)
 
 		// then
-		require.NoError(t, err, "failed to create toolchain InstallConfig")
+		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForInstallConfigToDelete(installcfg.Name)
+		err = await.WaitForCheInstallationToDelete(cheInstallation.Name)
 		require.NoError(t, err)
 
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
@@ -98,7 +98,7 @@ func TestToolchain(t *testing.T) {
 }
 
 func InitOperator(t *testing.T) (*framework.TestCtx, wait.ToolchainAwaitility) {
-	icList := &v1alpha1.InstallConfigList{}
+	icList := &v1alpha1.CheInstallationList{}
 	err := framework.AddToFrameworkScheme(apis.AddToScheme, icList)
 	require.NoError(t, err, "failed to add custom resource scheme to framework: %v", err)
 
