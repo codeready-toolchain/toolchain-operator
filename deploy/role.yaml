@@ -1,6 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
+  creationTimestamp: null
   name: toolchain-operator
 rules:
 - apiGroups:
@@ -57,5 +58,6 @@ rules:
   resources:
   - installconfigs
   - installconfigs/status
+  - tektoninstallations
   verbs:
   - '*'
