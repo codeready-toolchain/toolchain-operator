@@ -5,9 +5,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// InstallConfigSpec defines the desired state of InstallConfig
+// CheInstallationSpec defines the desired state of CheInstallation
 // +k8s:openapi-gen=true
-type InstallConfigSpec struct {
+type CheInstallationSpec struct {
 	// The configuration required for che operator
 	CheOperatorSpec CheOperator `json:"cheOperatorSpec"`
 }
@@ -17,15 +17,16 @@ type CheOperator struct {
 	Namespace string `json:"namespace"`
 }
 
-// InstallConfigStatus defines the observed state of InstallConfig
+// CheInstallationStatus defines the observed state of CheInstallation
 // +k8s:openapi-gen=true
-type InstallConfigStatus struct {
+type CheInstallationStatus struct {
+	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// Conditions is an array of current InstallConfig conditions
+	// Conditions is an array of current CheInstallation conditions
 	// Supported condition types:
-	// CreatedCheSubscription, FailedToCreateCheSubscription
+	// CheInstalled, FailedToInstallChe
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
@@ -34,26 +35,27 @@ type InstallConfigStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// InstallConfig is the Schema for the installconfigs API
+// CheInstallation is the Schema for the cheinstallations API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
-type InstallConfig struct {
+// +kubebuilder:resource:path=cheinstallations,scope=Cluster
+type CheInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   InstallConfigSpec   `json:"spec,omitempty"`
-	Status InstallConfigStatus `json:"status,omitempty"`
+	Spec   CheInstallationSpec   `json:"spec,omitempty"`
+	Status CheInstallationStatus `json:"status,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// InstallConfigList contains a list of InstallConfig
-type InstallConfigList struct {
+// CheInstallationList contains a list of CheInstallation
+type CheInstallationList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []InstallConfig `json:"items"`
+	Items           []CheInstallation `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&InstallConfig{}, &InstallConfigList{})
+	SchemeBuilder.Register(&CheInstallation{}, &CheInstallationList{})
 }

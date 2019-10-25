@@ -53,11 +53,3 @@ rules:
   - replicasets
   verbs:
   - get
-- apiGroups:
-  - toolchain.openshift.dev
-  resources:
-  - installconfigs
-  - installconfigs/status
-  - tektoninstallations
-  verbs:
-  - '*'

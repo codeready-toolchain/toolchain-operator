@@ -1,4 +1,4 @@
-package installconfig
+package cheinstallation
 
 import (
 	"context"
@@ -29,15 +29,15 @@ import (
 	"testing"
 )
 
-func TestInstallConfigController(t *testing.T) {
-	t.Run("should reconcile with installconfig", func(t *testing.T) {
+func TestCheInstallationController(t *testing.T) {
+	t.Run("should reconcile with che installation", func(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
-		request := newReconcileRequest(installConfig)
+		request := newReconcileRequest(cheInstallation)
 
 		t.Run("should create ns and requeue", func(t *testing.T) {
 			// when
@@ -162,21 +162,21 @@ func TestInstallConfigController(t *testing.T) {
 				Exists().
 				HasSpec(tektonSub.Spec)
 
-			AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
 				HasConditions(tekton.SubscriptionCreated(tekton.SubscriptionSuccess), che.SubscriptionCreated(che.SubscriptionSuccess))
 		})
 
 	})
 
-	t.Run("should not reconcile without installconfig", func(t *testing.T) {
+	t.Run("should not reconcile without che installation", func(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
 
 		cl, r := configureClient(t, cheOperatorNs)
 
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		request := newReconcileRequest(installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		request := newReconcileRequest(cheInstallation)
 
 		// when
 		_, err := r.Reconcile(request)
@@ -201,10 +201,10 @@ func TestInstallConfigController(t *testing.T) {
 
 		t.Run("update status when failed to get ns", func(t *testing.T) {
 			cheOperatorNs, cheOg, cheSub := newCheResources()
-			installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, installConfig)
+			cheInstallation := NewCheInstallation(cheOperatorNs)
+			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
-			request := newReconcileRequest(installConfig)
+			request := newReconcileRequest(cheInstallation)
 			errMsg := "something went wrong while getting ns"
 			cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 				if _, ok := obj.(*v1.Namespace); ok {
@@ -237,16 +237,16 @@ func TestInstallConfigController(t *testing.T) {
 				Exists().
 				HasSpec(tektonSub.Spec)
 
-			AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
 				HasConditions(tekton.SubscriptionCreated(tekton.SubscriptionSuccess), che.SubscriptionFailed(errMsg))
 		})
 
 		t.Run("should update status when failed to create operator group", func(t *testing.T) {
 			cheOperatorNs, cheOg, cheSub := newCheResources()
-			installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, installConfig)
+			cheInstallation := NewCheInstallation(cheOperatorNs)
+			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
-			request := newReconcileRequest(installConfig)
+			request := newReconcileRequest(cheInstallation)
 
 			errMsg := "something went wrong while creating og"
 			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
@@ -286,16 +286,16 @@ func TestInstallConfigController(t *testing.T) {
 				Exists().
 				HasSpec(tektonSub.Spec)
 
-			AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
 				HasConditions(che.SubscriptionFailed(errMsg), tekton.SubscriptionCreated(tekton.SubscriptionSuccess))
 		})
 
 		t.Run("should update status when failed to create che subscription", func(t *testing.T) {
 			cheOperatorNs, cheOg, cheSub := newCheResources()
-			installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, installConfig)
+			cheInstallation := NewCheInstallation(cheOperatorNs)
+			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
-			request := newReconcileRequest(installConfig)
+			request := newReconcileRequest(cheInstallation)
 
 			errMsg := "something went wrong while creating che subscription"
 			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
@@ -341,16 +341,16 @@ func TestInstallConfigController(t *testing.T) {
 				Exists().
 				HasSpec(tektonSub.Spec)
 
-			AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
 				HasConditions(che.SubscriptionFailed(errMsg), tekton.SubscriptionCreated(tekton.SubscriptionSuccess))
 		})
 
 		t.Run("should update status when failed to create tekton subscription", func(t *testing.T) {
 			cheOperatorNs, cheOg, cheSub := newCheResources()
-			installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, installConfig)
+			cheInstallation := NewCheInstallation(cheOperatorNs)
+			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
-			request := newReconcileRequest(installConfig)
+			request := newReconcileRequest(cheInstallation)
 
 			errMsg := "something went wrong while creating tekton subscription"
 			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
@@ -396,16 +396,16 @@ func TestInstallConfigController(t *testing.T) {
 			AssertThatSubscription(t, tektonSub.Namespace, cheSub.Name, cl).
 				DoesNotExist()
 
-			AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
 				HasConditions(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionFailed(errMsg))
 		})
 
 		t.Run("should update status when failed to create che and tekton subscription", func(t *testing.T) {
 			cheOperatorNs, cheOg, cheSub := newCheResources()
-			installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, installConfig)
+			cheInstallation := NewCheInstallation(cheOperatorNs)
+			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
-			request := newReconcileRequest(installConfig)
+			request := newReconcileRequest(cheInstallation)
 
 			errMsg := "something went wrong while creating tekton subscription"
 			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
@@ -445,7 +445,7 @@ func TestInstallConfigController(t *testing.T) {
 			AssertThatSubscription(t, tektonSub.Namespace, cheSub.Name, cl).
 				DoesNotExist()
 
-			AssertThatInstallConfig(t, installConfig.Namespace, installConfig.Name, cl).
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
 				HasConditions(che.SubscriptionFailed(errMsg), tekton.SubscriptionFailed(errMsg))
 		})
 	})
@@ -456,12 +456,12 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 	t.Run("create operator group", func(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
-		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
 
 		//then
 		require.NoError(t, err)
@@ -476,12 +476,12 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 	t.Run("should not fail if operator group already exists", func(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// create for the first time
-		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
 
 		require.NoError(t, err)
 
@@ -492,7 +492,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 			HasSpec(cheOg.Spec)
 
 		// when
-		ogCreated, err = r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		ogCreated, err = r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -507,8 +507,8 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 	t.Run("should fail to create operator group", func(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		errMsg := "something went wrong while creating operatogrgroup"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
@@ -516,7 +516,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
-		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, installConfig)
+		ogCreated, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
 
 		//then
 		require.EqualError(t, err, errMsg)
@@ -532,12 +532,12 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 	t.Run("create subscription", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
-		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
+		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -551,8 +551,8 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 	t.Run("should fail to create subscription", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		errMsg := "something went wrong while creating che subscription"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
@@ -560,7 +560,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
-		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
+		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.EqualError(t, err, errMsg)
@@ -573,12 +573,12 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 	t.Run("should not fail if subscription already exists", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// create for the first time
-		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
+		subCreated, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 		require.NoError(t, err)
 
 		assert.True(t, subCreated)
@@ -587,7 +587,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 			HasSpec(cheSub.Spec)
 
 		// when
-		subCreated, err = r.ensureCheSubscription(testLogger(), cheOperatorNs, installConfig)
+		subCreated, err = r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -605,12 +605,12 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		tektonSubNs := GenerateName("tekton-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		tektonSub := tekton.NewSubscription(tektonSubNs)
 
 		// when
-		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, installConfig)
+		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -625,8 +625,8 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		tektonSubNs := GenerateName("tekton-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		errMsg := "something went wrong while creating tekton subscription"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
@@ -634,7 +634,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		tektonSub := tekton.NewSubscription(cheOperatorNs)
 
 		// when
-		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, installConfig)
+		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
 
 		// then
 		require.EqualError(t, err, errMsg)
@@ -648,12 +648,12 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		tektonSubNs := GenerateName("tekton-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		tektonSub := tekton.NewSubscription(tektonSubNs)
 
 		// create for the first time
-		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, installConfig)
+		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
 		require.NoError(t, err)
 
 		assert.True(t, subCreated)
@@ -662,7 +662,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 			HasSpec(tektonSub.Spec)
 
 		// when
-		subCreated, err = r.ensureTektonSubscription(testLogger(), tektonSubNs, installConfig)
+		subCreated, err = r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -678,11 +678,11 @@ func TestCreateNamespaceForChe(t *testing.T) {
 	t.Run("should create ns", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
 		// when
-		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
+		nsCreated, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -696,11 +696,11 @@ func TestCreateNamespaceForChe(t *testing.T) {
 	t.Run("should not fail if ns exists", func(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 
 		// create for the first time
-		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
+		nsCreated, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 		require.NoError(t, err)
 
 		assert.True(t, nsCreated)
@@ -709,7 +709,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 			HasLabels(toolchain.Labels())
 
 		// when
-		nsCreated, err = r.ensureCheNamespace(testLogger(), installConfig)
+		nsCreated, err = r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -723,15 +723,15 @@ func TestCreateNamespaceForChe(t *testing.T) {
 	t.Run("should fail to create ns", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
-		installConfig := NewInstallConfig(GenerateName("toolchain-op"), cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, installConfig)
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
 		errMsg := "something went wrong while creating ns"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
 		}
 
 		// when
-		nsCreated, err := r.ensureCheNamespace(testLogger(), installConfig)
+		nsCreated, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.EqualError(t, err, errMsg)
@@ -743,15 +743,15 @@ func TestCreateNamespaceForChe(t *testing.T) {
 
 }
 
-func configureClient(t *testing.T, cheOperatorNs string, initObjs ...runtime.Object) (*test.FakeClient, *ReconcileInstallConfig) {
+func configureClient(t *testing.T, cheOperatorNs string, initObjs ...runtime.Object) (*test.FakeClient, *ReconcileCheInstallation) {
 	s := apiScheme(t)
 	cl := test.NewFakeClient(t, initObjs...)
-	reconcileInstallConfig := &ReconcileInstallConfig{scheme: s, client: cl}
-	return cl, reconcileInstallConfig
+	reconcileCheInstallation := &ReconcileCheInstallation{scheme: s, client: cl}
+	return cl, reconcileCheInstallation
 }
 
-func newReconcileRequest(installConfig *v1alpha1.InstallConfig) reconcile.Request {
-	namespacedName := types.NamespacedName{Namespace: installConfig.Namespace, Name: installConfig.Name}
+func newReconcileRequest(cheInstallation *v1alpha1.CheInstallation) reconcile.Request {
+	namespacedName := types.NamespacedName{Namespace: cheInstallation.Namespace, Name: cheInstallation.Name}
 	return reconcile.Request{namespacedName}
 }
 

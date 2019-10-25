@@ -28,67 +28,67 @@ type ToolchainAwaitility struct {
 	Client    client.Reader
 }
 
-// WaitForInstallConfig waits until there is InstallConfig with the given name available
-func (a *ToolchainAwaitility) WaitForInstallConfig(name string) error {
+// WaitForCheInstallation waits until there is CheInstallation with the given name available
+func (a *ToolchainAwaitility) WaitForCheInstallation(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		ic := &v1alpha1.InstallConfig{}
+		ic := &v1alpha1.CheInstallation{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
-				a.T.Logf("waiting for availability of InstallConfig '%s'", name)
+				a.T.Logf("waiting for availability of CheInstallation '%s'", name)
 				return false, nil
 			}
 			return false, err
 		}
-		a.T.Logf("found InstallConfig '%s'", name)
+		a.T.Logf("found CheInstallation '%s'", name)
 		return true, nil
 	})
 }
 
-func (a *ToolchainAwaitility) WaitForInstallConfigToDelete(name string) error {
+func (a *ToolchainAwaitility) WaitForCheInstallationToDelete(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		ic := &v1alpha1.InstallConfig{}
+		ic := &v1alpha1.CheInstallation{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
-				a.T.Logf("InstallConfig '%s' deleted", name)
+				a.T.Logf("CheInstallation '%s' deleted", name)
 				return true, nil
 			}
 			return false, err
 		}
-		a.T.Logf("waiting for deletion of InstallConfig '%s'", name)
+		a.T.Logf("waiting for deletion of CheInstallation '%s'", name)
 
 		return false, nil
 	})
 }
 
-func (a *ToolchainAwaitility) GetInstallConfig(name string) (*v1alpha1.InstallConfig, error) {
-	ic := &v1alpha1.InstallConfig{}
+func (a *ToolchainAwaitility) GetCheInstallation(name string) (*v1alpha1.CheInstallation, error) {
+	ic := &v1alpha1.CheInstallation{}
 	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic)
 	return ic, err
 }
 
-// InstallConfigWaitCondition represents a function checking if InstallConfig meets the given condition
-type InstallConfigWaitCondition func(a *ToolchainAwaitility, ic *v1alpha1.InstallConfig) bool
+// CheInstallationWaitCondition represents a function checking if CheInstallation meets the given condition
+type CheInstallationWaitCondition func(a *ToolchainAwaitility, ic *v1alpha1.CheInstallation) bool
 
-// UntilHasStatusCondition checks if InstallConfig status has the given set of conditions
-func UntilHasStatusCondition(conditions ...toolchainv1alpha1.Condition) InstallConfigWaitCondition {
-	return func(a *ToolchainAwaitility, ic *v1alpha1.InstallConfig) bool {
+// UntilHasStatusCondition checks if CheInstallation status has the given set of conditions
+func UntilHasStatusCondition(conditions ...toolchainv1alpha1.Condition) CheInstallationWaitCondition {
+	return func(a *ToolchainAwaitility, ic *v1alpha1.CheInstallation) bool {
 		toolchain.AssertConditionsMatch(a.T, ic.Status.Conditions, conditions...)
 		if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
-			a.T.Logf("status conditions match in InstallConfig '%s`", ic.Name)
+			a.T.Logf("status conditions match in CheInstallation '%s`", ic.Name)
 			return true
 		}
-		a.T.Logf("waiting for correct status condition of InstallConfig '%s`", ic.Name)
+		a.T.Logf("waiting for correct status condition of CheInstallation '%s`", ic.Name)
 		return false
 	}
 }
 
-// WaitForICConditions waits until there is InstallConfig available with the given name and meeting the set of given wait-conditions
-func (a *ToolchainAwaitility) WaitForICConditions(name string, waitCond ...InstallConfigWaitCondition) error {
+// WaitForCheInstallConditions waits until there is CheInstallation available with the given name and meeting the set of given wait-conditions
+func (a *ToolchainAwaitility) WaitForCheInstallConditions(name string, waitCond ...CheInstallationWaitCondition) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
-		ic := &v1alpha1.InstallConfig{}
+		ic := &v1alpha1.CheInstallation{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
-				a.T.Logf("waiting for availability of InstallConfig '%s'", name)
+				a.T.Logf("waiting for availability of CheInstallation '%s'", name)
 				return false, nil
 			}
 			return false, err
