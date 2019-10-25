@@ -7,12 +7,11 @@ import (
 	"time"
 )
 
-func NewCheInstallation(toolchainOp string, cheNamespace string) *v1alpha1.CheInstallation {
+func NewCheInstallation(cheNamespace string) *v1alpha1.CheInstallation {
 	cheInstallation := GenerateName("install-cfg")
 	return &v1alpha1.CheInstallation{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      cheInstallation,
-			Namespace: toolchainOp,
+			Name: cheInstallation,
 		},
 		Spec: v1alpha1.CheInstallationSpec{
 			CheOperatorSpec: v1alpha1.CheOperator{Namespace: cheNamespace},

@@ -36,12 +36,15 @@ rules:
   - toolchain.openshift.dev
   resources:
   - cheinstallations/finalizers
+  - tektoninstallations/finalizers
   verbs:
   - update
 - apiGroups:
   - toolchain.openshift.dev
   resources:
   - cheinstallations
+  - tektoninstallations
   - cheinstallations/status
+  - tektoninstallations/status
   verbs:
   - '*'

@@ -35,7 +35,7 @@ func TestToolchain(t *testing.T) {
 	cheSub := che.NewSubscription(cheOperatorNs)
 	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
 
-	cheInstallation := NewCheInstallation(await.Namespace, cheOperatorNs)
+	cheInstallation := NewCheInstallation(cheOperatorNs)
 	f := framework.Global
 
 	t.Run("should create operator group and subscription for che with installconfig", func(t *testing.T) {

@@ -50,10 +50,31 @@ spec:
               description: 'Conditions is an array of current CheInstallation conditions
                 Supported condition types: CheInstalled, FailedToInstallChe'
               items:
-                $ref: '#/definitions/github.com~1codeready-toolchain~1api~1pkg~1apis~1toolchain~1v1alpha1~0Condition'
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transit from one status to
+                      another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: Human readable message indicating details about last
+                      transition.
+                    type: string
+                  reason:
+                    description: (brief) reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of condition
+                    type: string
+                required:
+                - type
+                - status
+                type: object
               type: array
           type: object
-      type: object
   version: v1alpha1
   versions:
   - name: v1alpha1

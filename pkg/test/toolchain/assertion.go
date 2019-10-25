@@ -11,10 +11,10 @@ import (
 )
 
 type CheInstallationAssertion struct {
-	cheInstallation  *v1alpha1.CheInstallation
-	client         client.Client
-	namespacedName types.NamespacedName
-	t              *testing.T
+	cheInstallation *v1alpha1.CheInstallation
+	client          client.Client
+	namespacedName  types.NamespacedName
+	t               *testing.T
 }
 
 func (a *CheInstallationAssertion) loadCheInstallationAssertion() error {
