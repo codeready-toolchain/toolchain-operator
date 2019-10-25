@@ -2,4 +2,4 @@ apiVersion: toolchain.openshift.dev/v1alpha1
 kind: TektonInstallation
 metadata:
   name: toolchain-tektoninstallation
-spec:
+spec: {}
