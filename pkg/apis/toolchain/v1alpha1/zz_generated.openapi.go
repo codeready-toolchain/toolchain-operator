@@ -11,9 +11,12 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfig":       schema_pkg_apis_toolchain_v1alpha1_InstallConfig(ref),
-		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigSpec":   schema_pkg_apis_toolchain_v1alpha1_InstallConfigSpec(ref),
-		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigStatus": schema_pkg_apis_toolchain_v1alpha1_InstallConfigStatus(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfig":            schema_pkg_apis_toolchain_v1alpha1_InstallConfig(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigSpec":        schema_pkg_apis_toolchain_v1alpha1_InstallConfigSpec(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.InstallConfigStatus":      schema_pkg_apis_toolchain_v1alpha1_InstallConfigStatus(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.TektonInstallation":       schema_pkg_apis_toolchain_v1alpha1_TektonInstallation(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.TektonInstallationSpec":   schema_pkg_apis_toolchain_v1alpha1_TektonInstallationSpec(ref),
+		"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.TektonInstallationStatus": schema_pkg_apis_toolchain_v1alpha1_TektonInstallationStatus(ref),
 	}
 }
 
@@ -22,6 +25,7 @@ func schema_pkg_apis_toolchain_v1alpha1_InstallConfig(ref common.ReferenceCallba
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "InstallConfig is the Schema for the installconfigs API",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {
 						SchemaProps: spec.SchemaProps{
@@ -65,6 +69,7 @@ func schema_pkg_apis_toolchain_v1alpha1_InstallConfigSpec(ref common.ReferenceCa
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "InstallConfigSpec defines the desired state of InstallConfig",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"cheOperatorSpec": {
 						SchemaProps: spec.SchemaProps{
@@ -86,6 +91,7 @@ func schema_pkg_apis_toolchain_v1alpha1_InstallConfigStatus(ref common.Reference
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
 				Description: "InstallConfigStatus defines the observed state of InstallConfig",
+				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"conditions": {
 						VendorExtensible: spec.VendorExtensible{
@@ -111,5 +117,71 @@ func schema_pkg_apis_toolchain_v1alpha1_InstallConfigStatus(ref common.Reference
 		},
 		Dependencies: []string{
 			"github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1.Condition"},
+	}
+}
+
+func schema_pkg_apis_toolchain_v1alpha1_TektonInstallation(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TektonInstallation is the Schema for the tektoninstallations API",
+				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.TektonInstallationSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.TektonInstallationStatus"),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.TektonInstallationSpec", "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.TektonInstallationStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_toolchain_v1alpha1_TektonInstallationSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TektonInstallationSpec defines the desired state of TektonInstallation",
+				Type:        []string{"object"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_toolchain_v1alpha1_TektonInstallationStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Description: "TektonInstallationStatus defines the observed state of TektonInstallation",
+				Type:        []string{"object"},
+			},
+		},
 	}
 }
