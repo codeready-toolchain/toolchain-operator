@@ -9,7 +9,7 @@ spec:
     listKind: CheInstallationList
     plural: cheinstallations
     singular: cheinstallation
-  scope: Namespaced
+  scope: Cluster
   subresources:
     status: {}
   validation:

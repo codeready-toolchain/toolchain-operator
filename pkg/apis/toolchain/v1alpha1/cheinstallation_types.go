@@ -38,7 +38,7 @@ type CheInstallationStatus struct {
 // CheInstallation is the Schema for the cheinstallations API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=cheinstallations,scope=Namespaced
+// +kubebuilder:resource:path=cheinstallations,scope=Cluster
 type CheInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
