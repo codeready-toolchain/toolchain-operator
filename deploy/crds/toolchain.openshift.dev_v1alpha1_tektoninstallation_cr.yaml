@@ -1,7 +1,5 @@
 apiVersion: toolchain.openshift.dev/v1alpha1
 kind: TektonInstallation
 metadata:
-  name: example-tektoninstallation
+  name: toolchain-tektoninstallation
 spec:
-  # Add fields here
-  size: 3

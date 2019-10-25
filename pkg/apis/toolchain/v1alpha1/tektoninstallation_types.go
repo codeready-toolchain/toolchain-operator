@@ -28,7 +28,7 @@ type TektonInstallationStatus struct {
 // TektonInstallation is the Schema for the tektoninstallations API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=tektoninstallations,scope=Namespaced
+// +kubebuilder:resource:path=tektoninstallations,scope=Cluster
 type TektonInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
