@@ -36,6 +36,8 @@ func TestToolchain(t *testing.T) {
 	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
 
 	cheInstallation := NewCheInstallation(cheOperatorNs)
+	tektonInstallation := NewTektonInstallation()
+
 	f := framework.Global
 
 	t.Run("should create operator group and subscription for che with installconfig", func(t *testing.T) {
@@ -45,10 +47,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallation(cheInstallation.Name)
-		require.NoError(t, err)
-
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess)))
 		require.NoError(t, err)
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
@@ -64,12 +63,37 @@ func TestToolchain(t *testing.T) {
 			Exists().
 			HasSpec(cheSub.Spec)
 
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		require.NoError(t, err)
+
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
 			Exists().
 			HasSpec(tektonSub.Spec)
 	})
 
-	t.Run("should remove operatorgroup and subscription for che with installconfig deletion", func(t *testing.T) {
+	t.Run("should recreate deleted subscription for tekton", func(t *testing.T) {
+		// given
+		tektonInstallation, err := await.GetTektonInstallation(tektonInstallation.Name)
+		require.NoError(t, err)
+
+		// when
+		err = f.Client.Delete(context.TODO(), tektonInstallation)
+
+		// then
+		require.NoError(t, err, "failed to delete TektonInstallation")
+
+		//err = await.WaitForTektonInstallConditions(tektonInstallation.Name)
+		//require.NoError(t, err)
+
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		require.NoError(t, err)
+
+		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
+			Exists().
+			HasSpec(tektonSub.Spec)
+	})
+
+	t.Run("should remove operatorgroup and subscription for che with CheInstallation deletion", func(t *testing.T) {
 		// given
 		cheInstallation, err := await.GetCheInstallation(cheInstallation.Name)
 		require.NoError(t, err)
@@ -87,9 +111,6 @@ func TestToolchain(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
-			DoesNotExist()
-
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
 			DoesNotExist()
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).

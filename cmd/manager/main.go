@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
@@ -87,7 +86,6 @@ func main() {
 		log.Error(err, "")
 		os.Exit(1)
 	}
-
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
 		//	Namespace:          namespace, we'll need to build cache to inform from any namespace as che operator is installing in any ns
