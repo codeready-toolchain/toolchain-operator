@@ -4,10 +4,11 @@ import (
 	"context"
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -68,9 +69,9 @@ func (a *ToolchainAwaitility) GetCheInstallation(name string) (*v1alpha1.CheInst
 	return ic, err
 }
 
-func (a *ToolchainAwaitility) GetTektonSubscription() (*olmv1alpha1.Subscription, error) {
+func (a *ToolchainAwaitility) GetSubscription(ns, name string) (*olmv1alpha1.Subscription, error) {
 	subscription := &olmv1alpha1.Subscription{}
-	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: tekton.SubscriptionNamespace, Name: tekton.SubscriptionName}, subscription)
+	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: name}, subscription)
 	return subscription, err
 }
 
@@ -146,18 +147,48 @@ func (a *ToolchainAwaitility) WaitForTektonInstallConditions(name string, waitCo
 	})
 }
 
-// WaitForTektonSubscription waits until there is Tekton Subscription available with the given name
-func (a *ToolchainAwaitility) WaitForTektonSubscription() error {
+// WaitForSubscription waits until there is Subscription available with the given name and namespace
+func (a *ToolchainAwaitility) WaitForSubscription(ns, name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		sub := &olmv1alpha1.Subscription{}
-		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: tekton.SubscriptionNamespace, Name: tekton.SubscriptionName}, sub); err != nil {
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: name}, sub); err != nil {
 			if errors.IsNotFound(err) {
-				a.T.Logf("waiting for availability of Tekton Subscription '%s'", tekton.SubscriptionName)
+				a.T.Logf("waiting for availability of Subscription '%s' in namespace '%s'", name, ns)
 				return false, nil
 			}
 			return false, err
 		}
 		return true, nil
+	})
+}
+
+// WaitForNamespace waits until there is Namespace available with the given name
+func (a *ToolchainAwaitility) WaitForNamespace(name string) error {
+	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		ns := &v1.Namespace{}
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ns); err != nil {
+			if errors.IsNotFound(err) {
+				a.T.Logf("waiting for availability of namespace '%s'", name)
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
+	})
+}
+
+// WaitForOperatorGroup waits until there is OperatorGroup available with the given name and namespace
+func (a *ToolchainAwaitility) WaitForOperatorGroup(ns string, labels map[string]string) error {
+	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		ogList := &olmv1.OperatorGroupList{}
+		if err = a.Client.List(context.TODO(), ogList, client.InNamespace(ns), client.MatchingLabels(labels)); err != nil {
+			return false, err
+		}
+		if len(ogList.Items) > 0 {
+			return true, nil
+		}
+		a.T.Logf("waiting for availability of OperatorGroup with labels '%v' in namespace '%s'", labels, ns)
+		return false, nil
 	})
 }
 
