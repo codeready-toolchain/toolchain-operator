@@ -32,10 +32,6 @@ var log = logf.Log.WithName("controller_tektoninstallation")
 // Add creates a new TektonInstallation Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
-	cr := toolchain.NewTektonInstallation()
-	if err := mgr.GetClient().Create(context.TODO(), cr); err != nil && !errors.IsAlreadyExists(err) {
-		return errs.Wrapf(err, "failed to create tekton installation custom resource")
-	}
 	return add(mgr, newReconciler(mgr))
 }
 
@@ -87,13 +83,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	tektonInstallation := &toolchainv1alpha1.TektonInstallation{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: toolchain.TektonInstallation}, tektonInstallation); err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, maybe someone deleted it, but we need this to be exist, so creating it.
-			cr := toolchain.NewTektonInstallation()
-			if err := r.client.Create(context.TODO(), cr); err != nil {
-				reqLogger.Error(err, "failed to create tekton installation custom resource", "Namespace", request.Namespace, "Name", cr.Name)
-				return reconcile.Result{}, err
-			}
-			return reconcile.Result{Requeue: true}, nil
+			return reconcile.Result{}, nil
 		} else {
 			// Error reading the object - requeue the request.
 			return reconcile.Result{}, err

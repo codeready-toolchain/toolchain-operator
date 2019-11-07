@@ -149,125 +149,123 @@ func TestCheInstallationController(t *testing.T) {
 			DoesNotExist()
 	})
 
-	t.Run("should update status failed when something bad happens", func(t *testing.T) {
-		t.Run("update status when failed to get ns", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheInstallation)
+	t.Run("update status when failed to get ns", func(t *testing.T) {
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation)
 
-			request := newReconcileRequest(cheInstallation)
-			errMsg := "something went wrong while getting ns"
-			cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
-				if _, ok := obj.(*v1.Namespace); ok {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Get(ctx, key, obj)
+		request := newReconcileRequest(cheInstallation)
+		errMsg := "something went wrong while getting ns"
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			if _, ok := obj.(*v1.Namespace); ok {
+				return errors.New(errMsg)
 			}
+			return cl.Client.Get(ctx, key, obj)
+		}
 
-			// reconcile for che subscription
-			_, err := r.Reconcile(request)
+		// reconcile for che subscription
+		_, err := r.Reconcile(request)
 
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create namespace %s: %s", cheOperatorNs, errMsg))
+		// then
+		assert.EqualError(t, err, fmt.Sprintf("failed to create namespace %s: %s", cheOperatorNs, errMsg))
 
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				DoesNotExist()
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			DoesNotExist()
 
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				DoesNotExist()
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			DoesNotExist()
 
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
 
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(che.SubscriptionFailed(errMsg))
-		})
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionFailed(errMsg))
+	})
 
-		t.Run("should update status when failed to create operator group", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheInstallation)
+	t.Run("should update status when failed to create operator group", func(t *testing.T) {
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation)
 
-			request := newReconcileRequest(cheInstallation)
+		request := newReconcileRequest(cheInstallation)
 
-			errMsg := "something went wrong while creating og"
-			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-				if _, ok := obj.(*olmv1.OperatorGroup); ok {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Create(ctx, obj, opts...)
+		errMsg := "something went wrong while creating og"
+		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+			if _, ok := obj.(*olmv1.OperatorGroup); ok {
+				return errors.New(errMsg)
 			}
+			return cl.Client.Create(ctx, obj, opts...)
+		}
 
-			// first reconcile for ns creation
-			result, err := r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// first reconcile for ns creation
+		result, err := r.Reconcile(request)
+		require.NoError(t, err)
+		assert.True(t, result.Requeue)
 
-			// when
-			_, err = r.Reconcile(request)
+		// when
+		_, err = r.Reconcile(request)
 
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create operatorgroup in namespace %s: %s", cheOperatorNs, errMsg))
+		// then
+		assert.EqualError(t, err, fmt.Sprintf("failed to create operatorgroup in namespace %s: %s", cheOperatorNs, errMsg))
 
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				Exists().
-				HasLabels(toolchain.Labels())
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			Exists().
+			HasLabels(toolchain.Labels())
 
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				DoesNotExist()
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			DoesNotExist()
 
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
 
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(che.SubscriptionFailed(errMsg))
-		})
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionFailed(errMsg))
+	})
 
-		t.Run("should update status when failed to create che subscription", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheInstallation)
+	t.Run("should update status when failed to create che subscription", func(t *testing.T) {
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation)
 
-			request := newReconcileRequest(cheInstallation)
+		request := newReconcileRequest(cheInstallation)
 
-			errMsg := "something went wrong while creating che subscription"
-			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-				if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Name == che.SubscriptionName {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Create(ctx, obj, opts...)
+		errMsg := "something went wrong while creating che subscription"
+		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+			if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Name == che.SubscriptionName {
+				return errors.New(errMsg)
 			}
+			return cl.Client.Create(ctx, obj, opts...)
+		}
 
-			// first reconcile for ns creation
-			result, err := r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// first reconcile for ns creation
+		result, err := r.Reconcile(request)
+		require.NoError(t, err)
+		assert.True(t, result.Requeue)
 
-			// second reconcile for og creation
-			result, err = r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// second reconcile for og creation
+		result, err = r.Reconcile(request)
+		require.NoError(t, err)
+		assert.True(t, result.Requeue)
 
-			// when
-			_, err = r.Reconcile(request)
+		// when
+		_, err = r.Reconcile(request)
 
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create che subscription in namespace %s: %s", cheOperatorNs, errMsg))
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				Exists().
-				HasLabels(toolchain.Labels())
+		// then
+		assert.EqualError(t, err, fmt.Sprintf("failed to create che subscription in namespace %s: %s", cheOperatorNs, errMsg))
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			Exists().
+			HasLabels(toolchain.Labels())
 
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				Exists().
-				HasSize(1).
-				HasSpec(cheOg.Spec)
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			Exists().
+			HasSize(1).
+			HasSpec(cheOg.Spec)
 
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
 
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(che.SubscriptionFailed(errMsg))
-		})
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionFailed(errMsg))
 	})
 
 }

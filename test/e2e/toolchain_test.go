@@ -40,7 +40,7 @@ func TestToolchain(t *testing.T) {
 
 	f := framework.Global
 
-	t.Run("should create operator group and subscription for che with installconfig", func(t *testing.T) {
+	t.Run("should create operator group and subscription for che with CheInstallation", func(t *testing.T) {
 		// when
 		err := f.Client.Create(context.TODO(), cheInstallation, cleanupOptions(ctx))
 
@@ -62,6 +62,14 @@ func TestToolchain(t *testing.T) {
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
 			Exists().
 			HasSpec(cheSub.Spec)
+	})
+
+	t.Run("should create subscription for tekton with TektonInstallation", func(t *testing.T) {
+		// when
+		err := f.Client.Create(context.TODO(), tektonInstallation, cleanupOptions(ctx))
+
+		// then
+		require.NoError(t, err, "failed to create toolchain TektonInstallation")
 
 		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
 		require.NoError(t, err)
@@ -73,17 +81,17 @@ func TestToolchain(t *testing.T) {
 
 	t.Run("should recreate deleted subscription for tekton", func(t *testing.T) {
 		// given
-		tektonInstallation, err := await.GetTektonInstallation(tektonInstallation.Name)
+		tektonSubscription, err := await.GetTektonSubscription()
 		require.NoError(t, err)
 
 		// when
-		err = f.Client.Delete(context.TODO(), tektonInstallation)
+		err = f.Client.Delete(context.TODO(), tektonSubscription)
 
 		// then
 		require.NoError(t, err, "failed to delete TektonInstallation")
 
-		//err = await.WaitForTektonInstallConditions(tektonInstallation.Name)
-		//require.NoError(t, err)
+		err = await.WaitForTektonSubscription()
+		require.NoError(t, err)
 
 		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
 		require.NoError(t, err)

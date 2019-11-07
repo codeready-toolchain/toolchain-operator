@@ -4,8 +4,10 @@ import (
 	"context"
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -66,10 +68,10 @@ func (a *ToolchainAwaitility) GetCheInstallation(name string) (*v1alpha1.CheInst
 	return ic, err
 }
 
-func (a *ToolchainAwaitility) GetTektonInstallation(name string) (*v1alpha1.TektonInstallation, error) {
-	ic := &v1alpha1.TektonInstallation{}
-	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic)
-	return ic, err
+func (a *ToolchainAwaitility) GetTektonSubscription() (*olmv1alpha1.Subscription, error) {
+	subscription := &olmv1alpha1.Subscription{}
+	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: tekton.SubscriptionNamespace, Name: tekton.SubscriptionName}, subscription)
+	return subscription, err
 }
 
 // CheInstallationWaitCondition represents a function checking if CheInstallation meets the given condition
@@ -108,7 +110,7 @@ func UntilHasTektonStatusCondition(conditions ...toolchainv1alpha1.Condition) Te
 func (a *ToolchainAwaitility) WaitForCheInstallConditions(name string, waitCond ...CheInstallationWaitCondition) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ci := &v1alpha1.CheInstallation{}
-		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ci); err != nil {
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ci); err != nil {
 			if errors.IsNotFound(err) {
 				a.T.Logf("waiting for availability of CheInstallation '%s'", name)
 				return false, nil
@@ -124,11 +126,11 @@ func (a *ToolchainAwaitility) WaitForCheInstallConditions(name string, waitCond 
 	})
 }
 
-// WaitForCheInstallConditions waits until there is CheInstallation available with the given name and meeting the set of given wait-conditions
+// WaitForTektonInstallConditions waits until there is TektonInstallation available with the given name and meeting the set of given wait-conditions
 func (a *ToolchainAwaitility) WaitForTektonInstallConditions(name string, waitCond ...TektonInstallationWaitCondition) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ti := &v1alpha1.TektonInstallation{}
-		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ti); err != nil {
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ti); err != nil {
 			if errors.IsNotFound(err) {
 				a.T.Logf("waiting for availability of TektonInstallation '%s'", name)
 				return false, nil
@@ -139,6 +141,21 @@ func (a *ToolchainAwaitility) WaitForTektonInstallConditions(name string, waitCo
 			if !isMatched(a, ti) {
 				return false, nil
 			}
+		}
+		return true, nil
+	})
+}
+
+// WaitForTektonSubscription waits until there is Tekton Subscription available with the given name
+func (a *ToolchainAwaitility) WaitForTektonSubscription() error {
+	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		sub := &olmv1alpha1.Subscription{}
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: tekton.SubscriptionNamespace, Name: tekton.SubscriptionName}, sub); err != nil {
+			if errors.IsNotFound(err) {
+				a.T.Logf("waiting for availability of Tekton Subscription '%s'", tekton.SubscriptionName)
+				return false, nil
+			}
+			return false, err
 		}
 		return true, nil
 	})

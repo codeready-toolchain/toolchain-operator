@@ -35,8 +35,8 @@ spec:
           description: TektonInstallationStatus defines the observed state of TektonInstallation
           properties:
             conditions:
-              description: 'Conditions is an array of current CheInstallation conditions
-                Supported condition types: CheInstalled, FailedToInstallChe'
+              description: 'Conditions is an array of current TektonInstallation conditions
+                Supported condition types: TektonInstalled, FailedToInstallTekton'
               items:
                 properties:
                   lastTransitionTime:
