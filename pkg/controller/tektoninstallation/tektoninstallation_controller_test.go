@@ -63,34 +63,35 @@ func TestTektonInstallationController(t *testing.T) {
 		})
 
 	})
+}
 
-	t.Run("should update status when failed to create tekton subscription", func(t *testing.T) {
-		tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
+func TestFailingStatusForTektonInstallation(t *testing.T) {
+	// given
+	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
 
-		tektonInstallation := NewTektonInstallation()
-		cl, r := configureClient(t, tektonInstallation)
+	tektonInstallation := NewTektonInstallation()
+	cl, r := configureClient(t, tektonInstallation)
 
-		request := newReconcileRequest(tektonInstallation)
+	request := newReconcileRequest(tektonInstallation)
 
-		errMsg := "something went wrong while creating tekton subscription"
-		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-			if _, ok := obj.(*olmv1alpha1.Subscription); ok {
-				return errors.New(errMsg)
-			}
-			return cl.Client.Create(ctx, obj, opts...)
+	errMsg := "something went wrong while creating tekton subscription"
+	cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+		if _, ok := obj.(*olmv1alpha1.Subscription); ok {
+			return errors.New(errMsg)
 		}
-		// when
-		_, err := r.Reconcile(request)
+		return cl.Client.Create(ctx, obj, opts...)
+	}
+	// when
+	_, err := r.Reconcile(request)
 
-		// then
-		assert.EqualError(t, err, fmt.Sprintf("failed to create tekton subscription in namespace %s: %s", tektonSub.Namespace, errMsg))
+	// then
+	assert.EqualError(t, err, fmt.Sprintf("failed to create tekton subscription in namespace %s: %s", tektonSub.Namespace, errMsg))
 
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-			DoesNotExist()
+	AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
+		DoesNotExist()
 
-		AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-			HasConditions(tekton.SubscriptionFailed(errMsg))
-	})
+	AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+		HasConditions(tekton.SubscriptionFailed(errMsg))
 }
 
 func TestCreateSubscriptionForTekton(t *testing.T) {
