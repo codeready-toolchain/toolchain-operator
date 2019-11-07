@@ -40,6 +40,10 @@ func TestTektonInstallationController(t *testing.T) {
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
 				HasConditions(tekton.SubscriptionCreated(tekton.SubscriptionSuccess))
+
+			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
+				Exists().
+				HasSpec(tektonSub.Spec)
 		})
 
 		t.Run("should not requeue", func(t *testing.T) {
