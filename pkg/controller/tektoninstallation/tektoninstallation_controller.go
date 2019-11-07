@@ -99,18 +99,18 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 
 func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation) error {
 	tektonSubNamespace := tekton.SubscriptionNamespace
-	if err := r.ensureTektonSubscription(logger, tektonSubNamespace, tektonInstallation); err != nil {
+	if err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace); err != nil {
 		return r.wrapErrorWithStatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
 	}
 	return r.StatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionReady, tekton.SubscriptionSuccess)
 }
 
-func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, ns string, tektonInstallation *v1alpha1.TektonInstallation) error {
-	tektonSub := tekton.NewSubscription(ns)
+func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, ns string) error {
 	sub := &olmv1alpha1.Subscription{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: tektonSub.GetName(), Namespace: tektonSub.GetNamespace()}, sub)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: tekton.SubscriptionName}, sub)
 	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Creating subscription for tekton", "Subscription.Namespace", tektonSub.Namespace, "Subscription.Name", tektonSub.Name)
+		tektonSub := tekton.NewSubscription(ns)
+		logger.Info("Creating subscription for tekton", "Subscription.Namespace", ns, "Subscription.Name", tektonSub.Name)
 		if err := controllerutil.SetControllerReference(tektonInstallation, tektonSub, r.scheme); err != nil {
 			return err
 		}

@@ -101,7 +101,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		tektonSub := tekton.NewSubscription(tektonSubNs)
 
 		// when
-		err := r.ensureTektonSubscription(testLogger, tektonSubNs, tektonInstallation)
+		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
 
 		// then
 		require.NoError(t, err)
@@ -123,7 +123,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		tektonSub := tekton.NewSubscription(tektonSubNs)
 
 		// when
-		err := r.ensureTektonSubscription(testLogger, tektonSubNs, tektonInstallation)
+		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
 
 		// then
 		require.EqualError(t, err, errMsg)
@@ -136,19 +136,11 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		// given
 		tektonSubNs := GenerateName("tekton-op")
 		tektonInstallation := NewTektonInstallation()
-		cl, r := configureClient(t, tektonInstallation)
 		tektonSub := tekton.NewSubscription(tektonSubNs)
-
-		// create for the first time
-		err := r.ensureTektonSubscription(testLogger, tektonSubNs, tektonInstallation)
-		require.NoError(t, err)
-
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-			Exists().
-			HasSpec(tektonSub.Spec)
+		cl, r := configureClient(t, tektonInstallation, tektonSub)
 
 		// when
-		err = r.ensureTektonSubscription(testLogger, tektonSubNs, tektonInstallation)
+		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
 
 		// then
 		require.NoError(t, err)
