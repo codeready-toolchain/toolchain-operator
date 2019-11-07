@@ -25,7 +25,7 @@ type TektonInstallationStatus struct {
 
 	// Conditions is an array of current TektonInstallation conditions
 	// Supported condition types:
-	// TektonInstalled, FailedToInstallTekton
+	// TektonReady
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
