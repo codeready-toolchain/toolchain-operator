@@ -36,7 +36,7 @@ spec:
           properties:
             conditions:
               description: 'Conditions is an array of current TektonInstallation conditions
-                Supported condition types: TektonInstalled, FailedToInstallTekton'
+                Supported condition types: TektonReady'
               items:
                 properties:
                   lastTransitionTime:
