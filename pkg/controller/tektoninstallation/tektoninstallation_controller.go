@@ -2,6 +2,7 @@ package tektoninstallation
 
 import (
 	"context"
+
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -84,17 +85,13 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: toolchain.TektonInstallation}, tektonInstallation); err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
-		} else {
-			// Error reading the object - requeue the request.
-			return reconcile.Result{}, err
 		}
-	}
-
-	if err := r.EnsureTektonSubscription(reqLogger, tektonInstallation); err != nil {
+		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
-	return reconcile.Result{}, nil
+	err := r.EnsureTektonSubscription(reqLogger, tektonInstallation)
+	return reconcile.Result{}, err
 }
 
 func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation) error {
