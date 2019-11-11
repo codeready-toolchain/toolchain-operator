@@ -99,7 +99,7 @@ func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logge
 	if err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace); err != nil {
 		return r.wrapErrorWithStatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
 	}
-	return r.StatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionReady, tekton.SubscriptionSuccess)
+	return r.StatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionReady, "")
 }
 
 func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, ns string) error {
@@ -117,7 +117,7 @@ func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logge
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionReady(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, tekton.SubscriptionCreated(message))
+	return r.updateStatusConditions(tektonInstallation, tekton.SubscriptionCreated())
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {

@@ -2,6 +2,9 @@ package e2e
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
@@ -15,8 +18,6 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
 )
 
 func TestToolchain(t *testing.T) {
@@ -47,7 +48,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess)))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
@@ -71,7 +72,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain TektonInstallation")
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
@@ -93,7 +94,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForTektonSubscription()
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
