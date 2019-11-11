@@ -72,6 +72,11 @@ TOOLCHAIN_NS := toolchain-operator-$(shell date +'%s')
 #
 ###########################################################
 
+DATE_SUFFIX := $(shell date +'%s')
+
+IS_OS_3 := $(shell curl -k -XGET -H "Authorization: Bearer $(shell oc whoami -t 2>/dev/null)" $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.server}')/version/openshift 2>/dev/null | grep paths)
+IS_OS_CI := $(OPENSHIFT_BUILD_NAMESPACE)
+
 .PHONY: test-e2e-keep-namespaces
 test-e2e-keep-namespaces: e2e-setup e2e-run
 
@@ -92,7 +97,7 @@ print-logs:
 	@echo "====================================================================================="
 
 .PHONY: e2e-setup
-e2e-setup: is-minishift
+e2e-setup: build-image
 	oc new-project $(TOOLCHAIN_NS) --display-name e2e-tests
 	oc apply -f ./deploy/service_account.yaml
 	oc apply -f ./deploy/role.yaml
@@ -102,15 +107,20 @@ e2e-setup: is-minishift
 	oc apply -f deploy/crds
 	sed -e 's|REPLACE_IMAGE|${IMAGE_NAME}|g' ./deploy/operator.yaml  | oc apply -f -
 
-.PHONY: is-minishift
-is-minishift:
-ifeq ($(OPENSHIFT_BUILD_NAMESPACE),)
+.PHONY: build-image
+build-image:
+ifneq ($(IS_OS_3),)
 	$(info logging as system:admin")
 	$(shell echo "oc login -u system:admin")
 	$(eval IMAGE_NAME := docker.io/${GO_PACKAGE_ORG_NAME}/${GO_PACKAGE_REPO_NAME}:${GIT_COMMIT_ID_SHORT})
-	$(shell echo "make docker-image")
-else
+	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
+else ifneq ($(IS_OS_CI),)
 	$(eval IMAGE_NAME := registry.svc.ci.openshift.org/${OPENSHIFT_BUILD_NAMESPACE}/stable:toolchain-operator)
+else
+	# For OpenShift-4
+	$(eval IMAGE_NAME := quay.io/${QUAY_NAMESPACE}/${GO_PACKAGE_REPO_NAME}:${DATE_SUFFIX})
+	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
+	$(Q)docker push ${IMAGE_NAME}
 endif
 
 .PHONY: e2e-cleanup
