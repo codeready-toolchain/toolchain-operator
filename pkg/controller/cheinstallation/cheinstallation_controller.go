@@ -2,11 +2,11 @@ package cheinstallation
 
 import (
 	"context"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
@@ -16,7 +16,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	errorsutil "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
@@ -85,21 +84,10 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	var errors []error
 	if isResourceCreated, err := r.EnsureCheSubscription(reqLogger, cheInstallation); err != nil {
-		errors = append(errors, err)
+		return reconcile.Result{}, err
 	} else if isResourceCreated {
 		return reconcile.Result{Requeue: true}, nil
-	}
-
-	if isResourceCreated, err := r.EnsureTektonSubscription(reqLogger, cheInstallation); err != nil {
-		errors = append(errors, err)
-	} else if isResourceCreated {
-		return reconcile.Result{Requeue: true}, nil
-	}
-
-	if len(errors) > 0 {
-		return reconcile.Result{}, errorsutil.NewAggregate(errors)
 	}
 
 	return reconcile.Result{}, nil
@@ -114,17 +102,6 @@ func (r *ReconcileCheInstallation) wrapErrorWithStatusUpdate(logger logr.Logger,
 		logger.Error(err, "status update failed")
 	}
 	return errs.Wrapf(err, format, args...)
-}
-
-func (r *ReconcileCheInstallation) EnsureTektonSubscription(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
-	tektonSubNamespace := tekton.SubscriptionNamespace
-	if subCreated, err := r.ensureTektonSubscription(logger, tektonSubNamespace, cheInstallation); err != nil {
-		return subCreated, r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
-	} else if subCreated {
-		return subCreated, nil
-	}
-
-	return false, r.StatusUpdate(logger, cheInstallation, r.setStatusTektonSubscriptionReady, tekton.SubscriptionSuccess)
 }
 
 func (r *ReconcileCheInstallation) EnsureCheSubscription(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
@@ -147,7 +124,7 @@ func (r *ReconcileCheInstallation) EnsureCheSubscription(logger logr.Logger, che
 		return subCreated, nil
 	}
 
-	return false, r.StatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, che.SubscriptionSuccess)
+	return false, r.StatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
 }
 
 func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
@@ -210,24 +187,6 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns 
 	return subCreated, err
 }
 
-func (r *ReconcileCheInstallation) ensureTektonSubscription(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
-	tektonSub := tekton.NewSubscription(ns)
-	subCreated := false
-	sub := &olmv1alpha1.Subscription{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: tektonSub.GetName(), Namespace: tektonSub.GetNamespace()}, sub)
-	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Creating subscription for tekton", "Subscription.Namespace", tektonSub.Namespace, "Subscription.Name", tektonSub.Name)
-		if err := controllerutil.SetControllerReference(cheInstallation, tektonSub, r.scheme); err != nil {
-			return subCreated, err
-		}
-		if err := r.client.Create(context.TODO(), tektonSub); err != nil {
-			return subCreated, err
-		}
-		return true, nil
-	}
-	return subCreated, err
-}
-
 func (r *ReconcileCheInstallation) StatusUpdate(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation, statusUpdater func(cheInstallation *v1alpha1.CheInstallation, message string) error, msg string) error {
 	if err := statusUpdater(cheInstallation, msg); err != nil {
 		logger.Error(err, "unable to update status")
@@ -250,14 +209,6 @@ func (r *ReconcileCheInstallation) setStatusCheSubscriptionFailed(cheInstallatio
 	return r.updateStatusConditions(cheInstallation, che.SubscriptionFailed(message))
 }
 
-func (r *ReconcileCheInstallation) setStatusTektonSubscriptionFailed(cheInstallation *v1alpha1.CheInstallation, message string) error {
-	return r.updateStatusConditions(cheInstallation, tekton.SubscriptionFailed(message))
-}
-
 func (r *ReconcileCheInstallation) setStatusCheSubscriptionReady(cheInstallation *v1alpha1.CheInstallation, message string) error {
-	return r.updateStatusConditions(cheInstallation, che.SubscriptionCreated(message))
-}
-
-func (r *ReconcileCheInstallation) setStatusTektonSubscriptionReady(cheInstallation *v1alpha1.CheInstallation, message string) error {
-	return r.updateStatusConditions(cheInstallation, tekton.SubscriptionCreated(message))
+	return r.updateStatusConditions(cheInstallation, che.SubscriptionCreated())
 }

@@ -15,12 +15,11 @@ const (
 	InstalledReason       = "Installed"
 )
 
-func SubscriptionCreated(conditionType toolchainv1alpha1.ConditionType, reason, message string) toolchainv1alpha1.Condition {
+func SubscriptionCreated(conditionType toolchainv1alpha1.ConditionType, reason string) toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{
-		Type:    conditionType,
-		Status:  v1.ConditionTrue,
-		Reason:  reason,
-		Message: message,
+		Type:   conditionType,
+		Status: v1.ConditionTrue,
+		Reason: reason,
 	}
 }
 

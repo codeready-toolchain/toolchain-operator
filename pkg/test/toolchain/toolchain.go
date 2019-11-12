@@ -7,8 +7,10 @@ import (
 	"time"
 )
 
+const TektonInstallation = "tekton-installation"
+
 func NewCheInstallation(cheNamespace string) *v1alpha1.CheInstallation {
-	cheInstallation := GenerateName("install-cfg")
+	cheInstallation := GenerateName("che-installation")
 	return &v1alpha1.CheInstallation{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: cheInstallation,
@@ -21,4 +23,12 @@ func NewCheInstallation(cheNamespace string) *v1alpha1.CheInstallation {
 
 func GenerateName(prefix string) string {
 	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
+}
+
+func NewTektonInstallation() *v1alpha1.TektonInstallation {
+	return &v1alpha1.TektonInstallation{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: TektonInstallation,
+		},
+	}
 }

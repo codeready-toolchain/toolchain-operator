@@ -33,6 +33,35 @@ spec:
           type: object
         status:
           description: TektonInstallationStatus defines the observed state of TektonInstallation
+          properties:
+            conditions:
+              description: 'Conditions is an array of current TektonInstallation conditions
+                Supported condition types: TektonReady'
+              items:
+                properties:
+                  lastTransitionTime:
+                    description: Last time the condition transit from one status to
+                      another.
+                    format: date-time
+                    type: string
+                  message:
+                    description: Human readable message indicating details about last
+                      transition.
+                    type: string
+                  reason:
+                    description: (brief) reason for the condition's last transition.
+                    type: string
+                  status:
+                    description: Status of the condition, one of True, False, Unknown.
+                    type: string
+                  type:
+                    description: Type of condition
+                    type: string
+                required:
+                  - type
+                  - status
+                type: object
+              type: array
           type: object
       type: object
   version: v1alpha1

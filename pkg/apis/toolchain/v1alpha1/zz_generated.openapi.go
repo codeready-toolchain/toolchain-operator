@@ -181,7 +181,30 @@ func schema_pkg_apis_toolchain_v1alpha1_TektonInstallationStatus(ref common.Refe
 			SchemaProps: spec.SchemaProps{
 				Description: "TektonInstallationStatus defines the observed state of TektonInstallation",
 				Type:        []string{"object"},
+				Properties: map[string]spec.Schema{
+					"conditions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-patch-merge-key": "type",
+								"x-kubernetes-patch-strategy":  "merge",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Description: "Conditions is an array of current TektonInstallation conditions Supported condition types: TektonInstalled, FailedToInstallTekton",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref("github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1.Condition"),
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
+		Dependencies: []string{
+			"github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1.Condition"},
 	}
 }

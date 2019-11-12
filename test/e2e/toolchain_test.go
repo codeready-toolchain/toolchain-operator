@@ -2,6 +2,9 @@ package e2e
 
 import (
 	"context"
+	"os"
+	"testing"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
@@ -15,8 +18,6 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
-	"os"
-	"testing"
 )
 
 func TestToolchain(t *testing.T) {
@@ -36,19 +37,18 @@ func TestToolchain(t *testing.T) {
 	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
 
 	cheInstallation := NewCheInstallation(cheOperatorNs)
+	tektonInstallation := NewTektonInstallation()
+
 	f := framework.Global
 
-	t.Run("should create operator group and subscription for che with installconfig", func(t *testing.T) {
+	t.Run("should create operator group and subscription for che with CheInstallation", func(t *testing.T) {
 		// when
 		err := f.Client.Create(context.TODO(), cheInstallation, cleanupOptions(ctx))
 
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallation(cheInstallation.Name)
-		require.NoError(t, err)
-
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
@@ -63,13 +63,46 @@ func TestToolchain(t *testing.T) {
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
 			Exists().
 			HasSpec(cheSub.Spec)
+	})
+
+	t.Run("should create subscription for tekton with TektonInstallation", func(t *testing.T) {
+		// when
+		err := f.Client.Create(context.TODO(), tektonInstallation, cleanupOptions(ctx))
+
+		// then
+		require.NoError(t, err, "failed to create toolchain TektonInstallation")
+
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
+		require.NoError(t, err)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
 			Exists().
 			HasSpec(tektonSub.Spec)
 	})
 
-	t.Run("should remove operatorgroup and subscription for che with installconfig deletion", func(t *testing.T) {
+	t.Run("should recreate deleted subscription for tekton", func(t *testing.T) {
+		// given
+		tektonSubscription, err := await.GetTektonSubscription()
+		require.NoError(t, err)
+
+		// when
+		err = f.Client.Delete(context.TODO(), tektonSubscription)
+
+		// then
+		require.NoError(t, err, "failed to delete TektonInstallation")
+
+		err = await.WaitForTektonSubscription()
+		require.NoError(t, err)
+
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
+		require.NoError(t, err)
+
+		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
+			Exists().
+			HasSpec(tektonSub.Spec)
+	})
+
+	t.Run("should remove operatorgroup and subscription for che with CheInstallation deletion", func(t *testing.T) {
 		// given
 		cheInstallation, err := await.GetCheInstallation(cheInstallation.Name)
 		require.NoError(t, err)
@@ -87,9 +120,6 @@ func TestToolchain(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
-			DoesNotExist()
-
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
 			DoesNotExist()
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).

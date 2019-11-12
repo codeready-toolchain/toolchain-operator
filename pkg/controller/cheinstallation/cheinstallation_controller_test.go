@@ -4,10 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
@@ -26,16 +27,14 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"testing"
 )
 
 func TestCheInstallationController(t *testing.T) {
 	t.Run("should reconcile with che installation", func(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
-		tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -55,9 +54,6 @@ func TestCheInstallationController(t *testing.T) {
 				DoesNotExist()
 
 			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
-
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 				DoesNotExist()
 		})
 
@@ -79,9 +75,6 @@ func TestCheInstallationController(t *testing.T) {
 				HasSpec(cheOg.Spec)
 
 			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
-
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 				DoesNotExist()
 		})
 
@@ -105,36 +98,6 @@ func TestCheInstallationController(t *testing.T) {
 			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 				Exists().
 				HasSpec(cheSub.Spec)
-
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-				DoesNotExist()
-
-		})
-
-		t.Run("should create tekton subscription and requeue", func(t *testing.T) {
-			// when
-			result, err := r.Reconcile(request)
-
-			// then
-			require.NoError(t, err)
-
-			assert.True(t, result.Requeue)
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				Exists().
-				HasLabels(toolchain.Labels())
-
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				Exists().
-				HasSize(1).
-				HasSpec(cheOg.Spec)
-
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				Exists().
-				HasSpec(cheSub.Spec)
-
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-				Exists().
-				HasSpec(tektonSub.Spec)
 		})
 
 		t.Run("should not requeue", func(t *testing.T) {
@@ -158,12 +121,8 @@ func TestCheInstallationController(t *testing.T) {
 				Exists().
 				HasSpec(cheSub.Spec)
 
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-				Exists().
-				HasSpec(tektonSub.Spec)
-
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(tekton.SubscriptionCreated(tekton.SubscriptionSuccess), che.SubscriptionCreated(che.SubscriptionSuccess))
+				HasConditions(che.SubscriptionCreated())
 		})
 
 	})
@@ -171,11 +130,9 @@ func TestCheInstallationController(t *testing.T) {
 	t.Run("should not reconcile without che installation", func(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
-		tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
-
-		cl, r := configureClient(t, cheOperatorNs)
-
 		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t)
+
 		request := newReconcileRequest(cheInstallation)
 
 		// when
@@ -191,263 +148,125 @@ func TestCheInstallationController(t *testing.T) {
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			DoesNotExist()
-
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-			DoesNotExist()
 	})
 
-	t.Run("should update status failed when something bad happens", func(t *testing.T) {
-		tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
+	t.Run("update status when failed to get ns", func(t *testing.T) {
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation)
 
-		t.Run("update status when failed to get ns", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-
-			request := newReconcileRequest(cheInstallation)
-			errMsg := "something went wrong while getting ns"
-			cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
-				if _, ok := obj.(*v1.Namespace); ok {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Get(ctx, key, obj)
+		request := newReconcileRequest(cheInstallation)
+		errMsg := "something went wrong while getting ns"
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			if _, ok := obj.(*v1.Namespace); ok {
+				return errors.New(errMsg)
 			}
+			return cl.Client.Get(ctx, key, obj)
+		}
 
-			// reconcile for che subscription
-			result, err := r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// reconcile for che subscription
+		_, err := r.Reconcile(request)
 
-			// reconcile for tekton subscription
-			_, err = r.Reconcile(request)
+		// then
+		assert.EqualError(t, err, fmt.Sprintf("failed to create namespace %s: %s", cheOperatorNs, errMsg))
 
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create namespace %s: %s", cheOperatorNs, errMsg))
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			DoesNotExist()
 
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				DoesNotExist()
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			DoesNotExist()
 
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				DoesNotExist()
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
 
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionFailed(errMsg))
+	})
 
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-				Exists().
-				HasSpec(tektonSub.Spec)
+	t.Run("should update status when failed to create operator group", func(t *testing.T) {
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation)
 
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(tekton.SubscriptionCreated(tekton.SubscriptionSuccess), che.SubscriptionFailed(errMsg))
-		})
+		request := newReconcileRequest(cheInstallation)
 
-		t.Run("should update status when failed to create operator group", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-
-			request := newReconcileRequest(cheInstallation)
-
-			errMsg := "something went wrong while creating og"
-			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-				if _, ok := obj.(*olmv1.OperatorGroup); ok {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Create(ctx, obj, opts...)
+		errMsg := "something went wrong while creating og"
+		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+			if _, ok := obj.(*olmv1.OperatorGroup); ok {
+				return errors.New(errMsg)
 			}
+			return cl.Client.Create(ctx, obj, opts...)
+		}
 
-			// first reconcile for ns creation
-			result, err := r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// first reconcile for ns creation
+		result, err := r.Reconcile(request)
+		require.NoError(t, err)
+		assert.True(t, result.Requeue)
 
-			// reconcile for tekton subscription
-			result, err = r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// when
+		_, err = r.Reconcile(request)
 
-			// when
-			_, err = r.Reconcile(request)
+		// then
+		assert.EqualError(t, err, fmt.Sprintf("failed to create operatorgroup in namespace %s: %s", cheOperatorNs, errMsg))
 
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create operatorgroup in namespace %s: %s", cheOperatorNs, errMsg))
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			Exists().
+			HasLabels(toolchain.Labels())
 
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				Exists().
-				HasLabels(toolchain.Labels())
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			DoesNotExist()
 
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				DoesNotExist()
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
 
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionFailed(errMsg))
+	})
 
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-				Exists().
-				HasSpec(tektonSub.Spec)
+	t.Run("should update status when failed to create che subscription", func(t *testing.T) {
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation)
 
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(che.SubscriptionFailed(errMsg), tekton.SubscriptionCreated(tekton.SubscriptionSuccess))
-		})
+		request := newReconcileRequest(cheInstallation)
 
-		t.Run("should update status when failed to create che subscription", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-
-			request := newReconcileRequest(cheInstallation)
-
-			errMsg := "something went wrong while creating che subscription"
-			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-				if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Name == che.SubscriptionName {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Create(ctx, obj, opts...)
+		errMsg := "something went wrong while creating che subscription"
+		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+			if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Name == che.SubscriptionName {
+				return errors.New(errMsg)
 			}
+			return cl.Client.Create(ctx, obj, opts...)
+		}
 
-			// first reconcile for ns creation
-			result, err := r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// first reconcile for ns creation
+		result, err := r.Reconcile(request)
+		require.NoError(t, err)
+		assert.True(t, result.Requeue)
 
-			// second reconcile for og creation
-			result, err = r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// second reconcile for og creation
+		result, err = r.Reconcile(request)
+		require.NoError(t, err)
+		assert.True(t, result.Requeue)
 
-			// reconcile for tekton subscription
-			result, err = r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
+		// when
+		_, err = r.Reconcile(request)
 
-			// when
-			_, err = r.Reconcile(request)
+		// then
+		assert.EqualError(t, err, fmt.Sprintf("failed to create che subscription in namespace %s: %s", cheOperatorNs, errMsg))
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			Exists().
+			HasLabels(toolchain.Labels())
 
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create che subscription in namespace %s: %s", cheOperatorNs, errMsg))
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				Exists().
-				HasLabels(toolchain.Labels())
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			Exists().
+			HasSize(1).
+			HasSpec(cheOg.Spec)
 
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				Exists().
-				HasSize(1).
-				HasSpec(cheOg.Spec)
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
 
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
-
-			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-				Exists().
-				HasSpec(tektonSub.Spec)
-
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(che.SubscriptionFailed(errMsg), tekton.SubscriptionCreated(tekton.SubscriptionSuccess))
-		})
-
-		t.Run("should update status when failed to create tekton subscription", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-
-			request := newReconcileRequest(cheInstallation)
-
-			errMsg := "something went wrong while creating tekton subscription"
-			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-				if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Namespace == tekton.SubscriptionNamespace {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Create(ctx, obj, opts...)
-			}
-
-			// first reconcile for ns creation
-			result, err := r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
-
-			// second reconcile for og creation
-			result, err = r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
-
-			// third reconcile for che subscription creation
-			result, err = r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
-
-			// when
-			_, err = r.Reconcile(request)
-
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create tekton subscription in namespace %s: %s", tektonSub.Namespace, errMsg))
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				Exists().
-				HasLabels(toolchain.Labels())
-
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				Exists().
-				HasSize(1).
-				HasSpec(cheOg.Spec)
-
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				Exists().
-				HasSpec(cheSub.Spec)
-
-			AssertThatSubscription(t, tektonSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
-
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(che.SubscriptionCreated(che.SubscriptionSuccess), tekton.SubscriptionFailed(errMsg))
-		})
-
-		t.Run("should update status when failed to create che and tekton subscription", func(t *testing.T) {
-			cheOperatorNs, cheOg, cheSub := newCheResources()
-			cheInstallation := NewCheInstallation(cheOperatorNs)
-			cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-
-			request := newReconcileRequest(cheInstallation)
-
-			errMsg := "something went wrong while creating tekton subscription"
-			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-				if _, ok := obj.(*olmv1alpha1.Subscription); ok {
-					return errors.New(errMsg)
-				}
-				return cl.Client.Create(ctx, obj, opts...)
-			}
-
-			// first reconcile for ns creation
-			result, err := r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
-
-			// second reconcile for og creation
-			result, err = r.Reconcile(request)
-			require.NoError(t, err)
-			assert.True(t, result.Requeue)
-
-			// when
-			_, err = r.Reconcile(request)
-
-			// then
-			assert.EqualError(t, err, fmt.Sprintf("[failed to create che subscription in namespace %s: %s, failed to create tekton subscription in namespace %s: %s]", cheSub.Namespace, errMsg, tektonSub.Namespace, errMsg))
-			AssertThatNamespace(t, cheOperatorNs, cl).
-				Exists().
-				HasLabels(toolchain.Labels())
-
-			AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
-				Exists().
-				HasSize(1).
-				HasSpec(cheOg.Spec)
-
-			AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
-
-			AssertThatSubscription(t, tektonSub.Namespace, cheSub.Name, cl).
-				DoesNotExist()
-
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(che.SubscriptionFailed(errMsg), tekton.SubscriptionFailed(errMsg))
-		})
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionFailed(errMsg))
 	})
 
 }
@@ -457,7 +276,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
@@ -477,7 +296,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// create for the first time
@@ -508,7 +327,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 		errMsg := "something went wrong while creating operatogrgroup"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
@@ -533,7 +352,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
@@ -552,7 +371,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 		errMsg := "something went wrong while creating che subscription"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
@@ -574,7 +393,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// create for the first time
@@ -600,86 +419,12 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 
 }
 
-func TestCreateSubscriptionForTekton(t *testing.T) {
-	t.Run("create subscription", func(t *testing.T) {
-		// given
-		cheOperatorNs := GenerateName("che-op")
-		tektonSubNs := GenerateName("tekton-op")
-		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-		tektonSub := tekton.NewSubscription(tektonSubNs)
-
-		// when
-		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
-
-		// then
-		require.NoError(t, err)
-
-		assert.True(t, subCreated)
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-			Exists().
-			HasSpec(tektonSub.Spec)
-	})
-
-	t.Run("should fail to create subscription", func(t *testing.T) {
-		// given
-		cheOperatorNs := GenerateName("che-op")
-		tektonSubNs := GenerateName("tekton-op")
-		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-		errMsg := "something went wrong while creating tekton subscription"
-		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-			return errors.New(errMsg)
-		}
-		tektonSub := tekton.NewSubscription(cheOperatorNs)
-
-		// when
-		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
-
-		// then
-		require.EqualError(t, err, errMsg)
-
-		assert.False(t, subCreated)
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-			DoesNotExist()
-	})
-
-	t.Run("should not fail if subscription already exists", func(t *testing.T) {
-		// given
-		cheOperatorNs := GenerateName("che-op")
-		tektonSubNs := GenerateName("tekton-op")
-		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
-		tektonSub := tekton.NewSubscription(tektonSubNs)
-
-		// create for the first time
-		subCreated, err := r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
-		require.NoError(t, err)
-
-		assert.True(t, subCreated)
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-			Exists().
-			HasSpec(tektonSub.Spec)
-
-		// when
-		subCreated, err = r.ensureTektonSubscription(testLogger(), tektonSubNs, cheInstallation)
-
-		// then
-		require.NoError(t, err)
-
-		assert.False(t, subCreated)
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
-			Exists().
-			HasSpec(tektonSub.Spec)
-	})
-}
-
 func TestCreateNamespaceForChe(t *testing.T) {
 	t.Run("should create ns", func(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 
 		// when
 		nsCreated, err := r.ensureCheNamespace(testLogger(), cheInstallation)
@@ -697,7 +442,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 
 		// create for the first time
 		nsCreated, err := r.ensureCheNamespace(testLogger(), cheInstallation)
@@ -724,7 +469,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheOperatorNs, cheInstallation)
+		cl, r := configureClient(t, cheInstallation)
 		errMsg := "something went wrong while creating ns"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
@@ -743,7 +488,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 
 }
 
-func configureClient(t *testing.T, cheOperatorNs string, initObjs ...runtime.Object) (*test.FakeClient, *ReconcileCheInstallation) {
+func configureClient(t *testing.T, initObjs ...runtime.Object) (*test.FakeClient, *ReconcileCheInstallation) {
 	s := apiScheme(t)
 	cl := test.NewFakeClient(t, initObjs...)
 	reconcileCheInstallation := &ReconcileCheInstallation{scheme: s, client: cl}
