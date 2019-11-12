@@ -3,7 +3,6 @@ package e2e
 import (
 	"context"
 	"os"
-	"testing"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -21,7 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"testing"
 )
@@ -86,7 +84,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForNamespace(cheOperatorNs)
 		require.NoError(t, err)
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated(che.SubscriptionSuccess)))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
@@ -175,7 +173,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain TektonInstallation")
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
@@ -197,7 +195,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForSubscription(tekton.SubscriptionNamespace, tekton.SubscriptionName)
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated(tekton.SubscriptionSuccess)))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
