@@ -2,6 +2,7 @@ package cheinstallation
 
 import (
 	"context"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -123,7 +124,7 @@ func (r *ReconcileCheInstallation) EnsureCheSubscription(logger logr.Logger, che
 		return subCreated, nil
 	}
 
-	return false, r.StatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, che.SubscriptionSuccess)
+	return false, r.StatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
 }
 
 func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
@@ -209,5 +210,5 @@ func (r *ReconcileCheInstallation) setStatusCheSubscriptionFailed(cheInstallatio
 }
 
 func (r *ReconcileCheInstallation) setStatusCheSubscriptionReady(cheInstallation *v1alpha1.CheInstallation, message string) error {
-	return r.updateStatusConditions(cheInstallation, che.SubscriptionCreated(message))
+	return r.updateStatusConditions(cheInstallation, che.SubscriptionCreated())
 }

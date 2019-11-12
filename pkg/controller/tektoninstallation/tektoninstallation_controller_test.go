@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
@@ -20,7 +22,6 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"testing"
 )
 
 func TestTektonInstallationController(t *testing.T) {
@@ -39,7 +40,7 @@ func TestTektonInstallationController(t *testing.T) {
 			require.NoError(t, err)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(tekton.SubscriptionCreated(tekton.SubscriptionSuccess))
+				HasConditions(tekton.SubscriptionCreated())
 
 			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 				Exists().
@@ -59,7 +60,7 @@ func TestTektonInstallationController(t *testing.T) {
 				HasSpec(tektonSub.Spec)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(tekton.SubscriptionCreated(tekton.SubscriptionSuccess))
+				HasConditions(tekton.SubscriptionCreated())
 		})
 
 	})

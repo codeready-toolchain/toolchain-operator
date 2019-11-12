@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	SubscriptionName    = "eclipse-che"
-	SubscriptionSuccess = "che operator subscription created"
+	SubscriptionName = "eclipse-che"
 )
 
 //NewSubscription for eclipse Che operator
@@ -61,6 +60,6 @@ func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
 	return v1alpha1.SubscriptionFailed(v1alpha1.CheReady, v1alpha1.FailedToInstallReason, message)
 }
 
-func SubscriptionCreated(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionCreated(v1alpha1.CheReady, v1alpha1.InstalledReason, message)
+func SubscriptionCreated() toolchainv1alpha1.Condition {
+	return v1alpha1.SubscriptionCreated(v1alpha1.CheReady, v1alpha1.InstalledReason)
 }
