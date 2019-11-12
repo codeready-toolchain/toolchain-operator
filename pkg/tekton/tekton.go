@@ -12,7 +12,6 @@ import (
 const (
 	SubscriptionNamespace = "openshift-operators"
 	SubscriptionName      = "openshift-pipelines-operator"
-	SubscriptionSuccess   = "tekton operator subscription created"
 )
 
 //NewSubscription for openshift-pipeline operator
@@ -37,6 +36,6 @@ func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
 	return v1alpha1.SubscriptionFailed(v1alpha1.TektonReady, v1alpha1.FailedToInstallReason, message)
 }
 
-func SubscriptionCreated(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionCreated(v1alpha1.TektonReady, v1alpha1.InstalledReason, message)
+func SubscriptionCreated() toolchainv1alpha1.Condition {
+	return v1alpha1.SubscriptionCreated(v1alpha1.TektonReady, v1alpha1.InstalledReason)
 }
