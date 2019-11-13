@@ -3,6 +3,13 @@ kind: CustomResourceDefinition
 metadata:
   name: cheinstallations.toolchain.openshift.dev
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=="CheReady")].status
+    name: Ready
+    type: string
+  - JSONPath: .status.conditions[?(@.type=="CheReady")].reason
+    name: Reason
+    type: string
   group: toolchain.openshift.dev
   names:
     kind: CheInstallation
@@ -48,7 +55,7 @@ spec:
           properties:
             conditions:
               description: 'Conditions is an array of current CheInstallation conditions
-                Supported condition types: CheInstalled, FailedToInstallChe'
+                Supported condition types: CheReady'
               items:
                 properties:
                   lastTransitionTime:
