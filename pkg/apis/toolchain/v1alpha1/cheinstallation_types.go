@@ -26,10 +26,11 @@ type CheInstallationStatus struct {
 
 	// Conditions is an array of current CheInstallation conditions
 	// Supported condition types:
-	// CheInstalled, FailedToInstallChe
+	// CheReady
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
+	// +listType
 	Conditions []toolchainv1alpha1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
@@ -39,6 +40,8 @@ type CheInstallationStatus struct {
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=cheinstallations,scope=Cluster
+// +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"CheReady\")].status"
+// +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type==\"CheReady\")].reason"
 type CheInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

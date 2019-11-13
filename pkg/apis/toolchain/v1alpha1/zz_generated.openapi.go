@@ -96,12 +96,13 @@ func schema_pkg_apis_toolchain_v1alpha1_CheInstallationStatus(ref common.Referen
 					"conditions": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
+								"x-kubernetes-list-type":       "",
 								"x-kubernetes-patch-merge-key": "type",
 								"x-kubernetes-patch-strategy":  "merge",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Conditions is an array of current CheInstallation conditions Supported condition types: CheInstalled, FailedToInstallChe",
+							Description: "Conditions is an array of current CheInstallation conditions Supported condition types: CheReady",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -185,12 +186,13 @@ func schema_pkg_apis_toolchain_v1alpha1_TektonInstallationStatus(ref common.Refe
 					"conditions": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
+								"x-kubernetes-list-type":       "",
 								"x-kubernetes-patch-merge-key": "type",
 								"x-kubernetes-patch-strategy":  "merge",
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Conditions is an array of current TektonInstallation conditions Supported condition types: TektonInstalled, FailedToInstallTekton",
+							Description: "Conditions is an array of current TektonInstallation conditions Supported condition types: TektonReady",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{

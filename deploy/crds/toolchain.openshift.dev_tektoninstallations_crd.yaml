@@ -3,6 +3,13 @@ kind: CustomResourceDefinition
 metadata:
   name: tektoninstallations.toolchain.openshift.dev
 spec:
+  additionalPrinterColumns:
+  - JSONPath: .status.conditions[?(@.type=="TektonReady")].status
+    name: Ready
+    type: string
+  - JSONPath: .status.conditions[?(@.type=="TektonReady")].reason
+    name: Reason
+    type: string
   group: toolchain.openshift.dev
   names:
     kind: TektonInstallation
