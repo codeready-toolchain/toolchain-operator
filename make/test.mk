@@ -75,7 +75,9 @@ TOOLCHAIN_NS := toolchain-operator-$(shell date +'%s')
 DATE_SUFFIX := $(shell date +'%s')
 
 IS_OS_3 := $(shell curl -k -XGET -H "Authorization: Bearer $(shell oc whoami -t 2>/dev/null)" $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.server}')/version/openshift 2>/dev/null | grep paths)
+IS_CRC := $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>&1 | grep crc)
 IS_OS_CI := $(OPENSHIFT_BUILD_NAMESPACE)
+IS_KUBE_ADMIN := $(shell oc whoami | grep "kube:admin")
 
 .PHONY: test-e2e-keep-namespaces
 test-e2e-keep-namespaces: e2e-setup e2e-run
@@ -98,7 +100,7 @@ print-logs:
 
 .PHONY: e2e-setup
 e2e-setup: build-image
-	oc new-project $(TOOLCHAIN_NS) --display-name e2e-tests
+	-oc new-project $(TOOLCHAIN_NS) --display-name e2e-tests 1>/dev/null
 	oc apply -f ./deploy/service_account.yaml
 	oc apply -f ./deploy/role.yaml
 	oc apply -f ./deploy/role_binding.yaml
