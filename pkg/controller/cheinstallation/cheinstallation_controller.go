@@ -60,7 +60,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		OwnerType:    &v1alpha1.CheInstallation{},
 	}
 
-	if err := c.Watch(&source.Kind{Type: &olmv1alpha1.Subscription{}}, enqueueRequestForOwner); err != nil {
+	if err := c.Watch(&source.Kind{Type: &v1.Namespace{}}, enqueueRequestForOwner); err != nil {
 		return err
 	}
 
@@ -68,7 +68,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	if err := c.Watch(&source.Kind{Type: &v1.Namespace{}}, enqueueRequestForOwner); err != nil {
+	if err := c.Watch(&source.Kind{Type: &olmv1alpha1.Subscription{}}, enqueueRequestForOwner); err != nil {
 		return err
 	}
 
@@ -88,8 +88,6 @@ type ReconcileCheInstallation struct {
 
 // Reconcile reads that state of the cluster for a CheInstallation object and makes changes based on the state read
 // and what is in the CheInstallation.Spec
-// Note: The Controller will requeue the Request to be processed again if the returned error is non-nil or
-// Result.Requeue is true, otherwise upon completion it will remove the work from the queue.
 func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling CheInstallation")
@@ -103,11 +101,88 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	if err := r.EnsureCheSubscription(reqLogger, cheInstallation); err != nil {
-		return reconcile.Result{}, err
+	err = r.EnsureCheSubscription(reqLogger, cheInstallation)
+	return reconcile.Result{}, err
+}
+
+func (r *ReconcileCheInstallation) EnsureCheSubscription(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) error {
+	ns := cheInstallation.Spec.CheOperatorSpec.Namespace
+
+	if err := r.ensureCheNamespace(logger, cheInstallation); err != nil {
+		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", ns)
 	}
 
-	return reconcile.Result{}, nil
+	if err := r.ensureCheOperatorGroup(logger, ns, cheInstallation); err != nil {
+		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create operatorgroup in namespace %s", ns)
+	}
+
+	if err := r.ensureCheSubscription(logger, ns, cheInstallation); err != nil {
+		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", ns)
+	}
+
+	return r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
+}
+
+func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) error {
+	cheOpNamespace := cheInstallation.Spec.CheOperatorSpec.Namespace
+	ns := &v1.Namespace{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, ns); err != nil {
+		if errors.IsNotFound(err) {
+			logger.Info("Creating a namespace for che operator", "Namespace", cheOpNamespace)
+			namespace := che.NewNamespace(cheOpNamespace)
+			if err := controllerutil.SetControllerReference(cheInstallation, namespace, r.scheme); err != nil {
+				return err
+			}
+			if err := r.client.Create(context.TODO(), namespace); err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+
+	// To handle if namespace is deleted by user and it's in terminating state
+	if ns.Status.Phase == v1.NamespaceTerminating {
+		return errs.Errorf("namespace %s is not in active state", ns.Name)
+	}
+	return nil
+}
+
+func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) error {
+	ogList := &olmv1.OperatorGroupList{}
+	err := r.client.List(context.TODO(), ogList, client.InNamespace(ns), client.MatchingLabels(toolchain.Labels()))
+	if err == nil && len(ogList.Items) == 0 {
+		operatorGroup := che.NewOperatorGroup(ns)
+		logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", operatorGroup.Namespace)
+
+		if err := controllerutil.SetControllerReference(cheInstallation, operatorGroup, r.scheme); err != nil {
+			return err
+		}
+		if err := r.client.Create(context.TODO(), operatorGroup); err != nil {
+			return err
+		}
+		return nil
+	}
+	return err
+}
+
+func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) error {
+	sub := &olmv1alpha1.Subscription{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: che.SubscriptionName, Namespace: ns}, sub); err != nil {
+		if errors.IsNotFound(err) {
+			cheSub := che.NewSubscription(ns)
+			logger.Info("Creating subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
+			if err := controllerutil.SetControllerReference(cheInstallation, cheSub, r.scheme); err != nil {
+				return err
+			}
+			if err := r.client.Create(context.TODO(), cheSub); err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 // wrapErrorWithStatusUpdate wraps the error and update the install config status. If the update failed then logs the error.
@@ -121,85 +196,7 @@ func (r *ReconcileCheInstallation) wrapErrorWithStatusUpdate(logger logr.Logger,
 	return errs.Wrapf(err, format, args...)
 }
 
-func (r *ReconcileCheInstallation) EnsureCheSubscription(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) error {
-	ns := cheInstallation.Spec.CheOperatorSpec.Namespace
-	if err := r.ensureCheNamespace(logger, cheInstallation); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", ns)
-	}
-
-	if err := r.ensureCheOperatorGroup(logger, ns, cheInstallation); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create operatorgroup in namespace %s", ns)
-	}
-
-	if err := r.ensureCheSubscription(logger, ns, cheInstallation); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", ns)
-	}
-
-	return r.StatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
-}
-
-func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) error {
-	cheOpNamespace := cheInstallation.Spec.CheOperatorSpec.Namespace
-	ns := &v1.Namespace{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, ns)
-	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Creating a namespace for che operator", "Namespace", cheOpNamespace)
-		namespace := che.NewNamespace(cheOpNamespace)
-		if err := controllerutil.SetControllerReference(cheInstallation, namespace, r.scheme); err != nil {
-			return err
-		}
-		if err := r.client.Create(context.TODO(), namespace); err != nil {
-			return err
-		}
-		return nil
-	}
-	// To handle if namespace is deleted by user and it's in terminating state
-	if ns.Status.Phase == v1.NamespaceTerminating {
-		return errs.Errorf("namespace %s is not in active state", ns.Name)
-	}
-
-	return err
-}
-
-func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) error {
-	operatorGroup := che.NewOperatorGroup(ns)
-	if err := controllerutil.SetControllerReference(cheInstallation, operatorGroup, r.scheme); err != nil {
-		return err
-	}
-
-	ogList := &olmv1.OperatorGroupList{}
-	err := r.client.List(context.TODO(), ogList, client.InNamespace(ns), client.MatchingLabels(toolchain.Labels()))
-	if err == nil && len(ogList.Items) == 0 {
-		logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", operatorGroup.Namespace)
-		if err := r.client.Create(context.TODO(), operatorGroup); err != nil {
-			return err
-		}
-		return nil
-	}
-	return err
-}
-
-func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) error {
-	cheSub := che.NewSubscription(ns)
-	if err := controllerutil.SetControllerReference(cheInstallation, cheSub, r.scheme); err != nil {
-		return err
-	}
-	sub := &olmv1alpha1.Subscription{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheSub.GetName(), Namespace: cheSub.GetNamespace()}, sub)
-	if err != nil && errors.IsNotFound(err) {
-		logger.Info("Creating subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
-		if err := controllerutil.SetControllerReference(cheInstallation, cheSub, r.scheme); err != nil {
-			return err
-		}
-		if err := r.client.Create(context.TODO(), cheSub); err != nil {
-			return err
-		}
-		return nil
-	}
-	return err
-}
-
-func (r *ReconcileCheInstallation) StatusUpdate(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation, statusUpdater func(cheInstallation *v1alpha1.CheInstallation, message string) error, msg string) error {
+func (r *ReconcileCheInstallation) statusUpdate(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation, statusUpdater func(cheInstallation *v1alpha1.CheInstallation, message string) error, msg string) error {
 	if err := statusUpdater(cheInstallation, msg); err != nil {
 		logger.Error(err, "unable to update status")
 		return errs.Wrapf(err, "failed to update status")
