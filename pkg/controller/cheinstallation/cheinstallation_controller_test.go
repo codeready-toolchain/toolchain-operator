@@ -30,11 +30,63 @@ import (
 )
 
 func TestCheInstallationController(t *testing.T) {
-	t.Run("should reconcile with che installation and create che ns, operator group, subscription", func(t *testing.T) {
+	t.Run("should reconcile with che installation and create che ns", func(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
 		cl, r := configureClient(t, cheInstallation)
+
+		request := newReconcileRequest(cheInstallation)
+
+		// when
+		_, err := r.Reconcile(request)
+
+		// then
+		require.NoError(t, err)
+
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			Exists().
+			HasLabels(toolchain.Labels())
+
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			DoesNotExist()
+
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
+	})
+
+	t.Run("should reconcile with che installation and create che operator group", func(t *testing.T) {
+		// given
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs))
+
+		request := newReconcileRequest(cheInstallation)
+
+		// when
+		_, err := r.Reconcile(request)
+
+		// then
+		require.NoError(t, err)
+
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			Exists().
+			HasLabels(toolchain.Labels())
+
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			Exists().
+			HasSize(1).
+			HasSpec(cheOg.Spec)
+
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
+	})
+
+	t.Run("should reconcile with che installation and create che subscription", func(t *testing.T) {
+		// given
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs), che.NewOperatorGroup(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -119,7 +171,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation)
+		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -155,7 +207,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation)
+		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs), che.NewOperatorGroup(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -199,10 +251,11 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
-		err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
+		created, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
 
 		//then
 		require.NoError(t, err)
+		assert.True(t, created)
 
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 			Exists().
@@ -219,10 +272,11 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
-		err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
+		created, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
+		assert.False(t, created)
 
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
 			Exists().
@@ -242,7 +296,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOg := che.NewOperatorGroup(cheOperatorNs)
 
 		// when
-		err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
+		_, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
 
 		//then
 		require.EqualError(t, err, errMsg)
@@ -262,10 +316,11 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
-		err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
+		created, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
+		assert.True(t, created)
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			Exists().
@@ -284,10 +339,11 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
-		err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
+		created, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.EqualError(t, err, errMsg)
+		assert.False(t, created)
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			DoesNotExist()
@@ -303,7 +359,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
-		err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
+		_, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -323,10 +379,12 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		cl, r := configureClient(t, cheInstallation)
 
 		// when
-		err := r.ensureCheNamespace(testLogger(), cheInstallation)
+		created, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.NoError(t, err)
+		assert.True(t, created)
+
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
 			HasLabels(toolchain.Labels())
@@ -339,10 +397,11 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs))
 
 		// when
-		err := r.ensureCheNamespace(testLogger(), cheInstallation)
+		created, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.NoError(t, err)
+		assert.False(t, created)
 
 		AssertThatNamespace(t, cheOperatorNs, cl).
 			Exists().
@@ -360,7 +419,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		}
 
 		// when
-		err := r.ensureCheNamespace(testLogger(), cheInstallation)
+		_, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.EqualError(t, err, errMsg)
@@ -379,7 +438,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		_, r := configureClient(t, cheInstallation, namespace)
 
 		// when
-		err := r.ensureCheNamespace(testLogger(), cheInstallation)
+		_, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.EqualError(t, err, fmt.Sprintf("namespace %s is not in active state", cheOperatorNs))
