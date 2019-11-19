@@ -21,10 +21,8 @@ login-as-admin:
 		$(info logging as system:admin)
 		oc login -u system:admin 1>/dev/null
     else ifneq ($(IS_CRC),)
-        ifneq ($(IS_KUBE_ADMIN),)
-			$(info logging as kube:admin)
-			oc login -u=kubeadmin -p=`cat ~/.crc/cache/crc_libvirt_*/kubeadmin-password` 1>/dev/null
-        endif
+		$(info logging as kube:admin)
+		oc login -u=kubeadmin -p=`cat ~/.crc/cache/crc_libvirt_*/kubeadmin-password` 1>/dev/null
     endif
 
 .PHONY: create-namespace

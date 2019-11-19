@@ -84,10 +84,12 @@ type TektonInstallationWaitCondition func(a *ToolchainAwaitility, ic *v1alpha1.T
 // UntilHasCheStatusCondition checks if CheInstallation status has the given set of conditions
 func UntilHasCheStatusCondition(conditions ...toolchainv1alpha1.Condition) CheInstallationWaitCondition {
 	return func(a *ToolchainAwaitility, ic *v1alpha1.CheInstallation) bool {
-		toolchain.AssertConditionsMatch(a.T, ic.Status.Conditions, conditions...)
-		if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
-			a.T.Logf("status conditions match in CheInstallation '%s`", ic.Name)
-			return true
+		if len(ic.Status.Conditions) > 0 {
+			toolchain.AssertConditionsMatch(a.T, ic.Status.Conditions, conditions...)
+			if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
+				a.T.Logf("status conditions match in CheInstallation '%s`", ic.Name)
+				return true
+			}
 		}
 		a.T.Logf("waiting for correct status condition of CheInstallation '%s`", ic.Name)
 		return false
