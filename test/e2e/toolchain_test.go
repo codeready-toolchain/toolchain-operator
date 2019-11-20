@@ -15,6 +15,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
+	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
@@ -54,19 +55,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated()))
 		require.NoError(t, err)
-
-		AssertThatNamespace(t, cheOperatorNs, f.Client).
-			Exists().
-			HasLabels(toolchain.Labels())
-
-		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
-			Exists().
-			HasSize(1).
-			HasSpec(cheOg.Spec)
-
-		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
-			Exists().
-			HasSpec(cheSub.Spec)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub)
 	})
 
 	t.Run("should recreate che operator's ns operatorgroup subscription when ns deleted", func(t *testing.T) {
@@ -86,19 +75,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated()))
 		require.NoError(t, err)
-
-		AssertThatNamespace(t, cheOperatorNs, f.Client).
-			Exists().
-			HasLabels(toolchain.Labels())
-
-		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
-			Exists().
-			HasSize(1).
-			HasSpec(cheOg.Spec)
-
-		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
-			Exists().
-			HasSpec(cheSub.Spec)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub)
 	})
 
 	t.Run("should recreate deleted operatorgroup for che", func(t *testing.T) {
@@ -116,11 +93,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForOperatorGroup(cheOperatorNs, toolchain.Labels())
 		require.NoError(t, err)
-
-		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
-			Exists().
-			HasSize(1).
-			HasSpec(cheOg.Spec)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, nil)
 	})
 
 	t.Run("should recreate deleted subscription for che", func(t *testing.T) {
@@ -136,10 +109,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForSubscription(cheSub.Namespace, cheSub.Name)
 		require.NoError(t, err)
-
-		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
-			Exists().
-			HasSpec(cheSub.Spec)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, nil, cheSub)
 	})
 
 	t.Run("should remove operatorgroup and subscription for che with CheInstallation deletion", func(t *testing.T) {
@@ -176,9 +146,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
 		require.NoError(t, err)
 
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
-			Exists().
-			HasSpec(tektonSub.Spec)
+		checkTektonResources(t, f.Client.Client, tektonSub)
 	})
 
 	t.Run("should recreate deleted subscription for tekton", func(t *testing.T) {
@@ -198,10 +166,32 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
 		require.NoError(t, err)
 
-		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
-			Exists().
-			HasSpec(tektonSub.Spec)
+		checkTektonResources(t, f.Client.Client, tektonSub)
 	})
+}
+
+func checkCheResources(t *testing.T, client client.Client, cheOperatorNs string, cheOg *olmv1.OperatorGroup, cheSub *olmv1alpha1.Subscription) {
+	AssertThatNamespace(t, cheOperatorNs, client).
+		Exists().
+		HasLabels(toolchain.Labels())
+
+	if cheOg != nil {
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, client).
+			Exists().
+			HasSize(1).
+			HasSpec(cheOg.Spec)
+	}
+	if cheSub != nil {
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, client).
+			Exists().
+			HasSpec(cheSub.Spec)
+	}
+}
+
+func checkTektonResources(t *testing.T, client client.Client, tektonSub *olmv1alpha1.Subscription) {
+	AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, client).
+		Exists().
+		HasSpec(tektonSub.Spec)
 }
 
 func InitOperator(t *testing.T) (*framework.TestCtx, wait.ToolchainAwaitility) {

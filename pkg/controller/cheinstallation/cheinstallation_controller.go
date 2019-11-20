@@ -147,8 +147,8 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 		return false, err
 	}
 
-	// To handle if namespace is deleted by user and it's in terminating state
-	if ns.Status.Phase == v1.NamespaceTerminating {
+	// To handle if namespace is deleted by user and it's in terminating state and not in active state
+	if ns.Status.Phase != v1.NamespaceActive {
 		return false, errs.Errorf("namespace %s is not in active state", ns.Name)
 	}
 	return false, nil
