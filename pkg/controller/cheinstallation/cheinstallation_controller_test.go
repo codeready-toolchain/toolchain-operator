@@ -59,7 +59,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -86,7 +86,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs), che.NewOperatorGroup(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), che.NewOperatorGroup(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -171,7 +171,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -207,7 +207,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs), che.NewOperatorGroup(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), che.NewOperatorGroup(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -394,7 +394,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		//given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, che.NewNamespace(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive))
 
 		// when
 		created, err := r.ensureCheNamespace(testLogger(), cheInstallation)
@@ -432,10 +432,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		// given
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		namespace := che.NewNamespace(cheOperatorNs)
-		namespace.Status.Phase = v1.NamespaceTerminating
-
-		_, r := configureClient(t, cheInstallation, namespace)
+		_, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceTerminating))
 
 		// when
 		_, err := r.ensureCheNamespace(testLogger(), cheInstallation)
@@ -474,4 +471,10 @@ func testLogger() logr.Logger {
 func newCheResources() (string, *olmv1.OperatorGroup, *olmv1alpha1.Subscription) {
 	cheOperatorNs := GenerateName("che-op")
 	return cheOperatorNs, che.NewOperatorGroup(cheOperatorNs), che.NewSubscription(cheOperatorNs)
+}
+
+func newCheNamespace(nsName string, nsPhase v1.NamespacePhase) *v1.Namespace {
+	cheNs := che.NewNamespace(nsName)
+	cheNs.Status.Phase = nsPhase
+	return cheNs
 }
