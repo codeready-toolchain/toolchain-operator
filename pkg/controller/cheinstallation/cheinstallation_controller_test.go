@@ -133,6 +133,37 @@ func TestCheInstallationController(t *testing.T) {
 			DoesNotExist()
 	})
 
+	t.Run("update status ready with true", func(t *testing.T) {
+		// given
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), che.NewOperatorGroup(cheOperatorNs), che.NewSubscription(cheOperatorNs))
+
+		request := newReconcileRequest(cheInstallation)
+
+		// when
+		_, err := r.Reconcile(request)
+
+		// then
+		require.NoError(t, err)
+
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			Exists().
+			HasLabels(toolchain.Labels())
+
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			Exists().
+			HasSize(1).
+			HasSpec(cheOg.Spec)
+
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			Exists().
+			HasSpec(cheSub.Spec)
+
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionCreated())
+	})
+
 	t.Run("update status when failed to get ns", func(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
@@ -232,6 +263,47 @@ func TestCheInstallationController(t *testing.T) {
 			Exists().
 			HasSize(1).
 			HasSpec(cheOg.Spec)
+
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
+			DoesNotExist()
+
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasConditions(che.SubscriptionFailed(errMsg))
+	})
+
+	t.Run("update status failed", func(t *testing.T) {
+		// given
+		cheOperatorNs, cheOg, cheSub := newCheResources()
+		cheInstallation := NewCheInstallation(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation)
+
+		request := newReconcileRequest(cheInstallation)
+
+		errMsg := "something went wrong while creating namespace"
+		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
+			if _, ok := obj.(*v1.Namespace); ok {
+				return errors.New(errMsg)
+			}
+			return cl.Client.Create(ctx, obj, opts...)
+		}
+		errMsg = "something went wrong while updating che installation"
+		cl.MockUpdate = func(ctx context.Context, obj runtime.Object, opts ...client.UpdateOption) error {
+			if _, ok := obj.(*v1alpha1.CheInstallation); ok {
+				return errors.New(errMsg)
+			}
+			return cl.Client.Update(ctx, obj, opts...)
+		}
+
+		// when
+		_, err := r.Reconcile(request)
+
+		// then
+		assert.EqualError(t, err, fmt.Sprintf("failed to create namespace %s: %s", cheOperatorNs, errMsg))
+		AssertThatNamespace(t, cheOperatorNs, cl).
+			DoesNotExist()
+
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, cl).
+			DoesNotExist()
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			DoesNotExist()
