@@ -1,7 +1,6 @@
 package che
 
 import (
-	"fmt"
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
@@ -46,9 +45,9 @@ func NewNamespace(name string) *v1.Namespace {
 func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 	return &olmv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:    ns,
-			GenerateName: fmt.Sprintf("%s-", ns),
-			Labels:       toolchain.Labels(),
+			Namespace: ns,
+			Name:      ns,
+			Labels:    toolchain.Labels(),
 		},
 		Spec: olmv1.OperatorGroupSpec{
 

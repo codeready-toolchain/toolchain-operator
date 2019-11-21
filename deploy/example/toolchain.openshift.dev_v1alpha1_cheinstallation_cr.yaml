@@ -4,4 +4,4 @@ metadata:
   name: toolchain-cheinstallation
 spec:
   cheOperatorSpec:
-    namespace: your-che-operator-namespace
+    namespace: toolchain-che

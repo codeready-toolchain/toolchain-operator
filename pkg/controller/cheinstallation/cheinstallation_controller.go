@@ -7,7 +7,6 @@ import (
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -155,21 +154,23 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 }
 
 func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
-	ogList := &olmv1.OperatorGroupList{}
-	err := r.client.List(context.TODO(), ogList, client.InNamespace(ns), client.MatchingLabels(toolchain.Labels()))
-	if err == nil && len(ogList.Items) == 0 {
-		operatorGroup := che.NewOperatorGroup(ns)
-		logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", operatorGroup.Namespace)
+	cheOg := &olmv1.OperatorGroup{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: ns, Namespace: ns}, cheOg); err != nil {
+		if errors.IsNotFound(err) {
+			cheOg = che.NewOperatorGroup(ns)
+			logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", cheOg.Namespace, "OperatorGroup.Name", cheOg.Name)
 
-		if err := controllerutil.SetControllerReference(cheInstallation, operatorGroup, r.scheme); err != nil {
-			return false, err
+			if err := controllerutil.SetControllerReference(cheInstallation, cheOg, r.scheme); err != nil {
+				return false, err
+			}
+			if err := r.client.Create(context.TODO(), cheOg); err != nil {
+				return false, err
+			}
+			return true, nil
 		}
-		if err := r.client.Create(context.TODO(), operatorGroup); err != nil {
-			return false, err
-		}
-		return true, nil
+		return false, err
 	}
-	return false, err
+	return false, nil
 }
 
 func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
