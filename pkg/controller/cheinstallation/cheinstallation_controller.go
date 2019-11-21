@@ -139,6 +139,9 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 				return false, err
 			}
 			if err := r.client.Create(context.TODO(), namespace); err != nil {
+				if errors.IsAlreadyExists(err) {
+					return false, nil
+				}
 				return false, err
 			}
 			return true, nil
@@ -164,6 +167,9 @@ func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, ns
 				return false, err
 			}
 			if err := r.client.Create(context.TODO(), cheOg); err != nil {
+				if errors.IsAlreadyExists(err) {
+					return false, nil
+				}
 				return false, err
 			}
 			return true, nil
@@ -183,6 +189,9 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns 
 				return false, err
 			}
 			if err := r.client.Create(context.TODO(), cheSub); err != nil {
+				if errors.IsAlreadyExists(err) {
+					return false, nil
+				}
 				return false, err
 			}
 			return true, nil

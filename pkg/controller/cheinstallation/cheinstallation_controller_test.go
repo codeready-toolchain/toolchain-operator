@@ -359,10 +359,11 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheSub := che.NewSubscription(cheOperatorNs)
 
 		// when
-		_, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
+		created, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
 
 		// then
 		require.NoError(t, err)
+		assert.False(t, created)
 
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, cl).
 			Exists().
