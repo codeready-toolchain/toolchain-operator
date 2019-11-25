@@ -8,10 +8,11 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

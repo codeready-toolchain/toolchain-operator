@@ -10,6 +10,7 @@ import (
 	"testing"
 )
 
+// TektonInstallationAssertion an assertion on the Tekton installation
 type TektonInstallationAssertion struct {
 	tektonInstallation *v1alpha1.TektonInstallation
 	client             client.Client
@@ -27,14 +28,19 @@ func (a *TektonInstallationAssertion) loadTektonInstallationAssertion() error {
 	return err
 }
 
+// AssertThatTektonInstallation return an assertion on the Tekton installation
 func AssertThatTektonInstallation(t *testing.T, ns, name string, client client.Client) *TektonInstallationAssertion {
 	return &TektonInstallationAssertion{
-		client:         client,
-		namespacedName: types.NamespacedName{ns, name},
-		t:              t,
+		client: client,
+		namespacedName: types.NamespacedName{
+			Namespace: ns,
+			Name:      name,
+		},
+		t: t,
 	}
 }
 
+// HasConditions verifies that the Tekton installation has the expected conditions
 func (a *TektonInstallationAssertion) HasConditions(expected ...toolchainv1alpha1.Condition) *TektonInstallationAssertion {
 	err := a.loadTektonInstallationAssertion()
 	require.NoError(a.t, err)

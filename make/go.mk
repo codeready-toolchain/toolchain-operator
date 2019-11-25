@@ -8,7 +8,7 @@ export GO111MODULE
 
 .PHONY: build
 ## Build the operator
-build: $(OUT_DIR)/operator
+build: generate-assets $(OUT_DIR)/operator
 
 $(OUT_DIR)/operator:
 	$(Q)CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
@@ -20,3 +20,11 @@ $(OUT_DIR)/operator:
 .PHONY: vendor
 vendor:
 	$(Q)go mod vendor
+
+TEKTON_INSTALLATION_CR_DIR=deploy/tekton
+
+.PHONY: generate-assets
+generate-assets:
+	@echo "generating assets bindata..."
+	@go install github.com/go-bindata/go-bindata/
+	@$(GOPATH)/bin/go-bindata -pkg tekton -o pkg/resources/tekton/tekton_assets.go -nocompress -prefix $(TEKTON_INSTALLATION_CR_DIR) $(TEKTON_INSTALLATION_CR_DIR)

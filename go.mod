@@ -3,6 +3,9 @@ module github.com/codeready-toolchain/toolchain-operator
 require (
 	github.com/codeready-toolchain/api v0.0.0-20191009081803-8f4e395353de
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
+	github.com/docker/docker v1.13.1
+	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.3
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible // indirect
@@ -17,7 +20,8 @@ require (
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
-	k8s.io/kube-openapi v0.0.0-20190918143330-0270cf2f1c1d
+	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
+	k8s.io/kubectl v0.0.0-20191121023111-c390dc2e3448
 	sigs.k8s.io/controller-runtime v0.2.2
 )
 

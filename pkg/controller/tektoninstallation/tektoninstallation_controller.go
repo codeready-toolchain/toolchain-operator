@@ -6,11 +6,11 @@ import (
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
-	"github.com/go-logr/logr"
-
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	
+	"github.com/go-logr/logr"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +19,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -106,7 +105,7 @@ func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logge
 	sub := &olmv1alpha1.Subscription{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: tekton.SubscriptionName}, sub)
 	if err != nil && errors.IsNotFound(err) {
-		tektonSub := tekton.NewSubscription(ns)
+		tektonSub := tekton.NewSubscription(ns) 
 		logger.Info("Creating subscription for tekton", "Subscription.Namespace", ns, "Subscription.Name", tektonSub.Name)
 		if err := controllerutil.SetControllerReference(tektonInstallation, tektonSub, r.scheme); err != nil {
 			return err

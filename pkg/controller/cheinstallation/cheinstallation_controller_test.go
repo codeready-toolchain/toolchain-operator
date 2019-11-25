@@ -8,12 +8,13 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/che"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
+
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"

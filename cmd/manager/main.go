@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/resources"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/tekton"
 
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -23,6 +23,8 @@ import (
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -138,6 +140,13 @@ func main() {
 		if err == metrics.ErrServiceMonitorNotPresent {
 			log.Info("Install prometheus-operator in your cluster to create ServiceMonitor objects", "error", err.Error())
 		}
+	}
+
+	log.Info("Creating the TektonInstallation custom resource...")
+	asset, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+
+	if err = resources.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), asset); err != nil {
+		log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
 	}
 
 	log.Info("Starting the Cmd.")
