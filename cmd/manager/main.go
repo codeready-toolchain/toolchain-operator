@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -9,7 +10,7 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/installation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -142,17 +143,27 @@ func main() {
 		}
 	}
 
-	log.Info("Creating the TektonInstallation custom resource...")
-	asset, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+	stopChannel := signals.SetupSignalHandler()
 
-	if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), asset); err != nil {
-		log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
-	}
+	go func() {
+		log.Info("Creating Tekton installation resources once cache is sync'd")
+		if !mgr.GetCache().WaitForCacheSync(stopChannel) {
+			log.Error(errors.New("timed out waiting for caches to sync"), "")
+			os.Exit(1)
+		}
+		// create or update all NSTemplateTiers on the cluster at startup
+		log.Info("Creating the Tekton installation resource")
+		tektonInstallationCR, err := installation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
+			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
+		}
+		log.Info("Created/updated the NSTemplateTier resources")
+	}()
 
 	log.Info("Starting the Cmd.")
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(stopChannel); err != nil {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}
