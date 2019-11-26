@@ -6,7 +6,7 @@
 
 .PHONY: test
 ## runs the tests without coverage and excluding E2E tests
-test:
+test: generate-assets
 	@echo "running the tests without coverage and excluding E2E tests..."
 	$(Q)go test ${V_FLAG} -race $(shell go list ./... | grep -v /test/e2e) -failfast
 
