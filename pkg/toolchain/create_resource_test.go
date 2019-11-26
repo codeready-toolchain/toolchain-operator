@@ -66,6 +66,7 @@ func TestCreateFromYAML(t *testing.T) {
 			err = toolchain.CreateFromYAML(s, cl, ti)
 			// then
 			require.Error(t, err)
+			assert.Equal(t, "failed to create the obj", err.Error())
 		})
 
 	})
