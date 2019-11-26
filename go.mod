@@ -3,9 +3,7 @@ module github.com/codeready-toolchain/toolchain-operator
 require (
 	github.com/codeready-toolchain/api v0.0.0-20191009081803-8f4e395353de
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
-	github.com/docker/docker v1.13.1
-	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/go-bindata/go-bindata v3.1.2+incompatible // indirect
+	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.3
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible // indirect
@@ -16,13 +14,15 @@ require (
 	github.com/stretchr/testify v1.4.0
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
 	google.golang.org/grpc v1.23.0 // indirect
+	gopkg.in/yaml.v2 v2.2.4 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
-	k8s.io/kubectl v0.0.0-20191121023111-c390dc2e3448
+	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f // indirect
 	sigs.k8s.io/controller-runtime v0.2.2
+
 )
 
 // Pinned to kubernetes-1.14.1
@@ -44,6 +44,7 @@ replace (
 	k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20190228160746-b3a7cee44a30
 	k8s.io/kubernetes => k8s.io/kubernetes v1.14.5-beta.0.0.20190708100021-7936da50c68f
 	sigs.k8s.io/controller-runtime v0.2.2 => sigs.k8s.io/controller-runtime v0.2.0
+	sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.2.1
 	sigs.k8s.io/structured-merge-diff => sigs.k8s.io/structured-merge-diff v0.0.0-20190302045857-e85c7b244fd2
 )
 
