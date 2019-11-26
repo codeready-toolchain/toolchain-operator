@@ -34,4 +34,3 @@ func NewTektonInstallation() *v1alpha1.TektonInstallation {
 		},
 	}
 }
-
