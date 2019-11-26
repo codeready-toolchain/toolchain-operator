@@ -8,7 +8,7 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/che"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
@@ -526,7 +526,7 @@ func configureClient(t *testing.T, initObjs ...runtime.Object) (*test.FakeClient
 
 func newReconcileRequest(cheInstallation *v1alpha1.CheInstallation) reconcile.Request {
 	namespacedName := types.NamespacedName{Namespace: cheInstallation.Namespace, Name: cheInstallation.Name}
-	return reconcile.Request{namespacedName}
+	return reconcile.Request{NamespacedName: namespacedName}
 }
 
 func apiScheme(t *testing.T) *runtime.Scheme {

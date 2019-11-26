@@ -1,4 +1,4 @@
-package resources_test
+package toolchain_test
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/resources"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -33,7 +33,7 @@ func TestCreateFromYAML(t *testing.T) {
 			ti, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 			require.NoError(t, err)
 			// when
-			err = resources.CreateFromYAML(s, cl, ti)
+			err = toolchain.CreateFromYAML(s, cl, ti)
 			// then
 			require.NoError(t, err)
 			result := v1alpha1.TektonInstallation{}
@@ -46,10 +46,10 @@ func TestCreateFromYAML(t *testing.T) {
 			cl := test.NewFakeClient(t)
 			ti, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 			require.NoError(t, err)
-			err = resources.CreateFromYAML(s, cl, ti)
+			err = toolchain.CreateFromYAML(s, cl, ti)
 			require.NoError(t, err)
 			// when (create again)
-			err = resources.CreateFromYAML(s, cl, ti)
+			err = toolchain.CreateFromYAML(s, cl, ti)
 			// then
 			require.NoError(t, err)
 		})
@@ -63,7 +63,7 @@ func TestCreateFromYAML(t *testing.T) {
 			ti, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 			require.NoError(t, err)
 			// when
-			err = resources.CreateFromYAML(s, cl, ti)
+			err = toolchain.CreateFromYAML(s, cl, ti)
 			// then
 			require.Error(t, err)
 		})

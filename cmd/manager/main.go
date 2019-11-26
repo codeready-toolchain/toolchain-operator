@@ -9,8 +9,8 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/resources"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -145,7 +145,7 @@ func main() {
 	log.Info("Creating the TektonInstallation custom resource...")
 	asset, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 
-	if err = resources.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), asset); err != nil {
+	if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), asset); err != nil {
 		log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
 	}
 

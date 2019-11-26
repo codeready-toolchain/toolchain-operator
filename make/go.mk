@@ -27,4 +27,4 @@ TEKTON_INSTALLATION_CR_DIR=deploy/tekton
 generate-assets:
 	@echo "generating assets bindata..."
 	@go install github.com/go-bindata/go-bindata/
-	@$(GOPATH)/bin/go-bindata -pkg tekton -o pkg/resources/tekton/tekton_assets.go -nocompress -prefix $(TEKTON_INSTALLATION_CR_DIR) $(TEKTON_INSTALLATION_CR_DIR)
+	@$(GOPATH)/bin/go-bindata -pkg tekton -o pkg/tekton/tekton_assets.go -nocompress -prefix $(TEKTON_INSTALLATION_CR_DIR) $(TEKTON_INSTALLATION_CR_DIR)

@@ -5,11 +5,11 @@ import (
 
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
-	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/resources/tekton"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	
+	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+
 	"github.com/go-logr/logr"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
@@ -93,6 +93,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	return reconcile.Result{}, err
 }
 
+// EnsureTektonSubscription ensures that there is an OLM Subscription resource for Tekton
 func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation) error {
 	tektonSubNamespace := tekton.SubscriptionNamespace
 	if err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace); err != nil {
@@ -105,7 +106,7 @@ func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logge
 	sub := &olmv1alpha1.Subscription{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: tekton.SubscriptionName}, sub)
 	if err != nil && errors.IsNotFound(err) {
-		tektonSub := tekton.NewSubscription(ns) 
+		tektonSub := tekton.NewSubscription(ns)
 		logger.Info("Creating subscription for tekton", "Subscription.Namespace", ns, "Subscription.Name", tektonSub.Name)
 		if err := controllerutil.SetControllerReference(tektonInstallation, tektonSub, r.scheme); err != nil {
 			return err

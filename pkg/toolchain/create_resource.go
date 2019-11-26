@@ -1,4 +1,4 @@
-package resources
+package toolchain
 
 import (
 	"context"
@@ -11,10 +11,10 @@ import (
 )
 
 // CreateFromYAML creates a resource from a YAML manifest
-func CreateFromYAML(s *runtime.Scheme, cl client.Client, asset []byte) error {
+func CreateFromYAML(s *runtime.Scheme, cl client.Client, content []byte) error {
 	decoder := serializer.NewCodecFactory(s).UniversalDeserializer()
 	obj := unstructured.Unstructured{}
-	_, _, err := decoder.Decode(asset, nil, &obj)
+	_, _, err := decoder.Decode(content, nil, &obj)
 	if err != nil {
 		return err
 	}
