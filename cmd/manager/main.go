@@ -151,7 +151,7 @@ func main() {
 			log.Error(errors.New("timed out waiting for caches to sync"), "")
 			os.Exit(1)
 		}
-		// create or update all NSTemplateTiers on the cluster at startup
+		// create TektonInstallation on the cluster at startup
 		log.Info("Creating the Tekton installation resource")
 		tektonInstallationCR, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
