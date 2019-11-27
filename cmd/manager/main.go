@@ -10,7 +10,7 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/installation"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
@@ -153,7 +153,7 @@ func main() {
 		}
 		// create or update all NSTemplateTiers on the cluster at startup
 		log.Info("Creating the Tekton installation resource")
-		tektonInstallationCR, err := installation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+		tektonInstallationCR, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
 			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
 		}

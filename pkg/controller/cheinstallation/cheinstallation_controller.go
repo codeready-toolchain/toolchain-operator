@@ -6,7 +6,6 @@ import (
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
@@ -135,7 +134,7 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, ns); err != nil {
 		if errors.IsNotFound(err) {
 			logger.Info("Creating a namespace for che operator", "Namespace", cheOpNamespace)
-			namespace := che.NewNamespace(cheOpNamespace)
+			namespace := NewNamespace(cheOpNamespace)
 			if err := controllerutil.SetControllerReference(cheInstallation, namespace, r.scheme); err != nil {
 				return false, err
 			}
@@ -161,7 +160,7 @@ func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, ns
 	cheOg := &olmv1.OperatorGroup{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: ns, Namespace: ns}, cheOg); err != nil {
 		if errors.IsNotFound(err) {
-			cheOg = che.NewOperatorGroup(ns)
+			cheOg = NewOperatorGroup(ns)
 			logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", cheOg.Namespace, "OperatorGroup.Name", cheOg.Name)
 
 			if err := controllerutil.SetControllerReference(cheInstallation, cheOg, r.scheme); err != nil {
@@ -182,9 +181,9 @@ func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, ns
 
 func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
 	sub := &olmv1alpha1.Subscription{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: che.SubscriptionName, Namespace: ns}, sub); err != nil {
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: SubscriptionName, Namespace: ns}, sub); err != nil {
 		if errors.IsNotFound(err) {
-			cheSub := che.NewSubscription(ns)
+			cheSub := NewSubscription(ns)
 			logger.Info("Creating subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
 			if err := controllerutil.SetControllerReference(cheInstallation, cheSub, r.scheme); err != nil {
 				return false, err
@@ -232,9 +231,9 @@ func (r *ReconcileCheInstallation) updateStatusConditions(cheInstallation *v1alp
 }
 
 func (r *ReconcileCheInstallation) setStatusCheSubscriptionFailed(cheInstallation *v1alpha1.CheInstallation, message string) error {
-	return r.updateStatusConditions(cheInstallation, che.SubscriptionFailed(message))
+	return r.updateStatusConditions(cheInstallation, SubscriptionFailed(message))
 }
 
 func (r *ReconcileCheInstallation) setStatusCheSubscriptionReady(cheInstallation *v1alpha1.CheInstallation, message string) error {
-	return r.updateStatusConditions(cheInstallation, che.SubscriptionCreated())
+	return r.updateStatusConditions(cheInstallation, SubscriptionCreated())
 }

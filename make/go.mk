@@ -21,10 +21,10 @@ $(OUT_DIR)/operator:
 vendor:
 	$(Q)go mod vendor
 
-TEKTON_INSTALLATION_CR_DIR=deploy/tekton
+TEKTON_INSTALLATION_CR_DIR=deploy/installation/tekton
 
 .PHONY: generate-assets
 generate-assets:
 	@echo "generating assets bindata..."
 	@go install github.com/go-bindata/go-bindata/
-	@go-bindata -pkg tekton -o pkg/tekton/tekton_assets.go -nocompress -prefix $(TEKTON_INSTALLATION_CR_DIR) $(TEKTON_INSTALLATION_CR_DIR)
+	@go-bindata -pkg tektoninstallation -o pkg/controller/tektoninstallation/installation_assets.go -nocompress -prefix $(TEKTON_INSTALLATION_CR_DIR) $(TEKTON_INSTALLATION_CR_DIR)

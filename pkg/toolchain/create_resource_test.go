@@ -7,8 +7,8 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation" 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +30,7 @@ func TestCreateFromYAML(t *testing.T) {
 		t.Run("create", func(t *testing.T) {
 			// given
 			cl := test.NewFakeClient(t)
-			ti, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+			ti, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 			require.NoError(t, err)
 			// when
 			err = toolchain.CreateFromYAML(s, cl, ti)
@@ -44,7 +44,7 @@ func TestCreateFromYAML(t *testing.T) {
 		t.Run("ignore if already exists", func(t *testing.T) {
 			// given
 			cl := test.NewFakeClient(t)
-			ti, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+			ti, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 			require.NoError(t, err)
 			err = toolchain.CreateFromYAML(s, cl, ti)
 			require.NoError(t, err)
@@ -60,7 +60,7 @@ func TestCreateFromYAML(t *testing.T) {
 			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 				return fmt.Errorf("failed to create the obj")
 			}
-			ti, err := tekton.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+			ti, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 			require.NoError(t, err)
 			// when
 			err = toolchain.CreateFromYAML(s, cl, ti)

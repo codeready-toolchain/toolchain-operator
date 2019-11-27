@@ -6,8 +6,8 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
@@ -37,9 +37,9 @@ func TestToolchain(t *testing.T) {
 	ctx, await := InitOperator(t)
 	defer ctx.Cleanup()
 	cheOperatorNs := GenerateName("che-op")
-	cheOg := che.NewOperatorGroup(cheOperatorNs)
-	cheSub := che.NewSubscription(cheOperatorNs)
-	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
+	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNs)
+	cheSub := cheinstallation.NewSubscription(cheOperatorNs)
+	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
 	cheInstallation := NewCheInstallation(cheOperatorNs)
 	tektonInstallation := NewTektonInstallation()
@@ -53,7 +53,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated()))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 		require.NoError(t, err)
 		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub)
 	})
@@ -73,7 +73,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForNamespace(cheOperatorNs)
 		require.NoError(t, err)
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(che.SubscriptionCreated()))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 		require.NoError(t, err)
 		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub)
 	})
@@ -140,7 +140,7 @@ func TestToolchain(t *testing.T) {
 		// given
 		// TektonInstallation should already exist
 		// when
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.SubscriptionCreated()))
 		// then
 		require.NoError(t, err)
 
@@ -149,7 +149,7 @@ func TestToolchain(t *testing.T) {
 
 	t.Run("should recreate deleted subscription for tekton", func(t *testing.T) {
 		// given
-		tektonSubscription, err := await.GetSubscription(tekton.SubscriptionNamespace, tekton.SubscriptionName)
+		tektonSubscription, err := await.GetSubscription(tektoninstallation.SubscriptionNamespace, tektoninstallation.SubscriptionName)
 		require.NoError(t, err)
 
 		// when
@@ -158,10 +158,10 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete TektonInstallation")
 
-		err = await.WaitForSubscription(tekton.SubscriptionNamespace, tekton.SubscriptionName)
+		err = await.WaitForSubscription(tektoninstallation.SubscriptionNamespace, tektoninstallation.SubscriptionName)
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tekton.SubscriptionCreated()))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.SubscriptionCreated()))
 		require.NoError(t, err)
 
 		checkTektonResources(t, f.Client.Client, tektonSub)
