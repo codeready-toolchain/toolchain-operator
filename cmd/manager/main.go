@@ -157,7 +157,7 @@ func main() {
 		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
 			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
 		}
-		log.Info("Created/updated the NSTemplateTier resources")
+		log.Info("Created TektonInstallation resource")
 	}()
 
 	log.Info("Starting the Cmd.")
