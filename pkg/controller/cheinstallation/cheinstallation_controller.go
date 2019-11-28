@@ -7,6 +7,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
+	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -125,6 +126,12 @@ func (r *ReconcileCheInstallation) EnsureCheInstallation(logger logr.Logger, che
 		return nil
 	}
 
+	if created, err := r.ensureCheCluster(logger, ns, cheInstallation); err != nil {
+		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che cluster in namespace %s", ns)
+	} else if created {
+		return nil
+	}
+
 	return r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
 }
 
@@ -189,6 +196,28 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns 
 				return false, err
 			}
 			if err := r.client.Create(context.TODO(), cheSub); err != nil {
+				if errors.IsAlreadyExists(err) {
+					return false, nil
+				}
+				return false, err
+			}
+			return true, nil
+		}
+		return false, err
+	}
+	return false, nil
+}
+
+func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
+	cluster := &orgv1.CheCluster{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: che.CheClusterName, Namespace: ns}, cluster); err != nil {
+		if errors.IsNotFound(err) {
+			cluster = che.NewCheCluster(ns)
+			logger.Info("Creating CheCluster for che", "CheCluster.Namespace", cluster.Namespace, "CheCluster.Name", cluster.Name)
+			if err := controllerutil.SetControllerReference(cheInstallation, cluster, r.scheme); err != nil {
+				return false, err
+			}
+			if err := r.client.Create(context.TODO(), cluster); err != nil {
 				if errors.IsAlreadyExists(err) {
 					return false, nil
 				}

@@ -3,6 +3,7 @@ module github.com/codeready-toolchain/toolchain-operator
 require (
 	github.com/codeready-toolchain/api v0.0.0-20191009081803-8f4e395353de
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
+	github.com/eclipse/che-operator v0.0.0-20191127094847-557860435bb4
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.3
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible // indirect
