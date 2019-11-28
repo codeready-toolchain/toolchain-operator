@@ -2,17 +2,18 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"runtime"
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/rest"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
 	kubemetrics "github.com/operator-framework/operator-sdk/pkg/kube-metrics"
 	"github.com/operator-framework/operator-sdk/pkg/leader"
@@ -23,6 +24,8 @@ import (
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -140,10 +143,27 @@ func main() {
 		}
 	}
 
+	stopChannel := signals.SetupSignalHandler()
+
+	go func() {
+		log.Info("Creating Tekton installation resources once cache is sync'd")
+		if !mgr.GetCache().WaitForCacheSync(stopChannel) {
+			log.Error(errors.New("timed out waiting for caches to sync"), "")
+			os.Exit(1)
+		}
+		// create TektonInstallation on the cluster at startup
+		log.Info("Creating the Tekton installation resource")
+		tektonInstallationCR, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
+		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
+			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
+		}
+		log.Info("Created TektonInstallation resource")
+	}()
+
 	log.Info("Starting the Cmd.")
 
 	// Start the Cmd
-	if err := mgr.Start(signals.SetupSignalHandler()); err != nil {
+	if err := mgr.Start(stopChannel); err != nil {
 		log.Error(err, "Manager exited non-zero")
 		os.Exit(1)
 	}

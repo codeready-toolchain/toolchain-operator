@@ -5,12 +5,11 @@ import (
 
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
-	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
-	"github.com/go-logr/logr"
-
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+
+	"github.com/go-logr/logr"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -84,6 +82,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	tektonInstallation := &toolchainv1alpha1.TektonInstallation{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: toolchain.TektonInstallation}, tektonInstallation); err != nil {
 		if errors.IsNotFound(err) {
+			reqLogger.Info("TektonInstallation not found")
 			return reconcile.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
@@ -94,8 +93,9 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	return reconcile.Result{}, err
 }
 
+// EnsureTektonSubscription ensures that there is an OLM Subscription resource for Tekton
 func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation) error {
-	tektonSubNamespace := tekton.SubscriptionNamespace
+	tektonSubNamespace := SubscriptionNamespace
 	if err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace); err != nil {
 		return r.wrapErrorWithStatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
 	}
@@ -104,9 +104,9 @@ func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logge
 
 func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, ns string) error {
 	sub := &olmv1alpha1.Subscription{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: tekton.SubscriptionName}, sub)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: SubscriptionName}, sub)
 	if err != nil && errors.IsNotFound(err) {
-		tektonSub := tekton.NewSubscription(ns)
+		tektonSub := NewSubscription(ns)
 		logger.Info("Creating subscription for tekton", "Subscription.Namespace", ns, "Subscription.Name", tektonSub.Name)
 		if err := controllerutil.SetControllerReference(tektonInstallation, tektonSub, r.scheme); err != nil {
 			return err
@@ -117,11 +117,11 @@ func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logge
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionReady(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, tekton.SubscriptionCreated())
+	return r.updateStatusConditions(tektonInstallation, SubscriptionCreated())
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, tekton.SubscriptionFailed(message))
+	return r.updateStatusConditions(tektonInstallation, SubscriptionFailed(message))
 }
 
 func (r *ReconcileTektonInstallation) StatusUpdate(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, statusUpdater func(tektonInstallation *v1alpha1.TektonInstallation, message string) error, msg string) error {

@@ -8,10 +8,10 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/tekton"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,9 +25,10 @@ import (
 )
 
 func TestTektonInstallationController(t *testing.T) {
+
 	t.Run("should reconcile with tekton installation", func(t *testing.T) {
 		// given
-		tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
+		tektonSub := NewSubscription(SubscriptionNamespace)
 		tektonInstallation := NewTektonInstallation()
 		cl, r := configureClient(t, tektonInstallation)
 		request := newReconcileRequest(tektonInstallation)
@@ -40,7 +41,7 @@ func TestTektonInstallationController(t *testing.T) {
 			require.NoError(t, err)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(tekton.SubscriptionCreated())
+				HasConditions(SubscriptionCreated())
 
 			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 				Exists().
@@ -60,7 +61,7 @@ func TestTektonInstallationController(t *testing.T) {
 				HasSpec(tektonSub.Spec)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(tekton.SubscriptionCreated())
+				HasConditions(SubscriptionCreated())
 		})
 
 	})
@@ -68,7 +69,7 @@ func TestTektonInstallationController(t *testing.T) {
 
 func TestFailingStatusForTektonInstallation(t *testing.T) {
 	// given
-	tektonSub := tekton.NewSubscription(tekton.SubscriptionNamespace)
+	tektonSub := NewSubscription(SubscriptionNamespace)
 
 	tektonInstallation := NewTektonInstallation()
 	cl, r := configureClient(t, tektonInstallation)
@@ -92,7 +93,7 @@ func TestFailingStatusForTektonInstallation(t *testing.T) {
 		DoesNotExist()
 
 	AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-		HasConditions(tekton.SubscriptionFailed(errMsg))
+		HasConditions(SubscriptionFailed(errMsg))
 }
 
 func TestCreateSubscriptionForTekton(t *testing.T) {
@@ -104,7 +105,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		tektonSubNs := GenerateName("tekton-op")
 		tektonInstallation := NewTektonInstallation()
 		cl, r := configureClient(t, tektonInstallation)
-		tektonSub := tekton.NewSubscription(tektonSubNs)
+		tektonSub := NewSubscription(tektonSubNs)
 
 		// when
 		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
@@ -126,7 +127,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
 		}
-		tektonSub := tekton.NewSubscription(tektonSubNs)
+		tektonSub := NewSubscription(tektonSubNs)
 
 		// when
 		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
@@ -142,7 +143,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		// given
 		tektonSubNs := GenerateName("tekton-op")
 		tektonInstallation := NewTektonInstallation()
-		tektonSub := tekton.NewSubscription(tektonSubNs)
+		tektonSub := NewSubscription(tektonSubNs)
 		cl, r := configureClient(t, tektonInstallation, tektonSub)
 
 		// when
@@ -173,5 +174,5 @@ func apiScheme(t *testing.T) *runtime.Scheme {
 
 func newReconcileRequest(tektonInstallation *v1alpha1.TektonInstallation) reconcile.Request {
 	namespacedName := types.NamespacedName{Namespace: tektonInstallation.Namespace, Name: tektonInstallation.Name}
-	return reconcile.Request{namespacedName}
+	return reconcile.Request{NamespacedName: namespacedName}
 }
