@@ -8,12 +8,12 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/che"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
+
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -86,7 +86,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), che.NewOperatorGroup(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), NewOperatorGroup(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -137,7 +137,7 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), che.NewOperatorGroup(cheOperatorNs), che.NewSubscription(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), NewOperatorGroup(cheOperatorNs), NewSubscription(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
@@ -161,7 +161,7 @@ func TestCheInstallationController(t *testing.T) {
 			HasSpec(cheSub.Spec)
 
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-			HasConditions(che.SubscriptionCreated())
+			HasConditions(SubscriptionCreated())
 	})
 
 	t.Run("update status when failed to get ns", func(t *testing.T) {
@@ -195,7 +195,7 @@ func TestCheInstallationController(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-			HasConditions(che.SubscriptionFailed(errMsg))
+			HasConditions(SubscriptionFailed(errMsg))
 	})
 
 	t.Run("should update status when failed to create operator group", func(t *testing.T) {
@@ -231,20 +231,20 @@ func TestCheInstallationController(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-			HasConditions(che.SubscriptionFailed(errMsg))
+			HasConditions(SubscriptionFailed(errMsg))
 	})
 
 	t.Run("should update status when failed to create che subscription", func(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), che.NewOperatorGroup(cheOperatorNs))
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), NewOperatorGroup(cheOperatorNs))
 
 		request := newReconcileRequest(cheInstallation)
 
 		errMsg := "something went wrong while creating che subscription"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-			if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Name == che.SubscriptionName {
+			if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Name == SubscriptionName {
 				return errors.New(errMsg)
 			}
 			return cl.Client.Create(ctx, obj, opts...)
@@ -268,7 +268,7 @@ func TestCheInstallationController(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-			HasConditions(che.SubscriptionFailed(errMsg))
+			HasConditions(SubscriptionFailed(errMsg))
 	})
 
 	t.Run("update status failed", func(t *testing.T) {
@@ -309,7 +309,7 @@ func TestCheInstallationController(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-			HasConditions(che.SubscriptionFailed(errMsg))
+			HasConditions(SubscriptionFailed(errMsg))
 	})
 
 }
@@ -320,7 +320,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
 		cl, r := configureClient(t, cheInstallation)
-		cheOg := che.NewOperatorGroup(cheOperatorNs)
+		cheOg := NewOperatorGroup(cheOperatorNs)
 
 		// when
 		created, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
@@ -340,8 +340,8 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
 		// OperatorGroup is already exists as provided to fake client
-		cl, r := configureClient(t, cheInstallation, che.NewOperatorGroup(cheOperatorNs))
-		cheOg := che.NewOperatorGroup(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation, NewOperatorGroup(cheOperatorNs))
+		cheOg := NewOperatorGroup(cheOperatorNs)
 
 		// when
 		created, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
@@ -365,7 +365,7 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
 		}
-		cheOg := che.NewOperatorGroup(cheOperatorNs)
+		cheOg := NewOperatorGroup(cheOperatorNs)
 
 		// when
 		_, err := r.ensureCheOperatorGroup(testLogger(), cheOperatorNs, cheInstallation)
@@ -385,7 +385,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheOperatorNs := GenerateName("che-op")
 		cheInstallation := NewCheInstallation(cheOperatorNs)
 		cl, r := configureClient(t, cheInstallation)
-		cheSub := che.NewSubscription(cheOperatorNs)
+		cheSub := NewSubscription(cheOperatorNs)
 
 		// when
 		created, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
@@ -408,7 +408,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			return errors.New(errMsg)
 		}
-		cheSub := che.NewSubscription(cheOperatorNs)
+		cheSub := NewSubscription(cheOperatorNs)
 
 		// when
 		created, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
@@ -427,8 +427,8 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheInstallation := NewCheInstallation(cheOperatorNs)
 
 		// Che Subscription will exists as provided to fake client
-		cl, r := configureClient(t, cheInstallation, che.NewSubscription(cheOperatorNs))
-		cheSub := che.NewSubscription(cheOperatorNs)
+		cl, r := configureClient(t, cheInstallation, NewSubscription(cheOperatorNs))
+		cheSub := NewSubscription(cheOperatorNs)
 
 		// when
 		created, err := r.ensureCheSubscription(testLogger(), cheOperatorNs, cheInstallation)
@@ -525,7 +525,7 @@ func configureClient(t *testing.T, initObjs ...runtime.Object) (*test.FakeClient
 
 func newReconcileRequest(cheInstallation *v1alpha1.CheInstallation) reconcile.Request {
 	namespacedName := types.NamespacedName{Namespace: cheInstallation.Namespace, Name: cheInstallation.Name}
-	return reconcile.Request{namespacedName}
+	return reconcile.Request{NamespacedName: namespacedName}
 }
 
 func apiScheme(t *testing.T) *runtime.Scheme {
@@ -543,11 +543,11 @@ func testLogger() logr.Logger {
 
 func newCheResources() (string, *olmv1.OperatorGroup, *olmv1alpha1.Subscription) {
 	cheOperatorNs := GenerateName("che-op")
-	return cheOperatorNs, che.NewOperatorGroup(cheOperatorNs), che.NewSubscription(cheOperatorNs)
+	return cheOperatorNs, NewOperatorGroup(cheOperatorNs), NewSubscription(cheOperatorNs)
 }
 
 func newCheNamespace(nsName string, nsPhase v1.NamespacePhase) *v1.Namespace {
-	cheNs := che.NewNamespace(nsName)
+	cheNs := NewNamespace(nsName)
 	cheNs.Status.Phase = nsPhase
 	return cheNs
 }

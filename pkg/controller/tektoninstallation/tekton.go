@@ -1,4 +1,4 @@
-package tekton
+package tektoninstallation
 
 import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -32,10 +32,12 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	}
 }
 
-func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionFailed(v1alpha1.TektonReady, v1alpha1.FailedToInstallReason, message)
-}
-
+// SubscriptionCreated returns a status condition for the case where the Tekton installation succeeded
 func SubscriptionCreated() toolchainv1alpha1.Condition {
 	return v1alpha1.SubscriptionCreated(v1alpha1.TektonReady, v1alpha1.InstalledReason)
+}
+
+// SubscriptionFailed returns a status condition for the case where the Tekton installation failed
+func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
+	return v1alpha1.SubscriptionFailed(v1alpha1.TektonReady, v1alpha1.FailedToInstallReason, message)
 }
