@@ -2,6 +2,7 @@ package cheinstallation
 
 import (
 	"context"
+	"fmt"
 
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
@@ -71,6 +72,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	if err := c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -125,10 +130,12 @@ func (r *ReconcileCheInstallation) EnsureCheInstallation(logger logr.Logger, che
 		return nil
 	}
 
-	if created, err := r.ensureCheCluster(logger, ns, cheInstallation); err != nil {
+	if created, statusMsg, err := r.ensureCheCluster(logger, ns, cheInstallation); err != nil {
 		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che cluster in namespace %s", ns)
-	} else if created {
+	} else if created { // TODO VN: created can be removed
 		return nil
+	} else if statusMsg != "" {
+		return r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionInstalling, statusMsg)
 	}
 
 	return r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
@@ -207,26 +214,51 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns 
 	return false, nil
 }
 
-func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
+func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, string, error) {
 	cluster := &orgv1.CheCluster{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: CheClusterName, Namespace: ns}, cluster); err != nil {
 		if errors.IsNotFound(err) {
 			cluster = NewCheCluster(ns)
 			logger.Info("Creating CheCluster for che", "CheCluster.Namespace", cluster.Namespace, "CheCluster.Name", cluster.Name)
 			if err := controllerutil.SetControllerReference(cheInstallation, cluster, r.scheme); err != nil {
-				return false, err
+				return false, r.getCheClusterStatus(nil), err
 			}
 			if err := r.client.Create(context.TODO(), cluster); err != nil {
 				if errors.IsAlreadyExists(err) {
-					return false, nil
+					return false, r.getCheClusterStatus(nil), nil
 				}
-				return false, err
+				return false, r.getCheClusterStatus(nil), err
 			}
-			return true, nil
+			return true, r.getCheClusterStatus(cluster), nil
 		}
-		return false, err
+		return false, r.getCheClusterStatus(nil), err
 	}
-	return false, nil
+	return false, r.getCheClusterStatus(cluster), nil
+}
+
+func (r *ReconcileCheInstallation) getCheClusterStatus(cluster *orgv1.CheCluster) string {
+	if cluster == nil {
+		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
+	} else if cluster.Status == (orgv1.CheClusterStatus{}) {
+		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
+	} else if cluster.Status.CheClusterRunning != "Available" { // TODO VN: check for const
+		if !cluster.Status.DbProvisoned {
+			return fmt.Sprintf("Provisioning Database for CheCluster '%s'", CheClusterName)
+		} else if !cluster.Status.KeycloakProvisoned {
+			return fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", CheClusterName)
+		} else if !cluster.Status.OpenShiftoAuthProvisioned {
+			return fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", CheClusterName)
+		} else if cluster.Status.DevfileRegistryURL == "" {
+			return fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", CheClusterName)
+		} else if cluster.Status.PluginRegistryURL == "" {
+			return fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", CheClusterName)
+		} else if cluster.Status.CheURL == "" {
+			return fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", CheClusterName)
+		} else {
+			return fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, CheClusterName)
+		}
+	}
+	return ""
 }
 
 // wrapErrorWithStatusUpdate wraps the error and update the install config status. If the update failed then logs the error.
@@ -256,6 +288,10 @@ func (r *ReconcileCheInstallation) updateStatusConditions(cheInstallation *v1alp
 		return nil
 	}
 	return r.client.Status().Update(context.TODO(), cheInstallation)
+}
+
+func (r *ReconcileCheInstallation) setStatusCheSubscriptionInstalling(cheInstallation *v1alpha1.CheInstallation, message string) error {
+	return r.updateStatusConditions(cheInstallation, SubscriptionInstalling(message))
 }
 
 func (r *ReconcileCheInstallation) setStatusCheSubscriptionFailed(cheInstallation *v1alpha1.CheInstallation, message string) error {

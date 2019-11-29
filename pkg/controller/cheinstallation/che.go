@@ -115,6 +115,10 @@ func NewCheCluster(ns string) *orgv1.CheCluster {
 	}
 }
 
+func SubscriptionInstalling(message string) toolchainv1alpha1.Condition {
+	return v1alpha1.SubscriptionInstalling(v1alpha1.CheReady, v1alpha1.InstallingReason, message)
+}
+
 // SubscriptionCreated returns a status condition for the case where the Che installation succeeded
 func SubscriptionCreated() toolchainv1alpha1.Condition {
 	return v1alpha1.SubscriptionCreated(v1alpha1.CheReady, v1alpha1.InstalledReason)
