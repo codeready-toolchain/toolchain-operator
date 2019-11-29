@@ -137,7 +137,9 @@ func TestCheInstallationController(t *testing.T) {
 		// given
 		cheOperatorNs, cheOg, cheSub := newCheResources()
 		cheInstallation := NewCheInstallation(cheOperatorNs)
-		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), NewOperatorGroup(cheOperatorNs), NewSubscription(cheOperatorNs))
+		cheCluster := NewCheCluster(cheOperatorNs)
+		cheCluster.Status.CheClusterRunning = AvailableStatus
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNs, v1.NamespaceActive), NewOperatorGroup(cheOperatorNs), NewSubscription(cheOperatorNs), cheCluster)
 
 		request := newReconcileRequest(cheInstallation)
 

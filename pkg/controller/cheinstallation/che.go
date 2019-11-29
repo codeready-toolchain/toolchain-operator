@@ -18,6 +18,8 @@ const (
 	SubscriptionName = "codeready-workspaces"
 	CheClusterName   = "codeready-workspaces"
 	CheFlavorName    = "codeready"
+
+	AvailableStatus = "Available"
 )
 
 //NewSubscription for eclipse Che operator
