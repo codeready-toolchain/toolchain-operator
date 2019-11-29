@@ -12,11 +12,31 @@ import (
 )
 
 const (
-	// SubscriptionName the name of the OML subscription for Che
+	// InstallationName the name of the CheInstallation resource (cluster-scoped)
+	InstallationName = "toolchain-che-installation"
+	// Namespace the namespace in which the OLM OperatorGroup and Subscription resources will be created
+	Namespace = "toolchain-che"
+	// OperatorGroupName the name of the OLM OperatorGroup for Che
+	OperatorGroupName = InstallationName
+	// SubscriptionName the name of the OLM subscription for Che
 	SubscriptionName = "eclipse-che"
 )
 
-//NewSubscription for eclipse Che operator
+// NewInstallation returns a new CheInstallation resource
+func NewInstallation() *v1alpha1.CheInstallation {
+	return &v1alpha1.CheInstallation{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: InstallationName, // che installation resource is cluster-scoped, so no namespace is defined
+		},
+		Spec: v1alpha1.CheInstallationSpec{
+			CheOperatorSpec: v1alpha1.CheOperator{
+				Namespace: Namespace, // the namespace in which the che operatorgroup and subscription resources will be created
+			},
+		},
+	}
+}
+
+// NewSubscription for eclipse Che operator
 func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	return &olmv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
@@ -49,7 +69,7 @@ func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 	return &olmv1.OperatorGroup{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: ns,
-			Name:      ns,
+			Name:      OperatorGroupName,
 			Labels:    toolchain.Labels(),
 		},
 		Spec: olmv1.OperatorGroupSpec{

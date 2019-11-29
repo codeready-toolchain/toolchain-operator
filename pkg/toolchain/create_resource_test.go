@@ -7,8 +7,8 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation" 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	"github.com/stretchr/testify/assert"
@@ -37,7 +37,7 @@ func TestCreateFromYAML(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			result := v1alpha1.TektonInstallation{}
-			err = cl.Get(context.TODO(), types.NamespacedName{Name: "tekton-installation"}, &result)
+			err = cl.Get(context.TODO(), types.NamespacedName{Name: "toolchain-tekton-installation"}, &result)
 			assert.NoError(t, err)
 		})
 
