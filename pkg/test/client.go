@@ -2,10 +2,8 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -60,8 +58,6 @@ func (c *FakeClient) List(ctx context.Context, list runtime.Object, opts ...clie
 }
 
 func (c *FakeClient) Create(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
-	fmt.Printf("Creating a resource: %s\n", spew.Sdump(obj))
-
 	if c.MockCreate != nil {
 		return c.MockCreate(ctx, obj, opts...)
 	}
