@@ -158,6 +158,7 @@ func main() {
 		tektonInstallationCR, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
 		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
 			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
+			os.Exit(1)
 		}
 		log.Info("Created the Tekton Installation resource")
 
@@ -165,6 +166,7 @@ func main() {
 		log.Info("Creating the Che installation resource")
 		if err = mgr.GetClient().Create(context.TODO(), cheinstallation.NewInstallation()); err != nil && !apierrors.IsAlreadyExists(err) {
 			log.Error(err, "Failed to create the 'CheInstallation' custom resource during startup")
+			os.Exit(1)
 		}
 		log.Info("Created the Che Installation resource")
 
