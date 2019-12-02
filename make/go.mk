@@ -22,7 +22,6 @@ vendor:
 	$(Q)go mod vendor
 
 TEKTON_INSTALLATION_CR_DIR=deploy/installation/tekton
-CHE_INSTALLATION_CR_DIR=deploy/installation/che
 
 .PHONY: generate-assets
 generate-assets:
