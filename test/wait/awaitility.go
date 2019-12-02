@@ -2,6 +2,10 @@ package wait
 
 import (
 	"context"
+	"os"
+	"testing"
+	"time"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
@@ -12,15 +16,12 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
-	"time"
 )
 
 const (
+	Timeout              = time.Minute * 8
 	RetryInterval        = time.Second * 5
-	Timeout              = time.Second * 60
 	CleanupRetryInterval = time.Second * 1
 	CleanupTimeout       = time.Second * 5
 )
@@ -85,7 +86,6 @@ type TektonInstallationWaitCondition func(a *ToolchainAwaitility, ic *v1alpha1.T
 func UntilHasCheStatusCondition(conditions ...toolchainv1alpha1.Condition) CheInstallationWaitCondition {
 	return func(a *ToolchainAwaitility, ic *v1alpha1.CheInstallation) bool {
 		if len(ic.Status.Conditions) > 0 {
-			toolchain.AssertConditionsMatch(a.T, ic.Status.Conditions, conditions...)
 			if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
 				a.T.Logf("status conditions match in CheInstallation '%s`", ic.Name)
 				return true
@@ -99,7 +99,6 @@ func UntilHasCheStatusCondition(conditions ...toolchainv1alpha1.Condition) CheIn
 // UntilHasTektonStatusCondition checks if TektonInstallation status has the given set of conditions
 func UntilHasTektonStatusCondition(conditions ...toolchainv1alpha1.Condition) TektonInstallationWaitCondition {
 	return func(a *ToolchainAwaitility, ic *v1alpha1.TektonInstallation) bool {
-		toolchain.AssertConditionsMatch(a.T, ic.Status.Conditions, conditions...)
 		if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
 			a.T.Logf("status conditions match in TektonInstallation '%s`", ic.Name)
 			return true

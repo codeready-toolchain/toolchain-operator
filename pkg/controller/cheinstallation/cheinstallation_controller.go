@@ -241,7 +241,7 @@ func (r *ReconcileCheInstallation) getCheClusterStatus(cluster *orgv1.CheCluster
 		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
 	} else if cluster.Status == (orgv1.CheClusterStatus{}) {
 		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
-	} else if cluster.Status.CheClusterRunning != "Available" { // TODO VN: check for const
+	} else if cluster.Status.CheClusterRunning != AvailableStatus {
 		if !cluster.Status.DbProvisoned {
 			return fmt.Sprintf("Provisioning Database for CheCluster '%s'", CheClusterName)
 		} else if !cluster.Status.KeycloakProvisoned {
