@@ -37,7 +37,7 @@ func TestCreateFromYAML(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			result := v1alpha1.TektonInstallation{}
-			err = cl.Get(context.TODO(), types.NamespacedName{Name: "toolchain-tekton-installation"}, &result)
+			err = cl.Get(context.TODO(), types.NamespacedName{Name: "tekton-installation"}, &result)
 			assert.NoError(t, err)
 		})
 
