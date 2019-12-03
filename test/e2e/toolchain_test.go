@@ -207,7 +207,7 @@ func checkCheResources(t *testing.T, client client.Client, cheOperatorNs string,
 	if cheCluster != nil {
 		AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, client).
 			Exists().
-			HasSpec(cheCluster.Spec)
+			HasRunningStatus(cheinstallation.AvailableStatus)
 	}
 }
 
