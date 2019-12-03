@@ -221,41 +221,41 @@ func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns strin
 			cluster = NewCheCluster(ns)
 			logger.Info("Creating CheCluster for che", "CheCluster.Namespace", cluster.Namespace, "CheCluster.Name", cluster.Name)
 			if err := controllerutil.SetControllerReference(cheInstallation, cluster, r.scheme); err != nil {
-				return false, r.getCheClusterStatus(nil), err
+				return false, getCheClusterStatus(nil), err
 			}
 			if err := r.client.Create(context.TODO(), cluster); err != nil {
 				if errors.IsAlreadyExists(err) {
-					return false, r.getCheClusterStatus(nil), nil
+					return false, getCheClusterStatus(nil), nil
 				}
-				return false, r.getCheClusterStatus(nil), err
+				return false, getCheClusterStatus(nil), err
 			}
-			return true, r.getCheClusterStatus(cluster), nil
+			return true, getCheClusterStatus(cluster), nil
 		}
-		return false, r.getCheClusterStatus(nil), err
+		return false, getCheClusterStatus(nil), err
 	}
-	return false, r.getCheClusterStatus(cluster), nil
+	return false, getCheClusterStatus(cluster), nil
 }
 
-func (r *ReconcileCheInstallation) getCheClusterStatus(cluster *orgv1.CheCluster) string {
+func getCheClusterStatus(cluster *orgv1.CheCluster) string {
 	if cluster == nil {
 		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
 	} else if cluster.Status == (orgv1.CheClusterStatus{}) {
 		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
 	} else if cluster.Status.CheClusterRunning != AvailableStatus {
 		if !cluster.Status.DbProvisoned {
-			return fmt.Sprintf("Provisioning Database for CheCluster '%s'", CheClusterName)
+			return fmt.Sprintf("Provisioning Database for CheCluster '%s'", cluster.Name)
 		} else if !cluster.Status.KeycloakProvisoned {
-			return fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", CheClusterName)
+			return fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", cluster.Name)
 		} else if !cluster.Status.OpenShiftoAuthProvisioned {
-			return fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", CheClusterName)
+			return fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", cluster.Name)
 		} else if cluster.Status.DevfileRegistryURL == "" {
-			return fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", CheClusterName)
+			return fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", cluster.Name)
 		} else if cluster.Status.PluginRegistryURL == "" {
-			return fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", CheClusterName)
+			return fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", cluster.Name)
 		} else if cluster.Status.CheURL == "" {
-			return fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", CheClusterName)
+			return fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", cluster.Name)
 		} else {
-			return fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, CheClusterName)
+			return fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name)
 		}
 	}
 	return ""

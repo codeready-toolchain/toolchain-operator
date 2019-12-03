@@ -14,6 +14,7 @@ import (
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
+	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
@@ -39,6 +40,7 @@ func TestToolchain(t *testing.T) {
 	cheOperatorNs := GenerateName("che-op")
 	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNs)
 	cheSub := cheinstallation.NewSubscription(cheOperatorNs)
+	cheCluster := cheinstallation.NewCheCluster(cheOperatorNs)
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
 	cheInstallation := NewCheInstallation(cheOperatorNs)
@@ -55,7 +57,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub, cheCluster)
 	})
 
 	// TODO enable this test. The issue is Namespace when deleted, stuck in Terminating Phase
@@ -76,7 +78,7 @@ func TestToolchain(t *testing.T) {
 
 	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 	// 	require.NoError(t, err)
-	// 	checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub)
+	// 	checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub, cheCluster)
 	// })
 
 	t.Run("should recreate deleted operatorgroup for che", func(t *testing.T) {
@@ -94,7 +96,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForOperatorGroup(cheOperatorNs, toolchain.Labels())
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, nil)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, nil, nil)
 	})
 
 	t.Run("should recreate deleted subscription for che", func(t *testing.T) {
@@ -110,7 +112,23 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForSubscription(cheSub.Namespace, cheSub.Name)
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, nil, cheSub)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, nil, cheSub, nil)
+	})
+
+	t.Run("should recreate deleted checluster for che", func(t *testing.T) {
+		// given
+		cluster, err := await.GetCheCluster(cheCluster.Namespace, cheCluster.Name)
+		require.NoError(t, err)
+
+		// when
+		err = f.Client.Delete(context.TODO(), cluster)
+
+		// then
+		require.NoError(t, err, "failed to delete CheCluster %s in namespace %s", cluster.Name, cluster.Namespace)
+
+		err = await.WaitForCheCluster(cheCluster.Namespace, cheCluster.Name)
+		require.NoError(t, err)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, nil, cheSub, cheCluster)
 	})
 
 	t.Run("should remove operatorgroup and subscription for che with CheInstallation deletion", func(t *testing.T) {
@@ -169,7 +187,7 @@ func TestToolchain(t *testing.T) {
 	})
 }
 
-func checkCheResources(t *testing.T, client client.Client, cheOperatorNs string, cheOg *olmv1.OperatorGroup, cheSub *olmv1alpha1.Subscription) {
+func checkCheResources(t *testing.T, client client.Client, cheOperatorNs string, cheOg *olmv1.OperatorGroup, cheSub *olmv1alpha1.Subscription, cheCluster *orgv1.CheCluster) {
 	t.Helper()
 	AssertThatNamespace(t, cheOperatorNs, client).
 		Exists().
@@ -185,6 +203,11 @@ func checkCheResources(t *testing.T, client client.Client, cheOperatorNs string,
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, client).
 			Exists().
 			HasSpec(cheSub.Spec)
+	}
+	if cheCluster != nil {
+		AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, client).
+			Exists().
+			HasSpec(cheCluster.Spec)
 	}
 }
 

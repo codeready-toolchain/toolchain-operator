@@ -14,12 +14,14 @@ import (
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
+	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -516,6 +518,139 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		require.EqualError(t, err, fmt.Sprintf("namespace %s is not in active state", cheOperatorNs))
 	})
 
+}
+
+func TestGetCheClusterStatus(t *testing.T) {
+	t.Run("status_unknown_as_nil_input", func(t *testing.T) {
+		got := getCheClusterStatus(nil)
+		assert.Contains(t, got, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
+	})
+
+	t.Run("stauts_unknown_as_blank_status", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			Status: orgv1.CheClusterStatus{},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
+	})
+
+	t.Run("db_not_provision", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning: "Unavailable",
+				DbProvisoned:      false,
+			},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("Provisioning Database for CheCluster '%s'", cluster.Name))
+	})
+
+	t.Run("keycloak_not_provision", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning:  "Unavailable",
+				DbProvisoned:       true,
+				KeycloakProvisoned: false,
+			},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", cluster.Name))
+	})
+
+	t.Run("openshift_auth_not_provision", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning:         "Unavailable",
+				DbProvisoned:              true,
+				KeycloakProvisoned:        true,
+				OpenShiftoAuthProvisioned: false,
+			},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", cluster.Name))
+	})
+
+	t.Run("devfile_registry_url_not_set", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning:         "Unavailable",
+				DbProvisoned:              true,
+				KeycloakProvisoned:        true,
+				OpenShiftoAuthProvisioned: true,
+				DevfileRegistryURL:        "",
+			},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", cluster.Name))
+	})
+
+	t.Run("plugin_registry_url_not_set", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning:         "Unavailable",
+				DbProvisoned:              true,
+				KeycloakProvisoned:        true,
+				OpenShiftoAuthProvisioned: true,
+				DevfileRegistryURL:        "some_url",
+				PluginRegistryURL:         "",
+			},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", cluster.Name))
+	})
+
+	t.Run("che_url_not_set", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning:         "Unavailable",
+				DbProvisoned:              true,
+				KeycloakProvisoned:        true,
+				OpenShiftoAuthProvisioned: true,
+				DevfileRegistryURL:        "some_url",
+				PluginRegistryURL:         "some_url",
+				CheURL:                    "",
+			},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", cluster.Name))
+	})
+
+	t.Run("status_", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning:         "Unavailable",
+				DbProvisoned:              true,
+				KeycloakProvisoned:        true,
+				OpenShiftoAuthProvisioned: true,
+				DevfileRegistryURL:        "some_url",
+				PluginRegistryURL:         "some_url",
+				CheURL:                    "some_url",
+			},
+		}
+		got := getCheClusterStatus(cluster)
+		assert.Contains(t, got, fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name))
+	})
 }
 
 func configureClient(t *testing.T, initObjs ...runtime.Object) (*test.FakeClient, *ReconcileCheInstallation) {
