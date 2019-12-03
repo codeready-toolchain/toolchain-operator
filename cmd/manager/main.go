@@ -12,7 +12,6 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -155,12 +154,11 @@ func main() {
 		}
 		// create the TektonInstallation resource on the cluster at startup, stop if something when wrong
 		log.Info("Creating the Tekton installation resource")
-		tektonInstallationCR, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
-		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
+		if err = mgr.GetClient().Create(context.TODO(), tektoninstallation.NewInstallation()); err != nil && !apierrors.IsAlreadyExists(err) {
 			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
 			os.Exit(1)
 		}
-		log.Info("Created the Tekton Installation resource")
+		log.Info("Tekton Installation resource created")
 
 		// create the CheInstallation resource on the cluster at startup, stop if something when wrong
 		log.Info("Creating the Che installation resource")
@@ -168,7 +166,7 @@ func main() {
 			log.Error(err, "Failed to create the 'CheInstallation' custom resource during startup")
 			os.Exit(1)
 		}
-		log.Info("Created the Che Installation resource")
+		log.Info("Che Installation resource created")
 
 	}()
 
