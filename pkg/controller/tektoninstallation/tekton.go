@@ -16,7 +16,7 @@ const (
 	SubscriptionName = "openshift-pipelines-operator"
 )
 
-//NewSubscription for openshift-pipeline operator
+// NewSubscription for openshift-pipeline operator
 func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	return &olmv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{

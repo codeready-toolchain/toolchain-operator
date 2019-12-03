@@ -39,8 +39,8 @@ func TestToolchain(t *testing.T) {
 	// defer ctx.Cleanup()
 	cheInstallation := cheinstallation.NewInstallation()
 	cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
-	cheOg := cheinstallation.NewOperatorGroup(cheInstallation.Spec.CheOperatorSpec.Namespace)
-	cheSub := cheinstallation.NewSubscription(cheInstallation.Spec.CheOperatorSpec.Namespace)
+	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNS)
+	cheSub := cheinstallation.NewSubscription(cheOperatorNS)
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
 	tektonInstallation := NewTektonInstallation()
@@ -62,7 +62,7 @@ func TestToolchain(t *testing.T) {
 	t.Run("should recreate che operator's ns operatorgroup subscription when ns deleted", func(t *testing.T) {
 		// given
 		ns := &v1.Namespace{}
-		err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheInstallation.Spec.CheOperatorSpec.Namespace}, ns)
+		err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheOperatorNS}, ns)
 		require.NoError(t, err)
 
 		// when
@@ -71,7 +71,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete Che Operator Namespace")
 
-		err = await.WaitForNamespace(cheInstallation.Spec.CheOperatorSpec.Namespace)
+		err = await.WaitForNamespace(cheOperatorNS)
 		require.NoError(t, err)
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
@@ -82,7 +82,7 @@ func TestToolchain(t *testing.T) {
 	t.Run("should recreate deleted operatorgroup for che", func(t *testing.T) {
 		// given
 		ogList := &olmv1.OperatorGroupList{}
-		err := await.Client.List(context.TODO(), ogList, client.InNamespace(cheInstallation.Spec.CheOperatorSpec.Namespace), client.MatchingLabels(toolchain.Labels()))
+		err := await.Client.List(context.TODO(), ogList, client.InNamespace(cheOperatorNS), client.MatchingLabels(toolchain.Labels()))
 		require.NoError(t, err)
 		require.Len(t, ogList.Items, 1)
 
@@ -90,7 +90,7 @@ func TestToolchain(t *testing.T) {
 		err = f.Client.Delete(context.TODO(), ogList.Items[0].DeepCopy())
 
 		// then
-		require.NoError(t, err, "failed to delete OperatorGroup %s from namespace %s", ogList.Items[0].Name, cheInstallation.Spec.CheOperatorSpec.Namespace)
+		require.NoError(t, err, "failed to delete OperatorGroup %s from namespace %s", ogList.Items[0].Name, cheOperatorNS)
 
 		err = await.WaitForOperatorGroup(cheOperatorNS, toolchain.Labels())
 		require.NoError(t, err)
