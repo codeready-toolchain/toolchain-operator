@@ -142,7 +142,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 
 	t.Run("should not fail if subscription already exists", func(t *testing.T) {
 		// given
-		tektonSubNs := GenerateName("tekton-op")
+		tektonSubNs := generateName("tekton-op")
 		tektonInstallation := NewInstallation()
 		tektonSub := NewSubscription(tektonSubNs)
 		cl, r := configureClient(t, tektonInstallation, tektonSub)
