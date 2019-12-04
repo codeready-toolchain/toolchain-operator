@@ -7,8 +7,8 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation" 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	"github.com/stretchr/testify/assert"

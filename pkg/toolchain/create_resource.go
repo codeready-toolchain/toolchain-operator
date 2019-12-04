@@ -22,4 +22,4 @@ func CreateFromYAML(s *runtime.Scheme, cl client.Client, content []byte) error {
 		return err
 	}
 	return nil
-}
+} 

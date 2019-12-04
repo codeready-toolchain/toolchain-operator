@@ -105,6 +105,7 @@ e2e-setup: build-image
 	oc apply -f ./deploy/role.yaml
 	oc apply -f ./deploy/role_binding.yaml
 	oc apply -f ./deploy/cluster_role.yaml
+	oc apply -f ./deploy/cluster_role_binding.yaml
 	sed -e 's|REPLACE_NAMESPACE|${TOOLCHAIN_NS}|g' ./deploy/cluster_role_binding.yaml | oc apply -f -
 	oc apply -f deploy/crds
 	sed -e 's|REPLACE_IMAGE|${IMAGE_NAME}|g' ./deploy/operator.yaml  | oc apply -f -
