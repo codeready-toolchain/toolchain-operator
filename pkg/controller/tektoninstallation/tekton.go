@@ -10,11 +10,22 @@ import (
 )
 
 const (
+	// InstallationName the name of the TektonInstallation resource (cluster-scoped)
+	InstallationName = "toolchain-tekton-installation"
 	// SubscriptionNamespace the namespace of the TekTon Subscription resource
 	SubscriptionNamespace = "openshift-operators"
 	// SubscriptionName the name for of TekTon Subscription resource
 	SubscriptionName = "openshift-pipelines-operator"
 )
+
+// NewInstallation returns a new TektonInstallation resource
+func NewInstallation() *v1alpha1.TektonInstallation {
+	return &v1alpha1.TektonInstallation{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: InstallationName, // Tekton installation resource is cluster-scoped, so no namespace is defined
+		},
+	}
+}
 
 // NewSubscription for openshift-pipeline operator
 func NewSubscription(ns string) *olmv1alpha1.Subscription {

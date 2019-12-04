@@ -11,7 +11,6 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
-	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
@@ -43,7 +42,7 @@ func TestToolchain(t *testing.T) {
 	cheSub := cheinstallation.NewSubscription(cheOperatorNS)
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
-	tektonInstallation := NewTektonInstallation()
+	tektonInstallation := tektoninstallation.NewInstallation()
 
 	f := framework.Global
 
