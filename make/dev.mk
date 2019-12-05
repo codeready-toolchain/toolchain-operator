@@ -2,6 +2,7 @@ DOCKER_REPO?=quay.io/codeready-toolchain
 IMAGE_NAME?=toolchain-operator
 
 TIMESTAMP:=$(shell date +%s)
+FORMATTED_DATE:=$(shell date -u +%FT%TZ)
 TAG?=$(GIT_COMMIT_ID_SHORT)-$(TIMESTAMP)
 
 # to watch all namespaces, keep namespace empty
@@ -60,3 +61,21 @@ deploy-rbac:
 ## Deploy CRD
 deploy-crd:
 	$(Q)-oc apply -f deploy/crds
+
+.PHONY: deploy-csv
+## Creates ServiceCatalog with a ConfigMap that contains operator CSV and all CRDs and image location set to quay.io
+deploy-csv: docker-push
+	sed -e 's|REPLACE_IMAGE|${IMAGE}|g;s|REPLACE_CREATED_AT|${FORMATTED_DATE}|g' hack/deploy_csv.yaml | oc apply -f -
+
+.PHONY: install-operator
+## Creates OperatorGroup and Subscription that installs toolchain operator in a test namespace
+install-operator: deploy-csv create-namespace
+	sed -e 's|REPLACE_NAMESPACE|${LOCAL_TEST_NAMESPACE}|g' hack/install_operator.yaml | oc apply -f -
+
+.PHONY: deploy-csv-using-os-registry
+## Creates ServiceCatalog with a ConfigMap that contains operator CSV and all CRDs and image location set to current OS registry
+deploy-csv-using-os-registry: set-os-registry deploy-csv
+
+.PHONY: install-operator-using-os-registry
+## Creates OperatorGroup and Subscription that installs toolchain operator in a test namespace
+install-operator-using-os-registry: set-os-registry install-operator

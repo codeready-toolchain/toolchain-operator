@@ -6,7 +6,7 @@
 
 .PHONY: test
 ## runs the tests without coverage and excluding E2E tests
-test: 
+test:
 	@echo "running the tests without coverage and excluding E2E tests..."
 	$(Q)go test ${V_FLAG} -race $(shell go list ./... | grep -v /test/e2e) -failfast
 
@@ -116,14 +116,13 @@ ifneq ($(IS_OS_3),)
 	$(info logging as system:admin")
 	$(shell echo "oc login -u system:admin")
 	$(eval IMAGE_NAME := docker.io/${GO_PACKAGE_ORG_NAME}/${GO_PACKAGE_REPO_NAME}:${GIT_COMMIT_ID_SHORT})
-	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
+	$(MAKE) docker-image IMAGE=${IMAGE_NAME}
 else ifneq ($(IS_OS_CI),)
 	$(eval IMAGE_NAME := registry.svc.ci.openshift.org/${OPENSHIFT_BUILD_NAMESPACE}/stable:toolchain-operator)
 else
 	# For OpenShift-4
 	$(eval IMAGE_NAME := quay.io/${QUAY_NAMESPACE}/${GO_PACKAGE_REPO_NAME}:${DATE_SUFFIX})
-	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
-	$(Q)docker push ${IMAGE_NAME}
+	$(MAKE) docker-push IMAGE=${IMAGE_NAME}
 endif
 
 .PHONY: e2e-cleanup
