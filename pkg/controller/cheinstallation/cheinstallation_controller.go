@@ -74,10 +74,7 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 	}
 
 	r.watchCheCluster = func() error {
-		if err := c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner); err != nil {
-			return err
-		}
-		return nil
+		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner)
 	}
 
 	return nil
