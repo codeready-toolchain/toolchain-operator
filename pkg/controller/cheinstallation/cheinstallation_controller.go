@@ -2,6 +2,7 @@ package cheinstallation
 
 import (
 	"context"
+	"time"
 
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
@@ -106,8 +107,9 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 	} else if created {
 		return reconcile.Result{}, nil
 	} else if ns.Status.Phase != v1.NamespaceActive {
-		// handle the case where the namespace has been deleted by user and is in terminating state and not in active state yet.
-		return reconcile.Result{}, errs.Errorf("namespace %s is not in active state: %s", ns.Name, ns.Status.Phase)
+		reqLogger.Info("namespace is not in active state", "namespace", ns.Name, "phase", ns.Status.Phase)
+		// handle the case where the namespace has been deleted by user and is still in terminating state, or is not in active state yet.
+		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
 	if created, err := r.ensureCheOperatorGroup(reqLogger, cheInstallation); err != nil {
