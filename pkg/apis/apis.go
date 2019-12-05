@@ -2,6 +2,7 @@ package apis
 
 import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	apiextnv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
@@ -17,6 +18,7 @@ func init() {
 	AddToSchemes = append(AddToSchemes, olmv1alpha1.AddToScheme)
 	AddToSchemes = append(AddToSchemes, olmv1.AddToScheme)
 	AddToSchemes = append(AddToSchemes, orgv1.SchemeBuilder.AddToScheme)
+	AddToSchemes = append(AddToSchemes, apiextnv1beta1.AddToScheme)
 }
 
 // AddToScheme adds all Resources to the Scheme

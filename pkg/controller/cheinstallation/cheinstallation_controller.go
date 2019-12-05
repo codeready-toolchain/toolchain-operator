@@ -3,6 +3,7 @@ package cheinstallation
 import (
 	"context"
 	"fmt"
+	apiextnv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
@@ -36,12 +37,12 @@ func Add(mgr manager.Manager) error {
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager) *ReconcileCheInstallation {
 	return &ReconcileCheInstallation{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 	// Create a new controller
 	c, err := controller.New("cheinstallation-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -72,8 +73,11 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
-	if err := c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner); err != nil {
-		return err
+	r.watchCheCluster = func() error {
+		if err := c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner); err != nil {
+			return err
+		}
+		return nil
 	}
 
 	return nil
@@ -86,8 +90,9 @@ var _ reconcile.Reconciler = &ReconcileCheInstallation{}
 type ReconcileCheInstallation struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client          client.Client
+	scheme          *runtime.Scheme
+	watchCheCluster func() error
 }
 
 // Reconcile reads that state of the cluster for a CheInstallation object and makes changes based on the state read
@@ -215,6 +220,10 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns 
 }
 
 func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, string, error) {
+	if err := r.addCheCluserWatch(logger); err != nil {
+		return false, getCheClusterStatus(nil), err
+	}
+
 	cluster := &orgv1.CheCluster{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: CheClusterName, Namespace: ns}, cluster); err != nil {
 		if errors.IsNotFound(err) {
@@ -234,6 +243,20 @@ func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns strin
 		return false, getCheClusterStatus(nil), err
 	}
 	return false, getCheClusterStatus(cluster), nil
+}
+
+func (r *ReconcileCheInstallation) addCheCluserWatch(logger logr.Logger) error {
+	if r.watchCheCluster != nil {
+		cheClusterCRD := &apiextnv1beta1.CustomResourceDefinition{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "checlusters.org.eclipse.che"}, cheClusterCRD); err != nil {
+			return err
+		}
+		if err := r.watchCheCluster(); err != nil {
+			return err
+		}
+		r.watchCheCluster = nil // make sure watchCheCluster() should NOT be called afterwards
+	}
+	return nil
 }
 
 func getCheClusterStatus(cluster *orgv1.CheCluster) string {
