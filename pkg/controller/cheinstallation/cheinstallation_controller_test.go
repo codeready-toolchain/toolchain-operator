@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -297,10 +298,12 @@ func TestCheInstallationController(t *testing.T) {
 		request := newReconcileRequest(cheInstallation)
 
 		// when
-		_, err := r.Reconcile(request)
+		result, err := r.Reconcile(request)
 
 		//then
-		require.EqualError(t, err, "namespace toolchain-che is not in active state: Terminating")
+		require.NoError(t, err) // no error is reported...
+		assert.True(t, result.Requeue)
+		assert.Equal(t, 3*time.Second, result.RequeueAfter)
 		AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).
 			DoesNotExist()
 	})
