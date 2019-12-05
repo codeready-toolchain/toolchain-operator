@@ -70,7 +70,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete Che Operator Namespace")
 
-		err = await.WaitForNamespace(cheOperatorNS)
+		err = await.WaitForNamespace(cheOperatorNS, v1.NamespaceActive)
 		require.NoError(t, err)
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
