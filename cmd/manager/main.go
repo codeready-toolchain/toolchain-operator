@@ -10,8 +10,8 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
+	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -23,6 +23,7 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
@@ -146,18 +147,27 @@ func main() {
 	stopChannel := signals.SetupSignalHandler()
 
 	go func() {
-		log.Info("Creating Tekton installation resources once cache is sync'd")
+		log.Info("Waiting for cache to be sync'd before creating the Tekton and Che installation resources...")
 		if !mgr.GetCache().WaitForCacheSync(stopChannel) {
 			log.Error(errors.New("timed out waiting for caches to sync"), "")
 			os.Exit(1)
 		}
-		// create TektonInstallation on the cluster at startup
+		// create the TektonInstallation resource on the cluster at startup, stop if something when wrong
 		log.Info("Creating the Tekton installation resource")
-		tektonInstallationCR, err := tektoninstallation.Asset("toolchain.openshift.dev_v1alpha1_tektoninstallation_cr.yaml")
-		if err = toolchain.CreateFromYAML(mgr.GetScheme(), mgr.GetClient(), tektonInstallationCR); err != nil {
+		if err = mgr.GetClient().Create(context.TODO(), tektoninstallation.NewInstallation()); err != nil && !apierrors.IsAlreadyExists(err) {
 			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
+			os.Exit(1)
 		}
-		log.Info("Created TektonInstallation resource")
+		log.Info("Tekton Installation resource created")
+
+		// create the CheInstallation resource on the cluster at startup, stop if something when wrong
+		log.Info("Creating the Che installation resource")
+		if err = mgr.GetClient().Create(context.TODO(), cheinstallation.NewInstallation()); err != nil && !apierrors.IsAlreadyExists(err) {
+			log.Error(err, "Failed to create the 'CheInstallation' custom resource during startup")
+			os.Exit(1)
+		}
+		log.Info("Che Installation resource created")
+
 	}()
 
 	log.Info("Starting the Cmd.")

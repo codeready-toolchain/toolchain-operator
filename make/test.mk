@@ -6,7 +6,7 @@
 
 .PHONY: test
 ## runs the tests without coverage and excluding E2E tests
-test: generate-assets
+test:
 	@echo "running the tests without coverage and excluding E2E tests..."
 	$(Q)go test ${V_FLAG} -race $(shell go list ./... | grep -v /test/e2e) -failfast
 
@@ -22,7 +22,7 @@ COV_DIR = $(OUT_DIR)/coverage
 
 .PHONY: test-with-coverage
 ## runs the tests with coverage
-test-with-coverage: generate-assets
+test-with-coverage: 
 	@echo "running the tests with coverage..."
 	@-mkdir -p $(COV_DIR)
 	@-rm $(COV_DIR)/coverage.txt
@@ -105,6 +105,7 @@ e2e-setup: build-image
 	oc apply -f ./deploy/role.yaml
 	oc apply -f ./deploy/role_binding.yaml
 	oc apply -f ./deploy/cluster_role.yaml
+	oc apply -f ./deploy/cluster_role_binding.yaml
 	sed -e 's|REPLACE_NAMESPACE|${TOOLCHAIN_NS}|g' ./deploy/cluster_role_binding.yaml | oc apply -f -
 	oc apply -f deploy/crds
 	sed -e 's|REPLACE_IMAGE|${IMAGE_NAME}|g' ./deploy/operator.yaml  | oc apply -f -
@@ -115,14 +116,13 @@ ifneq ($(IS_OS_3),)
 	$(info logging as system:admin")
 	$(shell echo "oc login -u system:admin")
 	$(eval IMAGE_NAME := docker.io/${GO_PACKAGE_ORG_NAME}/${GO_PACKAGE_REPO_NAME}:${GIT_COMMIT_ID_SHORT})
-	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
+	$(MAKE) docker-image IMAGE=${IMAGE_NAME}
 else ifneq ($(IS_OS_CI),)
 	$(eval IMAGE_NAME := registry.svc.ci.openshift.org/${OPENSHIFT_BUILD_NAMESPACE}/stable:toolchain-operator)
 else
 	# For OpenShift-4
 	$(eval IMAGE_NAME := quay.io/${QUAY_NAMESPACE}/${GO_PACKAGE_REPO_NAME}:${DATE_SUFFIX})
-	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
-	$(Q)docker push ${IMAGE_NAME}
+	$(MAKE) docker-push IMAGE=${IMAGE_NAME}
 endif
 
 .PHONY: e2e-cleanup

@@ -11,7 +11,6 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
-	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
@@ -35,56 +34,57 @@ func TestToolchain(t *testing.T) {
 	err := os.Setenv(test.TestType, test.E2e)
 	require.NoError(t, err, "failed to set env variable %s=%s", test.TestType, test.E2e)
 
-	ctx, await := InitOperator(t)
-	defer ctx.Cleanup()
-	cheOperatorNs := GenerateName("che-op")
-	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNs)
-	cheSub := cheinstallation.NewSubscription(cheOperatorNs)
-	cheCluster := cheinstallation.NewCheCluster(cheOperatorNs)
+	// ctx, await := InitOperator(t)
+	_, await := InitOperator(t)
+	// defer ctx.Cleanup()
+	cheInstallation := cheinstallation.NewInstallation()
+	cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
+	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNS)
+	cheSub := cheinstallation.NewSubscription(cheOperatorNS)
+	cheCluster := cheinstallation.NewCheCluster(cheOperatorNS)
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
-	cheInstallation := NewCheInstallation(cheOperatorNs)
-	tektonInstallation := NewTektonInstallation()
+	tektonInstallation := tektoninstallation.NewInstallation()
 
 	f := framework.Global
 
 	t.Run("should create operator group and subscription for che with CheInstallation", func(t *testing.T) {
 		// when
-		err := f.Client.Create(context.TODO(), cheInstallation, cleanupOptions(ctx))
+		// CheInstallation should already exist
 
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub, cheCluster)
+		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
 
 	// TODO enable this test. The issue is Namespace when deleted, stuck in Terminating Phase
 	// t.Run("should recreate che operator's ns operatorgroup subscription when ns deleted", func(t *testing.T) {
 	// 	// given
 	// 	ns := &v1.Namespace{}
-	// 	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheOperatorNs}, ns)
+	// 	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheOperatorNS}, ns)
 	// 	require.NoError(t, err)
 
-	// 	// when
-	// 	err = f.Client.Delete(context.TODO(), ns)
+	// // 	// when
+	// // 	err = f.Client.Delete(context.TODO(), ns)
 
-	// 	// then
-	// 	require.NoError(t, err, "failed to delete Che Operator Namespace")
+	// // 	// then
+	// // 	require.NoError(t, err, "failed to delete Che Operator Namespace")
 
-	// 	err = await.WaitForNamespace(cheOperatorNs)
+	// 	err = await.WaitForNamespace(cheOperatorNS)
 	// 	require.NoError(t, err)
 
 	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 	// 	require.NoError(t, err)
-	// 	checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub, cheCluster)
+	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub)
 	// })
 
 	t.Run("should recreate deleted operatorgroup for che", func(t *testing.T) {
 		// given
 		ogList := &olmv1.OperatorGroupList{}
-		err := await.Client.List(context.TODO(), ogList, client.InNamespace(cheOperatorNs), client.MatchingLabels(toolchain.Labels()))
+		err := await.Client.List(context.TODO(), ogList, client.InNamespace(cheOperatorNS), client.MatchingLabels(toolchain.Labels()))
 		require.NoError(t, err)
 		require.Len(t, ogList.Items, 1)
 
@@ -92,11 +92,11 @@ func TestToolchain(t *testing.T) {
 		err = f.Client.Delete(context.TODO(), ogList.Items[0].DeepCopy())
 
 		// then
-		require.NoError(t, err, "failed to delete OperatorGroup %s from namespace %s", ogList.Items[0].Name, cheOperatorNs)
+		require.NoError(t, err, "failed to delete OperatorGroup %s from namespace %s", ogList.Items[0].Name, cheOperatorNS)
 
-		err = await.WaitForOperatorGroup(cheOperatorNs, toolchain.Labels())
+		err = await.WaitForOperatorGroup(cheOperatorNS, toolchain.Labels())
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, nil, nil)
+		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, nil, nil)
 	})
 
 	t.Run("should recreate deleted subscription for che", func(t *testing.T) {
@@ -112,7 +112,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForSubscription(cheSub.Namespace, cheSub.Name)
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, nil, cheSub, nil)
+		checkCheResources(t, f.Client.Client, cheOperatorNS, nil, cheSub, nil)
 	})
 
 	t.Run("should recreate deleted checluster for che", func(t *testing.T) {
@@ -126,10 +126,9 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete CheCluster %s in namespace %s", cluster.Name, cluster.Namespace)
 
-
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub, cheCluster)
+		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
 
 	t.Run("should remove operatorgroup, subscription and CheCluster for che with CheInstallation deletion", func(t *testing.T) {
@@ -152,7 +151,7 @@ func TestToolchain(t *testing.T) {
 		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
 			DoesNotExist()
 
-		AssertThatNamespace(t, cheOperatorNs, f.Client).
+		AssertThatNamespace(t, cheOperatorNS, f.Client).
 			DoesNotExist()
 
 		AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, f.Client).

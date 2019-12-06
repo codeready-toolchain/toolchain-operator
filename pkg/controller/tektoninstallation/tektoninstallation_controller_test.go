@@ -29,7 +29,7 @@ func TestTektonInstallationController(t *testing.T) {
 	t.Run("should reconcile with tekton installation", func(t *testing.T) {
 		// given
 		tektonSub := NewSubscription(SubscriptionNamespace)
-		tektonInstallation := NewTektonInstallation()
+		tektonInstallation := NewInstallation()
 		cl, r := configureClient(t, tektonInstallation)
 		request := newReconcileRequest(tektonInstallation)
 
@@ -71,7 +71,7 @@ func TestFailingStatusForTektonInstallation(t *testing.T) {
 	// given
 	tektonSub := NewSubscription(SubscriptionNamespace)
 
-	tektonInstallation := NewTektonInstallation()
+	tektonInstallation := NewInstallation()
 	cl, r := configureClient(t, tektonInstallation)
 
 	request := newReconcileRequest(tektonInstallation)
@@ -103,7 +103,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 	t.Run("create subscription", func(t *testing.T) {
 		// given
 		tektonSubNs := GenerateName("tekton-op")
-		tektonInstallation := NewTektonInstallation()
+		tektonInstallation := NewInstallation()
 		cl, r := configureClient(t, tektonInstallation)
 		tektonSub := NewSubscription(tektonSubNs)
 
@@ -121,7 +121,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 	t.Run("should fail to create subscription", func(t *testing.T) {
 		// given
 		tektonSubNs := GenerateName("tekton-op")
-		tektonInstallation := NewTektonInstallation()
+		tektonInstallation := NewInstallation()
 		cl, r := configureClient(t, tektonInstallation)
 		errMsg := "something went wrong while creating tekton subscription"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
@@ -142,7 +142,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 	t.Run("should not fail if subscription already exists", func(t *testing.T) {
 		// given
 		tektonSubNs := GenerateName("tekton-op")
-		tektonInstallation := NewTektonInstallation()
+		tektonInstallation := NewInstallation()
 		tektonSub := NewSubscription(tektonSubNs)
 		cl, r := configureClient(t, tektonInstallation, tektonSub)
 

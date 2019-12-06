@@ -7,7 +7,6 @@ import (
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
 
 	"github.com/go-logr/logr"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -77,10 +76,9 @@ type ReconcileTektonInstallation struct {
 func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling TektonInstallation")
-
 	// Fetch the TektonInstallation instance
 	tektonInstallation := &toolchainv1alpha1.TektonInstallation{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: toolchain.TektonInstallation}, tektonInstallation); err != nil {
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: InstallationName}, tektonInstallation); err != nil {
 		if errors.IsNotFound(err) {
 			reqLogger.Info("TektonInstallation not found")
 			return reconcile.Result{}, nil

@@ -102,19 +102,20 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 	err := r.client.Get(context.TODO(), request.NamespacedName, cheInstallation)
 	if err != nil {
 		if errors.IsNotFound(err) {
+			reqLogger.Info("CheInstallation not found")
 			return reconcile.Result{}, nil
 		}
 		return reconcile.Result{}, err
 	}
 
-	requeue, err := r.EnsureCheInstallation(reqLogger, cheInstallation)
+	requeue, err := r.ensureCheInstallation(reqLogger, cheInstallation)
 	if requeue {
-		return reconcile.Result{Requeue:true, RequeueAfter:time.Second*5}, err
+		return reconcile.Result{Requeue: true, RequeueAfter: time.Second * 5}, err
 	}
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileCheInstallation) EnsureCheInstallation(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
+func (r *ReconcileCheInstallation) ensureCheInstallation(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
 	ns := cheInstallation.Spec.CheOperatorSpec.Namespace
 
 	if created, err := r.ensureCheNamespace(logger, cheInstallation); err != nil {
@@ -180,11 +181,10 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 
 func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
 	cheOg := &olmv1.OperatorGroup{}
-	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: ns, Namespace: ns}, cheOg); err != nil {
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: OperatorGroupName, Namespace: ns}, cheOg); err != nil {
 		if errors.IsNotFound(err) {
 			cheOg = NewOperatorGroup(ns)
-			logger.Info("Creating a operatorgroup for che", "OperatorGroup.Namespace", cheOg.Namespace, "OperatorGroup.Name", cheOg.Name)
-
+			logger.Info("Creating an operatorgroup for che", "OperatorGroup.Namespace", cheOg.Namespace, "OperatorGroup.Name", cheOg.Name)
 			if err := controllerutil.SetControllerReference(cheInstallation, cheOg, r.scheme); err != nil {
 				return false, err
 			}
@@ -206,7 +206,7 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns 
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: SubscriptionName, Namespace: ns}, sub); err != nil {
 		if errors.IsNotFound(err) {
 			cheSub := NewSubscription(ns)
-			logger.Info("Creating subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
+			logger.Info("Creating a subscription for che", "Subscription.Namespace", cheSub.Namespace, "Subscription.Name", cheSub.Name)
 			if err := controllerutil.SetControllerReference(cheInstallation, cheSub, r.scheme); err != nil {
 				return false, err
 			}
