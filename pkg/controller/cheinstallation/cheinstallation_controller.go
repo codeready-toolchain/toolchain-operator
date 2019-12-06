@@ -3,6 +3,8 @@ package cheinstallation
 import (
 	"context"
 	"fmt"
+	"time"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -14,6 +16,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apiextnv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -25,7 +28,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 )
 
 var log = logf.Log.WithName("controller_cheinstallation")
@@ -77,6 +79,14 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner)
 	}
 
+	err = r.watchCheCluster()
+	if err != nil {
+		if _, ok := err.(*meta.NoKindMatchError); !ok { // ignore NoKindMatchError
+			return err
+		}
+	} else {
+		r.watchCheCluster = nil
+	}
 	return nil
 }
 
