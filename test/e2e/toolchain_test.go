@@ -41,7 +41,7 @@ func TestToolchain(t *testing.T) {
 	cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
 	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNS)
 	cheSub := cheinstallation.NewSubscription(cheOperatorNS)
-	cheCluster := cheinstallation.NewCheCluster(cheOperatorNs)
+	cheCluster := cheinstallation.NewCheCluster(cheOperatorNS)
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
 	tektonInstallation := tektoninstallation.NewInstallation()
