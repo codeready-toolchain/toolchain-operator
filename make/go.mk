@@ -8,7 +8,7 @@ export GO111MODULE
 
 .PHONY: build
 ## Build the operator
-build: generate-assets $(OUT_DIR)/operator
+build: $(OUT_DIR)/operator generate-csv
 
 $(OUT_DIR)/operator:
 	$(Q)CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
@@ -21,10 +21,14 @@ $(OUT_DIR)/operator:
 vendor:
 	$(Q)go mod vendor
 
-TEKTON_INSTALLATION_CR_DIR=deploy/installation/tekton
+PATH_TO_GENERATE_FILE=../api/scripts/olm-catalog-generate.sh
 
-.PHONY: generate-assets
-generate-assets:
-	@echo "generating assets bindata..."
-	@go install github.com/go-bindata/go-bindata/
-	@go-bindata -pkg tektoninstallation -o pkg/controller/tektoninstallation/installation_assets.go -nocompress -prefix $(TEKTON_INSTALLATION_CR_DIR) $(TEKTON_INSTALLATION_CR_DIR)
+PHONY: generate-csv
+generate-csv:
+ifneq ("$(wildcard $(PATH_TO_GENERATE_FILE))","")
+	@echo "generating CSV using script from local api repo..."
+	$(PATH_TO_GENERATE_FILE) -pr ../toolchain-operator/ -on codeready-toolchain-operator
+else
+	@echo "generating CSV using script from GH api repo (using latest version in master)..."
+	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/olm-catalog-generate.sh | bash -s --  -pr ../toolchain-operator/ -on codeready-toolchain-operator
+endif
