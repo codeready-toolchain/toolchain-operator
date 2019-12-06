@@ -3,8 +3,6 @@ package cheinstallation
 import (
 	"context"
 	"fmt"
-	apiextnv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
-
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -14,6 +12,7 @@ import (
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	apiextnv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -26,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"time"
 )
 
 var log = logf.Log.WithName("controller_cheinstallation")
@@ -107,40 +107,47 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	err = r.EnsureCheInstallation(reqLogger, cheInstallation)
+	requeue, err := r.EnsureCheInstallation(reqLogger, cheInstallation)
+	if requeue {
+		return reconcile.Result{Requeue:true, RequeueAfter:time.Second*5}, err
+	}
 	return reconcile.Result{}, err
 }
 
-func (r *ReconcileCheInstallation) EnsureCheInstallation(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) error {
+func (r *ReconcileCheInstallation) EnsureCheInstallation(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
 	ns := cheInstallation.Spec.CheOperatorSpec.Namespace
 
 	if created, err := r.ensureCheNamespace(logger, cheInstallation); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", ns)
+		return false, r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", ns)
 	} else if created {
-		return nil
+		return false, nil
 	}
 
 	if created, err := r.ensureCheOperatorGroup(logger, ns, cheInstallation); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create operatorgroup in namespace %s", ns)
+		return false, r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create operatorgroup in namespace %s", ns)
 	} else if created {
-		return nil
+		return false, nil
 	}
 
 	if created, err := r.ensureCheSubscription(logger, ns, cheInstallation); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", ns)
+		return false, r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", ns)
 	} else if created {
-		return nil
+		return false, nil
+	}
+
+	if err := r.ensureWatchCheCluster(); err != nil {
+		return true, r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to add watch for CheCluster")
 	}
 
 	if created, statusMsg, err := r.ensureCheCluster(logger, ns, cheInstallation); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che cluster in namespace %s", ns)
+		return false, r.wrapErrorWithStatusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che cluster in namespace %s", ns)
 	} else if created { // TODO VN: created can be removed
-		return nil
+		return false, nil
 	} else if statusMsg != "" {
-		return r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionInstalling, statusMsg)
+		return false, r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionInstalling, statusMsg)
 	}
 
-	return r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
+	return false, r.statusUpdate(logger, cheInstallation, r.setStatusCheSubscriptionReady, "")
 }
 
 func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
@@ -216,11 +223,21 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, ns 
 	return false, nil
 }
 
-func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, string, error) {
-	if err := r.addCheCluserWatch(logger); err != nil {
-		return false, getCheClusterStatus(nil), err
+func (r *ReconcileCheInstallation) ensureWatchCheCluster() error {
+	if r.watchCheCluster != nil {
+		cheClusterCRD := &apiextnv1beta1.CustomResourceDefinition{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "checlusters.org.eclipse.che"}, cheClusterCRD); err != nil {
+			return err
+		}
+		if err := r.watchCheCluster(); err != nil {
+			return err
+		}
+		r.watchCheCluster = nil // make sure watchCheCluster() should NOT be called afterwards
 	}
+	return nil
+}
 
+func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns string, cheInstallation *v1alpha1.CheInstallation) (bool, string, error) {
 	cluster := &orgv1.CheCluster{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: CheClusterName, Namespace: ns}, cluster); err != nil {
 		if errors.IsNotFound(err) {
@@ -240,20 +257,6 @@ func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, ns strin
 		return false, getCheClusterStatus(nil), err
 	}
 	return false, getCheClusterStatus(cluster), nil
-}
-
-func (r *ReconcileCheInstallation) addCheCluserWatch(logger logr.Logger) error {
-	if r.watchCheCluster != nil {
-		cheClusterCRD := &apiextnv1beta1.CustomResourceDefinition{}
-		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "checlusters.org.eclipse.che"}, cheClusterCRD); err != nil {
-			return err
-		}
-		if err := r.watchCheCluster(); err != nil {
-			return err
-		}
-		r.watchCheCluster = nil // make sure watchCheCluster() should NOT be called afterwards
-	}
-	return nil
 }
 
 func getCheClusterStatus(cluster *orgv1.CheCluster) string {
