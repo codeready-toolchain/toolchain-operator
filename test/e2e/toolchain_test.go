@@ -126,12 +126,13 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete CheCluster %s in namespace %s", cluster.Name, cluster.Namespace)
 
-		err = await.WaitForCheCluster(cheCluster.Namespace, cheCluster.Name)
+
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNs, nil, cheSub, cheCluster)
+		checkCheResources(t, f.Client.Client, cheOperatorNs, cheOg, cheSub, cheCluster)
 	})
 
-	t.Run("should remove operatorgroup and subscription for che with CheInstallation deletion", func(t *testing.T) {
+	t.Run("should remove operatorgroup, subscription and CheCluster for che with CheInstallation deletion", func(t *testing.T) {
 		// given
 		cheInstallation, err := await.GetCheInstallation(cheInstallation.Name)
 		require.NoError(t, err)
@@ -152,6 +153,9 @@ func TestToolchain(t *testing.T) {
 			DoesNotExist()
 
 		AssertThatNamespace(t, cheOperatorNs, f.Client).
+			DoesNotExist()
+
+		AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, f.Client).
 			DoesNotExist()
 	})
 
