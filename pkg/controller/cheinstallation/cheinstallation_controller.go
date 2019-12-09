@@ -75,17 +75,16 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 		return err
 	}
 
-	r.watchCheCluster = func() error {
+	watchCheCluster := func() error {
 		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner)
 	}
 
-	err = r.watchCheCluster()
+	err = watchCheCluster()
 	if err != nil {
 		if _, ok := err.(*meta.NoKindMatchError); !ok { // ignore NoKindMatchError
 			return err
 		}
-	} else {
-		r.watchCheCluster = nil
+		r.watchCheCluster = watchCheCluster
 	}
 	return nil
 }
