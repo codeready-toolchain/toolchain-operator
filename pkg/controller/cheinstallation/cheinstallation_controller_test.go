@@ -445,11 +445,11 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		cl, r := configureClient(t, cheInstallation)
 
 		// when
-		_, created, err := r.ensureCheNamespace(testLogger(), cheInstallation)
+		requeue, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.NoError(t, err)
-		assert.True(t, created)
+		assert.True(t, requeue)
 		AssertThatNamespace(t, Namespace, cl).
 			Exists().
 			HasLabels(toolchain.Labels())
@@ -462,14 +462,29 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNS, v1.NamespaceActive))
 
 		// when
-		_, created, err := r.ensureCheNamespace(testLogger(), cheInstallation)
+		requeue, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.NoError(t, err)
-		assert.False(t, created)
+		assert.False(t, requeue)
 		AssertThatNamespace(t, Namespace, cl).
 			Exists().
 			HasLabels(toolchain.Labels())
+	})
+
+	t.Run("should not fail as ns is in termination state", func(t *testing.T) {
+		// given
+		cheInstallation := NewInstallation()
+		cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
+		cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNS, v1.NamespaceTerminating))
+
+		// when
+		requeue, err := r.ensureCheNamespace(testLogger(), cheInstallation)
+
+		// then
+		require.NoError(t, err)
+		assert.True(t, requeue)
+		AssertThatNamespace(t, Namespace, cl).Exists()
 	})
 
 	t.Run("should fail to create ns", func(t *testing.T) {
@@ -482,11 +497,11 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		}
 
 		// when
-		_, created, err := r.ensureCheNamespace(testLogger(), cheInstallation)
+		requeue, err := r.ensureCheNamespace(testLogger(), cheInstallation)
 
 		// then
 		require.EqualError(t, err, errMsg)
-		assert.False(t, created)
+		assert.False(t, requeue)
 		AssertThatNamespace(t, Namespace, cl).
 			DoesNotExist()
 	})

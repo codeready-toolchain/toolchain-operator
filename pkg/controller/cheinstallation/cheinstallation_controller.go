@@ -102,13 +102,9 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, err
 	}
 
-	if ns, created, err := r.ensureCheNamespace(reqLogger, cheInstallation); err != nil {
+	if requeue, err := r.ensureCheNamespace(reqLogger, cheInstallation); err != nil {
 		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create namespace %s", cheInstallation.Spec.CheOperatorSpec.Namespace)
-	} else if created {
-		return reconcile.Result{}, nil
-	} else if ns.Status.Phase != v1.NamespaceActive {
-		reqLogger.Info("namespace is not in active state", "namespace", ns.Name, "phase", ns.Status.Phase)
-		// handle the case where the namespace has been deleted by user and is still in terminating state, or is not in active state yet.
+	} else if requeue {
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
@@ -127,7 +123,7 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 	return reconcile.Result{}, r.statusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionReady, "")
 }
 
-func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (*v1.Namespace, bool, error) {
+func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
 	cheOpNamespace := cheInstallation.Spec.CheOperatorSpec.Namespace
 	ns := &v1.Namespace{}
 	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, ns); err != nil {
@@ -135,19 +131,23 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 			logger.Info("Creating a namespace for che operator", "Namespace", cheOpNamespace)
 			namespace := NewNamespace(cheOpNamespace)
 			if err := controllerutil.SetControllerReference(cheInstallation, namespace, r.scheme); err != nil {
-				return &v1.Namespace{}, false, err
+				return false, err
 			}
 			if err := r.client.Create(context.TODO(), namespace); err != nil {
 				if errors.IsAlreadyExists(err) {
-					return ns, false, nil
+					return false, nil
 				}
-				return &v1.Namespace{}, false, err
+				return false, err
 			}
-			return ns, true, nil
+			return true, nil
 		}
-		return &v1.Namespace{}, false, err
+		return false, err
 	}
-	return ns, false, nil
+	if ns.Status.Phase != v1.NamespaceActive {
+		logger.Info("namespace is not in active state", "namespace", ns.Name, "phase", ns.Status.Phase)
+		return true, nil
+	}
+	return false, nil
 }
 
 func (r *ReconcileCheInstallation) ensureCheOperatorGroup(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, error) {
