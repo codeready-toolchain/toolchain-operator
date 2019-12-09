@@ -630,7 +630,10 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 		r.watchCheCluster = func() error {
 			return nil
 		}
+
+		// test
 		err := r.ensureWatchCheCluster()
+
 		require.NoError(t, err)
 		assert.Nil(t, r.watchCheCluster)
 	})
@@ -644,7 +647,10 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 		r.watchCheCluster = func() error {
 			return nil
 		}
+
+		// test
 		err := r.ensureWatchCheCluster()
+
 		require.Error(t, err)
 		assert.EqualError(t, err, errMsg)
 	})
@@ -658,7 +664,10 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 		r.watchCheCluster = func() error {
 			return fmt.Errorf(errMsg)
 		}
+
+		// test
 		err := r.ensureWatchCheCluster()
+
 		require.Error(t, err)
 		assert.EqualError(t, err, errMsg)
 	})
