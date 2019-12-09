@@ -1,28 +1,39 @@
 module github.com/codeready-toolchain/toolchain-operator
 
 require (
-	github.com/codeready-toolchain/api v0.0.0-20191009081803-8f4e395353de
+	github.com/codeready-toolchain/api v0.0.0-20191206004733-862cefb68396
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
-	github.com/davecgh/go-spew v1.1.1
-	github.com/go-bindata/go-bindata v3.1.2+incompatible
+	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/go-logr/logr v0.1.0
-	github.com/go-openapi/spec v0.19.3
+	github.com/go-openapi/spec v0.19.4
+	github.com/gobuffalo/flect v0.1.7 // indirect
+	github.com/gogo/protobuf v1.3.1 // indirect
+	github.com/json-iterator/go v1.1.8 // indirect
+	github.com/mattn/go-colorable v0.1.4 // indirect
+	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible // indirect
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190718033018-874b1785500e
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
+	golang.org/x/net v0.0.0-20191207000613-e7e4b65ae663 // indirect
+	golang.org/x/sys v0.0.0-20191206220618-eeba5f6aabab // indirect
+	golang.org/x/tools v0.0.0-20191206204035-259af5ff87bd // indirect
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect
 	google.golang.org/grpc v1.23.0 // indirect
-	gopkg.in/yaml.v2 v2.2.4 // indirect
+	gopkg.in/yaml.v2 v2.2.7 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2 // indirect
 	k8s.io/api v0.0.0
 	k8s.io/apiextensions-apiserver v0.0.0 // indirect
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
+	k8s.io/code-generator v0.0.0-20191121015212-c4c8f8345c7e
+	k8s.io/gengo v0.0.0-20191120174120-e74f70b9b27e // indirect
 	k8s.io/kube-openapi v0.0.0-20191107075043-30be4d16710a
 	k8s.io/utils v0.0.0-20191114184206-e782cd3c129f // indirect
 	sigs.k8s.io/controller-runtime v0.2.2
+	sigs.k8s.io/controller-tools v0.2.4
 )
 
 // Pinned to kubernetes-1.14.1
