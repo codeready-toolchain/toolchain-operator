@@ -621,6 +621,49 @@ func TestGetCheClusterStatus(t *testing.T) {
 	})
 }
 
+func TestEnsureWatchCheCluster(t *testing.T) {
+	t.Run("add_watch_ok", func(t *testing.T){
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return nil
+		}
+		r.watchCheCluster = func() error {
+			return nil
+		}
+		err := r.ensureWatchCheCluster()
+		require.NoError(t, err)
+		assert.Nil(t, r.watchCheCluster)
+	})
+
+	t.Run("add_watch_failed_as_crd_not_found", func(t *testing.T){
+		cl, r := configureClient(t)
+		errMsg := "not found"
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return fmt.Errorf(errMsg)
+		}
+		r.watchCheCluster = func() error {
+			return nil
+		}
+		err := r.ensureWatchCheCluster()
+		require.Error(t, err)
+		assert.EqualError(t, err, errMsg)
+	})
+
+	t.Run("add_watch_failed_as_kind_not_found", func(t *testing.T){
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return nil
+		}
+		errMsg := `no matches for kind "CheCluster" in version "org.eclipse.che/v1"`
+		r.watchCheCluster = func() error {
+			return fmt.Errorf(errMsg)
+		}
+		err := r.ensureWatchCheCluster()
+		require.Error(t, err)
+		assert.EqualError(t, err, errMsg)
+	})
+}
+
 func configureClient(t *testing.T, initObjs ...runtime.Object) (*test.FakeClient, *ReconcileCheInstallation) {
 	s := apiScheme(t)
 	cl := test.NewFakeClient(t, initObjs...)
