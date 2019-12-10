@@ -88,6 +88,23 @@ spec:
           - list
           - watch
         - apiGroups:
+          - org.eclipse.che
+          resources:
+          - checlusters
+          verbs:
+          - get
+          - create
+          - list
+          - watch
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - ""
           resources:
           - namespaces

@@ -21,7 +21,7 @@ const (
 	// OperatorGroupName the name of the OLM OperatorGroup for Che
 	OperatorGroupName = InstallationName
 	// SubscriptionName the name of the OLM subscription for Che
-	SubscriptionName = "eclipse-che"
+	SubscriptionName = "codeready-workspaces"
 
 	CheClusterName = "codeready-workspaces"
 	CheFlavorName  = "codeready"
