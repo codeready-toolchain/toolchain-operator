@@ -29,7 +29,9 @@ generate-crds: vendor
 	@echo "Re-generating the Toolchain CRD files..."
 	$(Q)go run $(shell pwd)/vendor/sigs.k8s.io/controller-tools/cmd/controller-gen/main.go crd:trivialVersions=true \
 	paths=./pkg/apis/... output:dir=deploy/crds
-
+	# Delete two first lines of the CRD ("\n----\n") to make a single manifest file out of the original multiple manifest file
+	@find deploy/crds -name "toolchain.*.yaml" -exec sed -i '' -e '1,2d' '{}' \; 
+	
 PATH_TO_GENERATE_FILE=../api/scripts/olm-catalog-generate.sh
 
 .PHONY: generate-csv
