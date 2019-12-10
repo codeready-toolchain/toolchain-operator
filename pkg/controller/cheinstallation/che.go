@@ -19,7 +19,7 @@ const (
 	// OperatorGroupName the name of the OLM OperatorGroup for Che
 	OperatorGroupName = InstallationName
 	// SubscriptionName the name of the OLM subscription for Che
-	SubscriptionName = "eclipse-che"
+	SubscriptionName = "codeready-workspaces"
 )
 
 // NewInstallation returns a new CheInstallation resource
@@ -36,7 +36,7 @@ func NewInstallation() *v1alpha1.CheInstallation {
 	}
 }
 
-// NewSubscription for eclipse Che operator
+// NewSubscription for CodeReady Workspaces operator
 func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	return &olmv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
@@ -45,10 +45,10 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 			Labels:    toolchain.Labels(),
 		},
 		Spec: &olmv1alpha1.SubscriptionSpec{
-			Channel:                "stable",
-			Package:                "eclipse-che",
-			StartingCSV:            "eclipse-che.v7.2.0",
-			CatalogSource:          "community-operators",
+			Channel:                "latest",
+			Package:                "codeready-workspaces",
+			StartingCSV:            "crwoperator.v2.0.0",
+			CatalogSource:          "redhat-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
 		},
 	}
