@@ -20,6 +20,8 @@ const (
 	OperatorGroupName = InstallationName
 	// SubscriptionName the name of the OLM subscription for Che
 	SubscriptionName = "eclipse-che"
+	// StartingCSV keeps the CSV version the installation should start with
+	StartingCSV = "eclipse-che.v7.4.0"
 )
 
 // NewInstallation returns a new CheInstallation resource
@@ -47,7 +49,7 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 		Spec: &olmv1alpha1.SubscriptionSpec{
 			Channel:                "stable",
 			Package:                "eclipse-che",
-			StartingCSV:            "eclipse-che.v7.2.0",
+			StartingCSV:            StartingCSV,
 			CatalogSource:          "community-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
 		},
