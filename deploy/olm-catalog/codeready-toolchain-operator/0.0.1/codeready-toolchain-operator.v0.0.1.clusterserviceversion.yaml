@@ -65,6 +65,54 @@ spec:
     mediatype: image/png
   install:
     spec:
+      clusterPermissions:
+      - rules:
+        - apiGroups:
+          - operators.coreos.com
+          resources:
+          - subscriptions
+          - operatorgroups
+          verbs:
+          - get
+          - create
+          - list
+          - watch
+        - apiGroups:
+          - operators.coreos.com
+          resources:
+          - catalogsources
+          - clusterserviceversions
+          - installplans
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - ""
+          resources:
+          - namespaces
+          verbs:
+          - get
+          - create
+          - list
+          - watch
+        - apiGroups:
+          - toolchain.openshift.dev
+          resources:
+          - cheinstallations/finalizers
+          - tektoninstallations/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - toolchain.openshift.dev
+          resources:
+          - cheinstallations
+          - tektoninstallations
+          - cheinstallations/status
+          - tektoninstallations/status
+          verbs:
+          - '*'
+        serviceAccountName: toolchain-operator
       deployments:
       - name: toolchain-operator
         spec:
