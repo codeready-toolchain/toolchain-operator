@@ -312,8 +312,6 @@ func TestCheInstallationController(t *testing.T) {
 
 func TestCreateOperatorGroupForChe(t *testing.T) {
 
-	logf.SetLogger(zap.Logger(true))
-
 	t.Run("create operator group", func(t *testing.T) {
 		//given
 		cheInstallation := NewInstallation()
