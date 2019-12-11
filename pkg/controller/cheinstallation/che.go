@@ -27,6 +27,8 @@ const (
 	CheFlavorName  = "codeready"
 
 	AvailableStatus = "Available"
+	// StartingCSV keeps the CSV version the installation should start with
+	StartingCSV = "crwoperator.v2.0.0"
 )
 
 // NewInstallation returns a new CheInstallation resource
@@ -74,9 +76,9 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 			Channel:                "latest",
 			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
 			Package:                "codeready-workspaces",
+			StartingCSV:            StartingCSV,
 			CatalogSource:          "redhat-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
-			StartingCSV:            "crwoperator.v2.0.0",
 		},
 	}
 }
