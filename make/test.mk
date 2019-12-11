@@ -65,7 +65,6 @@ PR_COMMIT := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].pulls[0].sha')
 PULL_NUMBER := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].pulls[0].number')
 
 TOOLCHAIN_NS := openshift-operators
-TOOLCHAIN_TEST_NS := toolchain-operator-$(shell date +'%s')
 
 ###########################################################
 #
@@ -88,8 +87,7 @@ test-e2e: test-e2e-keep-resources clean-e2e-resources
 
 .PHONY: e2e-run
 e2e-run:
-	-oc new-project $(TOOLCHAIN_TEST_NS) --display-name e2e-tests 1>/dev/null
-	operator-sdk test local ./test/e2e --no-setup --namespace $(TOOLCHAIN_TEST_NS) --verbose --go-test-flags "-timeout=15m" || \
+	operator-sdk test local ./test/e2e --no-setup --namespace $(TOOLCHAIN_NS) --verbose --go-test-flags "-timeout=15m" || \
 	($(MAKE) print-logs TOOLCHAIN_NS=${TOOLCHAIN_NS} && exit 1)
 
 .PHONY: print-logs
