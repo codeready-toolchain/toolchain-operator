@@ -46,6 +46,7 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 		},
 		Spec: &olmv1alpha1.SubscriptionSpec{
 			Channel:                "latest",
+			InstallPlanApproval:    olmv1alpha1.ApprovalAutomatic,
 			Package:                "codeready-workspaces",
 			StartingCSV:            "crwoperator.v2.0.0",
 			CatalogSource:          "redhat-operators",
