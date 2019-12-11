@@ -64,7 +64,8 @@ BASE_COMMIT := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].base_sha')
 PR_COMMIT := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].pulls[0].sha')
 PULL_NUMBER := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].pulls[0].number')
 
-TOOLCHAIN_NS := toolchain-operator-$(shell date +'%s')
+TOOLCHAIN_NS := openshift-operators
+TOOLCHAIN_TEST_NS := toolchain-operator-$(shell date +'%s')
 
 ###########################################################
 #
@@ -79,15 +80,16 @@ IS_CRC := $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.ser
 IS_OS_CI := $(OPENSHIFT_BUILD_NAMESPACE)
 IS_KUBE_ADMIN := $(shell oc whoami | grep "kube:admin")
 
-.PHONY: test-e2e-keep-namespaces
+.PHONY: test-e2e-keep-resources
 test-e2e-keep-namespaces: e2e-setup e2e-run
 
 .PHONY: test-e2e
-test-e2e: test-e2e-keep-namespaces e2e-cleanup
+test-e2e: test-e2e-keep-resources clean-e2e-resources
 
 .PHONY: e2e-run
 e2e-run:
-	operator-sdk test local ./test/e2e --no-setup --namespace $(TOOLCHAIN_NS) --verbose --go-test-flags "-timeout=15m" || \
+	-oc new-project $(TOOLCHAIN_TEST_NS) --display-name e2e-tests 1>/dev/null
+	operator-sdk test local ./test/e2e --no-setup --namespace $(TOOLCHAIN_TEST_NS) --verbose --go-test-flags "-timeout=15m" || \
 	($(MAKE) print-logs TOOLCHAIN_NS=${TOOLCHAIN_NS} && exit 1)
 
 .PHONY: print-logs
@@ -100,7 +102,7 @@ print-logs:
 
 .PHONY: e2e-setup
 e2e-setup: build-image
-	-oc new-project $(TOOLCHAIN_NS) --display-name e2e-tests 1>/dev/null
+	oc project $(TOOLCHAIN_NS) 1>/dev/null
 ifneq ($(IS_OS_3),)
 	oc apply -f ./deploy/service_account.yaml
 	oc apply -f ./deploy/role.yaml
@@ -151,10 +153,10 @@ else
 	$(MAKE) docker-push IMAGE=${IMAGE_NAME}
 endif
 
-.PHONY: e2e-cleanup
-e2e-cleanup:
-	oc delete project ${TOOLCHAIN_NS} --wait=false || true
-
-.PHONY: clean-e2e-namespaces
-clean-e2e-namespaces:
-	$(Q)-oc get projects --output=name | grep -E "toolchain\-operator\-[0-9]+" | xargs oc delete
+.PHONY: clean-e2e-resources
+clean-e2e-resources:
+	oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n openshift-marketplace
+	oc get subscription --output=name -n ${TOOLCHAIN_NS} |  grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n ${TOOLCHAIN_NS}
+	oc get subscription --output=name -n openshift-operators |  grep "openshift-pipelines-operator" | xargs --no-run-if-empty oc delete -n openshift-operators
+	oc delete crd cheinstallations.toolchain.openshift.dev tektoninstallations.toolchain.openshift.dev
+	oc delete project toolchain-che --timeout=10s || true
