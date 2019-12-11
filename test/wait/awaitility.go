@@ -171,7 +171,7 @@ func (a *ToolchainAwaitility) WaitForSubscription(ns, name string) error {
 }
 
 // WaitForNamespace waits until there is Namespace available with the given name
-func (a *ToolchainAwaitility) WaitForNamespace(name string) error {
+func (a *ToolchainAwaitility) WaitForNamespace(name string, expectedPhase v1.NamespacePhase) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ns := &v1.Namespace{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ns); err != nil {
@@ -181,7 +181,7 @@ func (a *ToolchainAwaitility) WaitForNamespace(name string) error {
 			}
 			return false, err
 		}
-		return true, nil
+		return ns.Status.Phase == expectedPhase, nil
 	})
 }
 

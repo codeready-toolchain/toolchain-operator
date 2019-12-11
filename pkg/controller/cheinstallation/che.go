@@ -43,7 +43,7 @@ func NewInstallation() *v1alpha1.CheInstallation {
 	}
 }
 
-// NewSubscription for eclipse Che operator
+// NewSubscription for CodeReady Workspaces operator
 func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	/* 	Default Subscription yaml: oc get sub codeready-workspaces -o yaml
 	apiVersion: operators.coreos.com/v1alpha1
