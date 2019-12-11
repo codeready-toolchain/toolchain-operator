@@ -80,6 +80,12 @@ spec:
         - apiGroups:
           - operators.coreos.com
           resources:
+          - subscriptions/finalizers
+          verbs:
+          - update
+        - apiGroups:
+          - operators.coreos.com
+          resources:
           - catalogsources
           - clusterserviceversions
           - installplans

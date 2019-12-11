@@ -3,7 +3,6 @@ module github.com/codeready-toolchain/toolchain-operator
 require (
 	github.com/codeready-toolchain/api v0.0.0-20191009081803-8f4e395353de
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
-	github.com/davecgh/go-spew v1.1.1
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.3
@@ -11,6 +10,7 @@ require (
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190718033018-874b1785500e
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/pkg/errors v0.8.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	google.golang.org/genproto v0.0.0-20190819201941-24fa4b261c55 // indirect

@@ -2,20 +2,22 @@ package wait
 
 import (
 	"context"
+	"os"
+	"testing"
+	"time"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
-	"time"
 )
 
 const (
@@ -26,16 +28,15 @@ const (
 )
 
 type ToolchainAwaitility struct {
-	T         *testing.T
-	Namespace string
-	Client    client.Reader
+	T      *testing.T
+	Client client.Reader
 }
 
 // WaitForCheInstallation waits until there is CheInstallation with the given name available
 func (a *ToolchainAwaitility) WaitForCheInstallation(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ic := &v1alpha1.CheInstallation{}
-		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic); err != nil {
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
 				a.T.Logf("waiting for availability of CheInstallation '%s'", name)
 				return false, nil
@@ -50,7 +51,7 @@ func (a *ToolchainAwaitility) WaitForCheInstallation(name string) error {
 func (a *ToolchainAwaitility) WaitForCheInstallationToDelete(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ic := &v1alpha1.CheInstallation{}
-		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic); err != nil {
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
 				a.T.Logf("CheInstallation '%s' deleted", name)
 				return true, nil
@@ -63,9 +64,25 @@ func (a *ToolchainAwaitility) WaitForCheInstallationToDelete(name string) error 
 	})
 }
 
+func (a *ToolchainAwaitility) WaitForTektonInstallationToDelete(name string) error {
+	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		tektonInstallation := &v1alpha1.TektonInstallation{}
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, tektonInstallation); err != nil {
+			if errors.IsNotFound(err) {
+				a.T.Logf("TektonInstallation '%s' deleted", name)
+				return true, nil
+			}
+			return false, err
+		}
+		a.T.Logf("waiting for deletion of TektonInstallation '%s'", name)
+
+		return false, nil
+	})
+}
+
 func (a *ToolchainAwaitility) GetCheInstallation(name string) (*v1alpha1.CheInstallation, error) {
 	ic := &v1alpha1.CheInstallation{}
-	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic)
+	err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic)
 	return ic, err
 }
 
