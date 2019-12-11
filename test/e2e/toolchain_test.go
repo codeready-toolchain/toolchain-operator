@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"os"
+	"testing"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -13,15 +14,13 @@ import (
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
+
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
-
-	"testing"
-
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -73,7 +72,7 @@ func TestToolchain(t *testing.T) {
 	// // 	// then
 	// // 	require.NoError(t, err, "failed to delete Che Operator Namespace")
 
-	// 	err = await.WaitForNamespace(cheOperatorNS)
+	// 	err = await.WaitForNamespace(cheOperatorNS, v1.NamespaceActive)
 	// 	require.NoError(t, err)
 
 	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
