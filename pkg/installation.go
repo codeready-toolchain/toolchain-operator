@@ -20,6 +20,12 @@ const (
 	codereadyToolchainPackageName      = "codeready-toolchain-operator"
 )
 
+// CreateInstallationResources creates both CheInstallation and TektonInstallation resources. If they already exist then it ignores it.
+// Before the actual creation it also tries to get the Subscription that was created for codeready-toolchain-operator.
+// If such a subscription is found, then it sets it as ownerReference for the Installation resources. The reason is
+// that we need to remove(uninstall) the Che and Tekton operators when the codeready-toolchain-operator is being uninstalled,
+// which means the respective Subscription is removed. Thanks to the garbage collector it will ensure that both
+// Che and Tekton operators will be uninstalled too.
 func CreateInstallationResources(cl client.Client, scheme *runtime.Scheme, log logr.Logger) error {
 	tektonInstallation := tektoninstallation.NewInstallation()
 	cheInstallation := cheinstallation.NewInstallation()
