@@ -81,7 +81,7 @@ IS_OS_CI := $(OPENSHIFT_BUILD_NAMESPACE)
 IS_KUBE_ADMIN := $(shell oc whoami | grep "kube:admin")
 
 .PHONY: test-e2e-keep-resources
-test-e2e-keep-namespaces: e2e-setup e2e-run
+test-e2e-keep-resources: e2e-setup e2e-run
 
 .PHONY: test-e2e
 test-e2e: test-e2e-keep-resources clean-e2e-resources
@@ -158,5 +158,5 @@ clean-e2e-resources:
 	oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n openshift-marketplace
 	oc get subscription --output=name -n ${TOOLCHAIN_NS} |  grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n ${TOOLCHAIN_NS}
 	oc get subscription --output=name -n openshift-operators |  grep "openshift-pipelines-operator" | xargs --no-run-if-empty oc delete -n openshift-operators
-	oc delete crd cheinstallations.toolchain.openshift.dev tektoninstallations.toolchain.openshift.dev
+	oc delete crd cheinstallations.toolchain.openshift.dev tektoninstallations.toolchain.openshift.dev || true
 	oc delete project toolchain-che --timeout=10s || true
