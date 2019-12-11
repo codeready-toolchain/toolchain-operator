@@ -64,16 +64,14 @@ BASE_COMMIT := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].base_sha')
 PR_COMMIT := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].pulls[0].sha')
 PULL_NUMBER := $(shell echo $$CLONEREFS_OPTIONS | jq '.refs[0].pulls[0].number')
 
-TOOLCHAIN_NS := toolchain-operator-nurali
-
+ TOOLCHAIN_NS := toolchain-operator-$(shell date +'%s')
 ###########################################################
 #
 # End-to-end Tests
 #
 ###########################################################
 
-DATE_SUFFIX := nurali
-
+ DATE_SUFFIX := $(shell date +'%s')
 IS_OS_3 := $(shell curl -k -XGET -H "Authorization: Bearer $(shell oc whoami -t 2>/dev/null)" $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.server}')/version/openshift 2>/dev/null | grep paths)
 IS_CRC := $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>&1 | grep crc)
 IS_OS_CI := $(OPENSHIFT_BUILD_NAMESPACE)
@@ -83,8 +81,7 @@ IS_KUBE_ADMIN := $(shell oc whoami | grep "kube:admin")
 test-e2e-keep-namespaces: e2e-setup e2e-run
 
 .PHONY: test-e2e
-test-e2e: test-e2e-keep-namespaces
-
+ test-e2e: test-e2e-keep-namespaces e2e-cleanup
 .PHONY: e2e-run
 e2e-run:
 	operator-sdk test local ./test/e2e --no-setup --namespace $(TOOLCHAIN_NS) --verbose --go-test-flags "-timeout=60m" || \

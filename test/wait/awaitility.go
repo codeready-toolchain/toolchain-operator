@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	Timeout              = time.Minute * 8
+	Timeout              = time.Minute * 15
 	RetryInterval        = time.Second * 5
 	CleanupRetryInterval = time.Second * 1
 	CleanupTimeout       = time.Second * 5
