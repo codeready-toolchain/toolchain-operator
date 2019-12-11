@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -102,7 +103,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 
 	t.Run("create subscription", func(t *testing.T) {
 		// given
-		tektonSubNs := GenerateName("tekton-op")
+		tektonSubNs := generateName("tekton-op")
 		tektonInstallation := NewInstallation()
 		cl, r := configureClient(t, tektonInstallation)
 		tektonSub := NewSubscription(tektonSubNs)
@@ -120,7 +121,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 
 	t.Run("should fail to create subscription", func(t *testing.T) {
 		// given
-		tektonSubNs := GenerateName("tekton-op")
+		tektonSubNs := generateName("tekton-op")
 		tektonInstallation := NewInstallation()
 		cl, r := configureClient(t, tektonInstallation)
 		errMsg := "something went wrong while creating tekton subscription"
@@ -141,7 +142,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 
 	t.Run("should not fail if subscription already exists", func(t *testing.T) {
 		// given
-		tektonSubNs := GenerateName("tekton-op")
+		tektonSubNs := generateName("tekton-op")
 		tektonInstallation := NewInstallation()
 		tektonSub := NewSubscription(tektonSubNs)
 		cl, r := configureClient(t, tektonInstallation, tektonSub)
@@ -175,4 +176,9 @@ func apiScheme(t *testing.T) *runtime.Scheme {
 func newReconcileRequest(tektonInstallation *v1alpha1.TektonInstallation) reconcile.Request {
 	namespacedName := types.NamespacedName{Namespace: tektonInstallation.Namespace, Name: tektonInstallation.Name}
 	return reconcile.Request{NamespacedName: namespacedName}
+}
+
+// generateName return the given name with a suffix based on the current time (UnixNano)
+func generateName(prefix string) string {
+	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
 }
