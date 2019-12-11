@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"os"
+	"testing"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -21,7 +22,6 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 func TestToolchain(t *testing.T) {
@@ -70,7 +70,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete Che Operator Namespace")
 
-		err = await.WaitForNamespace(cheOperatorNS)
+		err = await.WaitForNamespace(cheOperatorNS, v1.NamespaceActive)
 		require.NoError(t, err)
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))

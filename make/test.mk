@@ -6,7 +6,7 @@
 
 .PHONY: test
 ## runs the tests without coverage and excluding E2E tests
-test: 
+test:
 	@echo "running the tests without coverage and excluding E2E tests..."
 	$(Q)go test ${V_FLAG} -race $(shell go list ./... | grep -v /test/e2e) -failfast
 
@@ -101,6 +101,7 @@ print-logs:
 .PHONY: e2e-setup
 e2e-setup: build-image
 	-oc new-project $(TOOLCHAIN_NS) --display-name e2e-tests 1>/dev/null
+ifneq ($(IS_OS_3),)
 	oc apply -f ./deploy/service_account.yaml
 	oc apply -f ./deploy/role.yaml
 	oc apply -f ./deploy/role_binding.yaml
@@ -109,6 +110,31 @@ e2e-setup: build-image
 	sed -e 's|REPLACE_NAMESPACE|${TOOLCHAIN_NS}|g' ./deploy/cluster_role_binding.yaml | oc apply -f -
 	oc apply -f deploy/crds
 	sed -e 's|REPLACE_IMAGE|${IMAGE_NAME}|g' ./deploy/operator.yaml  | oc apply -f -
+else
+	# it is not using OS 3 so we will install operator via CSV
+	$(eval REPO_NAME := ${GO_PACKAGE_REPO_NAME})
+	sed -e 's|REPLACE_IMAGE|${IMAGE_NAME}|g;s|^  name: .*|&-${DATE_SUFFIX}|;s|^  configMap: .*|&-${DATE_SUFFIX}|' ./hack/deploy_csv.yaml > /tmp/${REPO_NAME}_deploy_csv_${DATE_SUFFIX}.yaml
+	cat /tmp/${REPO_NAME}_deploy_csv_${DATE_SUFFIX}.yaml | oc apply -f -
+	sed -e 's|REPLACE_NAMESPACE|${TOOLCHAIN_NS}|g;s|^  source: .*|&-${DATE_SUFFIX}|' ./hack/install_operator.yaml > /tmp/${REPO_NAME}_install_operator_${DATE_SUFFIX}.yaml
+	cat /tmp/${REPO_NAME}_install_operator_${DATE_SUFFIX}.yaml | oc apply -f -
+	while [[ -z `oc get sa ${REPO_NAME} -n ${TOOLCHAIN_NS} 2>/dev/null` ]]; do \
+		if [[ $${NEXT_WAIT_TIME} -eq 300 ]]; then \
+		   CATALOGSOURCE_NAME=`oc get catalogsource --output=name -n openshift-marketplace | grep "${REPO_NAME}.*${DATE_SUFFIX}"`; \
+		   SUBSCRIPTION_NAME=`oc get subscription --output=name -n ${TOOLCHAIN_NS} | grep "${REPO_NAME}"`; \
+		   echo "reached timeout of waiting for ServiceAccount ${REPO_NAME} to be available in namespace ${TOOLCHAIN_NS} - see following info for debugging:"; \
+		   echo "================================ CatalogSource =================================="; \
+		   oc get $${CATALOGSOURCE_NAME} -n openshift-marketplace -o yaml; \
+		   echo "================================ CatalogSource Pod Logs =================================="; \
+		   oc logs `oc get pods -l "olm.catalogSource=$${CATALOGSOURCE_NAME#*/}" -n openshift-marketplace -o name` -n openshift-marketplace; \
+		   echo "================================ Subscription =================================="; \
+		   oc get $${SUBSCRIPTION_NAME} -n ${TOOLCHAIN_NS} -o yaml; \
+		   $(MAKE) print-logs TOOLCHAIN_NS=${TOOLCHAIN_NS}; \
+		   exit 1; \
+		fi; \
+		echo "$$(( NEXT_WAIT_TIME++ )). attempt of waiting for ServiceAccount ${REPO_NAME} in namespace ${TOOLCHAIN_NS}"; \
+		sleep 1; \
+	done
+endif
 
 .PHONY: build-image
 build-image:
@@ -116,14 +142,13 @@ ifneq ($(IS_OS_3),)
 	$(info logging as system:admin")
 	$(shell echo "oc login -u system:admin")
 	$(eval IMAGE_NAME := docker.io/${GO_PACKAGE_ORG_NAME}/${GO_PACKAGE_REPO_NAME}:${GIT_COMMIT_ID_SHORT})
-	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
+	$(MAKE) docker-image IMAGE=${IMAGE_NAME}
 else ifneq ($(IS_OS_CI),)
 	$(eval IMAGE_NAME := registry.svc.ci.openshift.org/${OPENSHIFT_BUILD_NAMESPACE}/stable:toolchain-operator)
 else
 	# For OpenShift-4
 	$(eval IMAGE_NAME := quay.io/${QUAY_NAMESPACE}/${GO_PACKAGE_REPO_NAME}:${DATE_SUFFIX})
-	$(MAKE) docker-image IMAGE_NAME=${IMAGE_NAME}
-	$(Q)docker push ${IMAGE_NAME}
+	$(MAKE) docker-push IMAGE=${IMAGE_NAME}
 endif
 
 .PHONY: e2e-cleanup
