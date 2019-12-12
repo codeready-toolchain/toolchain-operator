@@ -644,7 +644,7 @@ func TestGetCheClusterStatus(t *testing.T) {
 }
 
 func TestEnsureWatchCheCluster(t *testing.T) {
-	t.Run("add_watch_ok", func(t *testing.T){
+	t.Run("add_watch_ok", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 			return nil
@@ -660,7 +660,7 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 		assert.Nil(t, r.watchCheCluster)
 	})
 
-	t.Run("add_watch_failed_as_crd_not_found", func(t *testing.T){
+	t.Run("add_watch_failed_as_crd_not_found", func(t *testing.T) {
 		cl, r := configureClient(t)
 		errMsg := "not found"
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
@@ -677,7 +677,7 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 		assert.EqualError(t, err, errMsg)
 	})
 
-	t.Run("add_watch_failed_as_kind_not_found", func(t *testing.T){
+	t.Run("add_watch_failed_as_kind_not_found", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 			return nil

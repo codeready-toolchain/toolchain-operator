@@ -48,25 +48,6 @@ func NewInstallation() *v1alpha1.CheInstallation {
 
 // NewSubscription for CodeReady Workspaces operator
 func NewSubscription(ns string) *olmv1alpha1.Subscription {
-	/* 	Default Subscription yaml: oc get sub codeready-workspaces -o yaml
-	apiVersion: operators.coreos.com/v1alpha1
-	kind: Subscription
-	metadata:
-	  creationTimestamp: "2019-11-28T04:47:12Z"
-	  generation: 1
-	  name: codeready-workspaces
-	  namespace: demo-crw
-	  resourceVersion: "30249"
-	  selfLink: /apis/operators.coreos.com/v1alpha1/namespaces/demo-crw/subscriptions/codeready-workspaces
-	  uid: 24d3ecab-119a-11ea-9fce-52fdfc072182
-	spec:
-	  channel: latest
-	  installPlanApproval: Automatic
-	  name: codeready-workspaces
-	  source: redhat-operators
-	  sourceNamespace: openshift-marketplace
-	  startingCSV: crwoperator.v2.0.0
-	*/
 	return &olmv1alpha1.Subscription{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      SubscriptionName,

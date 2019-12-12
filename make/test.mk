@@ -73,6 +73,7 @@ TOOLCHAIN_NS := openshift-operators
 ###########################################################
 
 DATE_SUFFIX := $(shell date +'%s')
+
 IS_OS_3 := $(shell curl -k -XGET -H "Authorization: Bearer $(shell oc whoami -t 2>/dev/null)" $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.server}')/version/openshift 2>/dev/null | grep paths)
 IS_CRC := $(shell oc config view --minify -o jsonpath='{.clusters[0].cluster.server}' 2>&1 | grep crc)
 IS_OS_CI := $(OPENSHIFT_BUILD_NAMESPACE)

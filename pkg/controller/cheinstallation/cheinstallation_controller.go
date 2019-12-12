@@ -136,7 +136,7 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 	}
 
 	if err := r.ensureWatchCheCluster(); err != nil {
-		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to add watch for CheCluster")
+		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to add watch for CheCluster")
 	}
 
 	if created, statusMsg, err := r.ensureCheCluster(reqLogger, cheInstallation); err != nil {
@@ -147,7 +147,6 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, r.statusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionInstalling, statusMsg)
 	}
 
-	
 	return reconcile.Result{}, r.statusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionReady, "")
 }
 
