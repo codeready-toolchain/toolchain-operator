@@ -155,13 +155,13 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallationToDelete(tektonInstallation.Name)
+		err = await.WaitForTektonInstallationToBeDeleted(tektonInstallation.Name)
 		require.NoError(t, err)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
 			DoesNotExist()
 
-		err = await.WaitForCheInstallationToDelete(cheInstallation.Name)
+		err = await.WaitForCheInstallationToBeDeleted(cheInstallation.Name)
 		require.NoError(t, err)
 
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).

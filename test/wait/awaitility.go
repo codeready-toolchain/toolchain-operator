@@ -48,7 +48,7 @@ func (a *ToolchainAwaitility) WaitForCheInstallation(name string) error {
 	})
 }
 
-func (a *ToolchainAwaitility) WaitForCheInstallationToDelete(name string) error {
+func (a *ToolchainAwaitility) WaitForCheInstallationToBeDeleted(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ic := &v1alpha1.CheInstallation{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic); err != nil {
@@ -64,7 +64,7 @@ func (a *ToolchainAwaitility) WaitForCheInstallationToDelete(name string) error 
 	})
 }
 
-func (a *ToolchainAwaitility) WaitForTektonInstallationToDelete(name string) error {
+func (a *ToolchainAwaitility) WaitForTektonInstallationToBeDeleted(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		tektonInstallation := &v1alpha1.TektonInstallation{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, tektonInstallation); err != nil {
