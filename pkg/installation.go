@@ -47,7 +47,7 @@ func CreateInstallationResources(cl client.Client, scheme *runtime.Scheme, log l
 		}
 	}
 
-	// create the TektonInstallation resource on the cluster at startup, stop if something when wrong
+	// create the TektonInstallation resource, stop if something wrong happened
 	log.Info("Creating the Tekton installation resource")
 	if err = cl.Create(context.TODO(), tektonInstallation); err != nil && !apierrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "Failed to create the 'TektonInstallation' custom resource during startup")
