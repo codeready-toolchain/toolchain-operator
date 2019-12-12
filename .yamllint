@@ -1,3 +1,6 @@
+ignore: |
+  vendor
+
 rules:
   braces: enable
   brackets: enable
@@ -21,6 +24,8 @@ rules:
   quoted-strings: disable
   trailing-spaces: enable
   truthy:
+    ignore: |
+      .codecov.yaml
     level: warning
 
   # accept both     key:
