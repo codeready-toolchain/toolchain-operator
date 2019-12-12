@@ -54,7 +54,7 @@ func CreateInstallationResources(cl client.Client, scheme *runtime.Scheme, log l
 	}
 	log.Info("Tekton Installation resource created")
 
-	// create the CheInstallation resource on the cluster at startup, stop if something when wrong
+	// create the CheInstallation resource, stop if something wrong happened
 	log.Info("Creating the Che installation resource")
 	if err = cl.Create(context.TODO(), cheInstallation); err != nil && !apierrors.IsAlreadyExists(err) {
 		return errors.Wrap(err, "Failed to create the 'CheInstallation' custom resource")
