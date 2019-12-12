@@ -22,13 +22,14 @@ const (
 	OperatorGroupName = InstallationName
 	// SubscriptionName the name of the OLM subscription for Che
 	SubscriptionName = "codeready-workspaces"
-
-	CheClusterName = "codeready-workspaces"
-	CheFlavorName  = "codeready"
-
-	AvailableStatus = "Available"
 	// StartingCSV keeps the CSV version the installation should start with
 	StartingCSV = "crwoperator.v2.0.0"
+	// CheClusterName the name of the CheCluster
+	CheClusterName = "codeready-workspaces"
+	// CheFlavorName the name of the CheCluster flavor
+	CheFlavorName = "codeready"
+	// AvailableStatus constant for Available status
+	AvailableStatus = "Available"
 )
 
 // NewInstallation returns a new CheInstallation resource
