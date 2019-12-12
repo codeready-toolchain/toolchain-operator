@@ -152,7 +152,7 @@ func main() {
 		}
 
 		if err := pkg.CreateInstallationResources(mgr.GetClient(), mgr.GetScheme(), log); err != nil {
-			log.Error(err, "unable to create toolchain installation resources")
+			log.Error(err, "unable to create toolchain installation resources during startup")
 			os.Exit(1)
 		}
 	}()
