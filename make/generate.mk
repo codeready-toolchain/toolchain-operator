@@ -46,3 +46,17 @@ else
 	@echo "generating CSV using script from GH api repo (using latest version in master)..."
 	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/olm-catalog-generate.sh | bash -s -- ${GENERATE_PARAMS}
 endif
+
+
+CSV_VERSION_TO_GENERATE := 0.1.0
+
+PHONY: generate-release-manifest
+generate-release-manifest:
+	$(eval GENERATE_PARAMS = -pr ../toolchain-operator -on codeready-toolchain-operator  --next-version ${CSV_VERSION_TO_GENERATE})
+ifneq ("$(wildcard $(PATH_TO_GENERATE_FILE))","")
+	@echo "generating release manifest in ./manifest/ directory using script from local api repo..."
+	../api/scripts/create-release-bundle.sh ${GENERATE_PARAMS}
+else
+	@echo "generating release manifest in ./manifest/ directory using script from GH api repo (using latest version in master)..."
+	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/create-release-bundle.sh | bash -s -- ${GENERATE_PARAMS}
+endif
