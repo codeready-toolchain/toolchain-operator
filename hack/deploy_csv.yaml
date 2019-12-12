@@ -21,6 +21,7 @@ data:
     - apiVersion: apiextensions.k8s.io/v1beta1
       kind: CustomResourceDefinition
       metadata:
+        creationTimestamp: null
         name: cheinstallations.toolchain.openshift.dev
       spec:
         additionalPrinterColumns:
@@ -101,19 +102,27 @@ data:
                           description: Type of condition
                           type: string
                       required:
-                      - type
                       - status
+                      - type
                       type: object
                     type: array
                 type: object
+            type: object
         version: v1alpha1
         versions:
         - name: v1alpha1
           served: true
           storage: true
+      status:
+        acceptedNames:
+          kind: ""
+          plural: ""
+        conditions: []
+        storedVersions: []
     - apiVersion: apiextensions.k8s.io/v1beta1
       kind: CustomResourceDefinition
       metadata:
+        creationTimestamp: null
         name: tektoninstallations.toolchain.openshift.dev
       spec:
         additionalPrinterColumns:
@@ -178,8 +187,8 @@ data:
                           description: Type of condition
                           type: string
                       required:
-                        - type
-                        - status
+                      - status
+                      - type
                       type: object
                     type: array
                 type: object
@@ -189,6 +198,12 @@ data:
         - name: v1alpha1
           served: true
           storage: true
+      status:
+        acceptedNames:
+          kind: ""
+          plural: ""
+        conditions: []
+        storedVersions: []
   clusterServiceVersions: |-
     - apiVersion: operators.coreos.com/v1alpha1
       kind: ClusterServiceVersion
