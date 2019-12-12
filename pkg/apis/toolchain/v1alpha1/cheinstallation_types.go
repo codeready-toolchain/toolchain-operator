@@ -42,6 +42,7 @@ type CheInstallationStatus struct {
 // +kubebuilder:resource:path=cheinstallations,scope=Cluster
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"CheReady\")].status"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type==\"CheReady\")].reason"
+// +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type==\"CheReady\")].message",priority=1
 type CheInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
