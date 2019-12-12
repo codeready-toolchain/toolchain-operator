@@ -119,8 +119,8 @@ func NewCheCluster(ns string) *orgv1.CheCluster {
 		Spec: orgv1.CheClusterSpec{
 			Server: orgv1.CheClusterSpecServer{
 				CheFlavor:      CheFlavorName,
-				TlsSupport:     true,
-				SelfSignedCert: true,
+				TlsSupport:     false,
+				SelfSignedCert: false,
 			},
 
 			Database: orgv1.CheClusterSpecDB{
