@@ -44,11 +44,8 @@ func (a *CheInstallationAssertion) HasOwnerRef(sub *opsv1alpha1.Subscription) *C
 	err := a.loadCheInstallationAssertion()
 	require.NoError(a.t, err)
 
-	err = a.client.Get(context.TODO(), types.NamespacedName{Namespace: sub.GetNamespace(), Name: sub.GetName()}, sub)
-	require.NoError(a.t, err)
-
 	references := a.cheInstallation.ObjectMeta.GetOwnerReferences()
-	assertThatContainsOwnerReference(a.t, references, sub)
+	assertThatContainsOwnerReference(a.t, a.client, references, sub)
 	return a
 }
 

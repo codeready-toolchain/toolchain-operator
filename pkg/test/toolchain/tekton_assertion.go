@@ -50,11 +50,8 @@ func (a *TektonInstallationAssertion) HasOwnerRef(sub *opsv1alpha1.Subscription)
 	err := a.loadTektonInstallationAssertion()
 	require.NoError(a.t, err)
 
-	err = a.client.Get(context.TODO(), types.NamespacedName{Namespace: sub.GetNamespace(), Name: sub.GetName()}, sub)
-	require.NoError(a.t, err)
-
 	references := a.tektonInstallation.ObjectMeta.GetOwnerReferences()
-	assertThatContainsOwnerReference(a.t, references, sub)
+	assertThatContainsOwnerReference(a.t, a.client, references, sub)
 	return a
 }
 
@@ -76,7 +73,10 @@ func (a *TektonInstallationAssertion) HasConditions(expected ...toolchainv1alpha
 	return a
 }
 
-func assertThatContainsOwnerReference(t *testing.T, references []v1.OwnerReference, sub *opsv1alpha1.Subscription) {
+func assertThatContainsOwnerReference(t *testing.T, cl client.Client, references []v1.OwnerReference, sub *opsv1alpha1.Subscription) {
+	err := cl.Get(context.TODO(), types.NamespacedName{Namespace: sub.GetNamespace(), Name: sub.GetName()}, sub)
+	require.NoError(t, err)
+
 	require.Len(t, references, 1)
 	assert.Equal(t, sub.GetName(), references[0].Name)
 	assert.Equal(t, sub.Kind, references[0].Kind)
