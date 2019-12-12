@@ -8,13 +8,14 @@ require (
 	github.com/go-openapi/spec v0.19.4
 	github.com/gobuffalo/flect v0.1.7 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golangci/golangci-lint v1.21.0 // indirect
 	github.com/json-iterator/go v1.1.8 // indirect
+	github.com/mattn/go-colorable v0.1.4 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible // indirect
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20190718033018-874b1785500e
 	github.com/operator-framework/operator-sdk v0.11.1-0.20191012024916-f419ad3f3dc5
 	github.com/pkg/errors v0.8.1
+	github.com/satori/go.uuid v1.2.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
 	golang.org/x/net v0.0.0-20191207000613-e7e4b65ae663 // indirect
