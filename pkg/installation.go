@@ -33,7 +33,7 @@ func CreateInstallationResources(cl client.Client, scheme *runtime.Scheme, log l
 	subscriptions := &v1alpha1.SubscriptionList{}
 	err := cl.List(context.TODO(), subscriptions, client.InNamespace(defaultOpenShiftOperatorsNamespace))
 	if err != nil {
-		return errors.Wrap(err, "unable to list the subscription")
+		return errors.Wrap(err, "unable to list the subscriptions")
 	}
 	for _, subscription := range subscriptions.Items {
 		if subscription.Spec.Package == codereadyToolchainPackageName {
