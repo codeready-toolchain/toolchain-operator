@@ -4,6 +4,9 @@ import (
 	"context"
 	"testing"
 
+	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
+
+	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -12,7 +15,10 @@ import (
 
 // NewFakeClient creates a fake K8s client with ability to override specific Get/List/Create/Update/StatusUpdate/Delete functions
 func NewFakeClient(t *testing.T, initObjs ...runtime.Object) *FakeClient {
-	client := fake.NewFakeClientWithScheme(scheme.Scheme, initObjs...)
+	s := scheme.Scheme
+	err := apis.AddToScheme(s)
+	require.NoError(t, err)
+	client := fake.NewFakeClientWithScheme(s, initObjs...)
 	return &FakeClient{client, t, nil, nil, nil, nil, nil, nil, nil, nil, nil}
 }
 

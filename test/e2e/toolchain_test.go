@@ -112,30 +112,6 @@ func TestToolchain(t *testing.T) {
 		checkCheResources(t, f.Client.Client, cheOperatorNS, nil, cheSub)
 	})
 
-	t.Run("should remove operatorgroup and subscription for che with CheInstallation deletion", func(t *testing.T) {
-		// given
-		cheInstallation, err := await.GetCheInstallation(cheInstallation.Name)
-		require.NoError(t, err)
-
-		// when
-		err = f.Client.Delete(context.TODO(), cheInstallation)
-
-		// then
-		require.NoError(t, err, "failed to create toolchain CheInstallation")
-
-		err = await.WaitForCheInstallationToDelete(cheInstallation.Name)
-		require.NoError(t, err)
-
-		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
-			DoesNotExist()
-
-		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
-			DoesNotExist()
-
-		AssertThatNamespace(t, cheOperatorNS, f.Client).
-			DoesNotExist()
-	})
-
 	t.Run("should create subscription for tekton with TektonInstallation", func(t *testing.T) {
 		// given
 		// TektonInstallation should already exist
@@ -165,6 +141,37 @@ func TestToolchain(t *testing.T) {
 		require.NoError(t, err)
 
 		checkTektonResources(t, f.Client.Client, tektonSub)
+	})
+
+	t.Run("should remove both Tekton and Che when toolchain operator is deleted", func(t *testing.T) {
+		// given
+		toolchainSubscription := &olmv1alpha1.Subscription{}
+		err := f.Client.Get(context.TODO(), types.NamespacedName{Namespace: "openshift-operators", Name: "subscription-codeready-toolchain-operator"}, toolchainSubscription)
+		require.NoError(t, err)
+
+		// when
+		err = f.Client.Delete(context.TODO(), toolchainSubscription)
+
+		// then
+		require.NoError(t, err)
+
+		err = await.WaitForTektonInstallationToBeDeleted(tektonInstallation.Name)
+		require.NoError(t, err)
+
+		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).
+			DoesNotExist()
+
+		err = await.WaitForCheInstallationToBeDeleted(cheInstallation.Name)
+		require.NoError(t, err)
+
+		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
+			DoesNotExist()
+
+		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
+			DoesNotExist()
+
+		AssertThatNamespace(t, cheOperatorNS, f.Client).
+			DoesNotExist()
 	})
 }
 
@@ -210,9 +217,8 @@ func InitOperator(t *testing.T) (*framework.TestCtx, wait.ToolchainAwaitility) {
 	// get global framework variables
 	f := framework.Global
 	await := wait.ToolchainAwaitility{
-		T:         t,
-		Namespace: namespace,
-		Client:    f.Client,
+		T:      t,
+		Client: f.Client,
 	}
 	// wait for toolchain-operator to be ready
 	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "toolchain-operator", 1, wait.RetryInterval, wait.Timeout)

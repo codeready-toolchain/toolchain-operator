@@ -2,12 +2,16 @@ package toolchain
 
 import (
 	"context"
+	"testing"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+
+	opsv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 type CheInstallationAssertion struct {
@@ -33,6 +37,26 @@ func AssertThatCheInstallation(t *testing.T, ns, name string, client client.Clie
 		namespacedName: types.NamespacedName{ns, name},
 		t:              t,
 	}
+}
+
+// HasOwnerRef verifies that the Che installation has the expected ownerReference
+func (a *CheInstallationAssertion) HasOwnerRef(sub *opsv1alpha1.Subscription) *CheInstallationAssertion {
+	err := a.loadCheInstallationAssertion()
+	require.NoError(a.t, err)
+
+	references := a.cheInstallation.ObjectMeta.GetOwnerReferences()
+	assertThatContainsOwnerReference(a.t, a.client, references, sub)
+	return a
+}
+
+// HasNoOwnerRef verifies that the Che installation has no ownerReference
+func (a *CheInstallationAssertion) HasNoOwnerRef() *CheInstallationAssertion {
+	err := a.loadCheInstallationAssertion()
+	require.NoError(a.t, err)
+
+	references := a.cheInstallation.ObjectMeta.GetOwnerReferences()
+	assert.Empty(a.t, references)
+	return a
 }
 
 func (a *CheInstallationAssertion) HasConditions(expected ...toolchainv1alpha1.Condition) *CheInstallationAssertion {
