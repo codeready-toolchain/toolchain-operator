@@ -275,26 +275,6 @@ data:
             clusterPermissions:
             - rules:
               - apiGroups:
-                - operators.coreos.com
-                resources:
-                - subscriptions
-                - operatorgroups
-                verbs:
-                - get
-                - create
-                - list
-                - watch
-              - apiGroups:
-                - operators.coreos.com
-                resources:
-                - catalogsources
-                - clusterserviceversions
-                - installplans
-                verbs:
-                - get
-                - list
-                - watch
-              - apiGroups:
                 - ""
                 resources:
                 - namespaces
@@ -403,6 +383,32 @@ data:
                 - replicasets
                 verbs:
                 - get
+              - apiGroups:
+                - operators.coreos.com
+                resources:
+                - subscriptions
+                - operatorgroups
+                verbs:
+                - get
+                - create
+                - list
+                - watch
+              - apiGroups:
+                - operators.coreos.com
+                resources:
+                - subscriptions/finalizers
+                verbs:
+                - update
+              - apiGroups:
+                - operators.coreos.com
+                resources:
+                - catalogsources
+                - clusterserviceversions
+                - installplans
+                verbs:
+                - get
+                - list
+                - watch
               serviceAccountName: toolchain-operator
           strategy: deployment
         installModes:
