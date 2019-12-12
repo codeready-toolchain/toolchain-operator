@@ -8,10 +8,9 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/codeready-toolchain/toolchain-operator/pkg"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	"github.com/operator-framework/operator-sdk/pkg/k8sutil"
@@ -23,7 +22,6 @@ import (
 	sdkVersion "github.com/operator-framework/operator-sdk/version"
 	"github.com/spf13/pflag"
 	v1 "k8s.io/api/core/v1"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
@@ -152,22 +150,11 @@ func main() {
 			log.Error(errors.New("timed out waiting for caches to sync"), "")
 			os.Exit(1)
 		}
-		// create the TektonInstallation resource on the cluster at startup, stop if something when wrong
-		log.Info("Creating the Tekton installation resource")
-		if err = mgr.GetClient().Create(context.TODO(), tektoninstallation.NewInstallation()); err != nil && !apierrors.IsAlreadyExists(err) {
-			log.Error(err, "Failed to create the 'TektonInstallation' custom resource during startup")
+
+		if err := pkg.CreateInstallationResources(mgr.GetClient(), mgr.GetScheme(), log); err != nil {
+			log.Error(err, "unable to create toolchain installation resources during startup")
 			os.Exit(1)
 		}
-		log.Info("Tekton Installation resource created")
-
-		// create the CheInstallation resource on the cluster at startup, stop if something when wrong
-		log.Info("Creating the Che installation resource")
-		if err = mgr.GetClient().Create(context.TODO(), cheinstallation.NewInstallation()); err != nil && !apierrors.IsAlreadyExists(err) {
-			log.Error(err, "Failed to create the 'CheInstallation' custom resource during startup")
-			os.Exit(1)
-		}
-		log.Info("Che Installation resource created")
-
 	}()
 
 	log.Info("Starting the Cmd.")
