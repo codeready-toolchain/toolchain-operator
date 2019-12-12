@@ -87,7 +87,7 @@ test-e2e: test-e2e-keep-resources clean-e2e-resources
 
 .PHONY: e2e-run
 e2e-run:
-	operator-sdk test local ./test/e2e --no-setup --namespace $(TOOLCHAIN_NS) --verbose --go-test-flags "-timeout=60m" || \
+	operator-sdk test local ./test/e2e --no-setup --namespace $(TOOLCHAIN_NS) --verbose --go-test-flags "-timeout=90m" || \
 	($(MAKE) print-logs TOOLCHAIN_NS=${TOOLCHAIN_NS} && exit 1)
 
 .PHONY: print-logs
