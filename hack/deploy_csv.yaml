@@ -31,6 +31,10 @@ data:
         - JSONPath: .status.conditions[?(@.type=="CheReady")].reason
           name: Reason
           type: string
+        - JSONPath: .status.conditions[?(@.type=="CheReady")].message
+          name: Message
+          priority: 1
+          type: string
         group: toolchain.openshift.dev
         names:
           kind: CheInstallation
@@ -402,9 +406,9 @@ data:
               serviceAccountName: toolchain-operator
           strategy: deployment
         installModes:
-        - supported: true
+        - supported: false
           type: OwnNamespace
-        - supported: true
+        - supported: false
           type: SingleNamespace
         - supported: false
           type: MultiNamespace

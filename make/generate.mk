@@ -36,12 +36,13 @@ generate-crds: vendor
 
 PATH_TO_GENERATE_FILE=../api/scripts/olm-catalog-generate.sh
 
-.PHONY: generate-csv
+PHONY: generate-csv
 generate-csv:
+	$(eval GENERATE_PARAMS = -pr ../toolchain-operator -on codeready-toolchain-operator --allnamespaces true)
 ifneq ("$(wildcard $(PATH_TO_GENERATE_FILE))","")
 	@echo "generating CSV using script from local api repo..."
-	$(PATH_TO_GENERATE_FILE) -pr ../toolchain-operator/ -on codeready-toolchain-operator
+	$(PATH_TO_GENERATE_FILE) ${GENERATE_PARAMS}
 else
 	@echo "generating CSV using script from GH api repo (using latest version in master)..."
-	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/olm-catalog-generate.sh | bash -s --  -pr ../toolchain-operator/ -on codeready-toolchain-operator
+	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/olm-catalog-generate.sh | bash -s -- ${GENERATE_PARAMS}
 endif
