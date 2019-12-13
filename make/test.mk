@@ -101,6 +101,7 @@ print-logs:
 .PHONY: e2e-setup
 e2e-setup: build-image
 	oc project $(TOOLCHAIN_NS) 1>/dev/null
+	-oc create user foo
 ifneq ($(IS_OS_3),)
 	oc apply -f ./deploy/service_account.yaml
 	oc apply -f ./deploy/role.yaml
