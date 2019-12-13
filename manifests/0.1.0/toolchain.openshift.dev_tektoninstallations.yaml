@@ -2,31 +2,27 @@ apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
   creationTimestamp: null
-  name: cheinstallations.toolchain.openshift.dev
+  name: tektoninstallations.toolchain.openshift.dev
 spec:
   additionalPrinterColumns:
-  - JSONPath: .status.conditions[?(@.type=="CheReady")].status
+  - JSONPath: .status.conditions[?(@.type=="TektonReady")].status
     name: Ready
     type: string
-  - JSONPath: .status.conditions[?(@.type=="CheReady")].reason
+  - JSONPath: .status.conditions[?(@.type=="TektonReady")].reason
     name: Reason
-    type: string
-  - JSONPath: .status.conditions[?(@.type=="CheReady")].message
-    name: Message
-    priority: 1
     type: string
   group: toolchain.openshift.dev
   names:
-    kind: CheInstallation
-    listKind: CheInstallationList
-    plural: cheinstallations
-    singular: cheinstallation
+    kind: TektonInstallation
+    listKind: TektonInstallationList
+    plural: tektoninstallations
+    singular: tektoninstallation
   scope: Cluster
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: CheInstallation is the Schema for the cheinstallations API
+      description: TektonInstallation is the Schema for the tektoninstallations API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -41,27 +37,14 @@ spec:
         metadata:
           type: object
         spec:
-          description: CheInstallationSpec defines the desired state of CheInstallation
-          properties:
-            cheOperatorSpec:
-              description: The configuration required for che operator
-              properties:
-                namespace:
-                  description: The namespace where the CodeReady Workspaces operator
-                    will be installed
-                  type: string
-              required:
-              - namespace
-              type: object
-          required:
-          - cheOperatorSpec
+          description: TektonInstallationSpec defines the desired state of TektonInstallation
           type: object
         status:
-          description: CheInstallationStatus defines the observed state of CheInstallation
+          description: TektonInstallationStatus defines the observed state of TektonInstallation
           properties:
             conditions:
-              description: 'Conditions is an array of current CheInstallation conditions
-                Supported condition types: CheReady'
+              description: 'Conditions is an array of current TektonInstallation conditions
+                Supported condition types: TektonReady'
               items:
                 properties:
                   lastTransitionTime:

@@ -28,8 +28,8 @@ metadata:
     capabilities: Basic Install
     categories: Developer Tools, Integration & Delivery, OpenShift Optional
     certified: "false"
-    containerImage: REPLACE_IMAGE
-    createdAt: REPLACE_CREATED_AT
+    containerImage: quay.io/codeready-toolchain/toolchain-operator:6cfa9ae
+    createdAt: 2019-12-13T14:05:20Z
     description: CodeReady Toolchain is a suite of dev tools and runtimes for development
       and deployment of cloud-native applications on OpenShift. CodeReady Toolchain
       provides an easy way to deploy and configure the set of Red Hat curated developer
@@ -37,7 +37,7 @@ metadata:
       from the Dev Perspective of the OpenShift console.
     repository: https://github.com/codeready-toolchain/toolchain-operator
     support: Red Hat, Inc.
-  name: codeready-toolchain-operator.v0.0.1
+  name: codeready-toolchain-operator.v0.1.0
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -93,43 +93,6 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
-          - operators.coreos.com
-          resources:
-          - subscriptions
-          - operatorgroups
-          verbs:
-          - get
-          - create
-          - list
-          - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - catalogsources
-          - clusterserviceversions
-          - installplans
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
-          - org.eclipse.che
-          resources:
-          - checlusters
-          verbs:
-          - get
-          - create
-          - list
-          - watch
-        - apiGroups:
-          - apiextensions.k8s.io
-          resources:
-          - customresourcedefinitions
-          verbs:
-          - get
-          - list
-          - watch
-        - apiGroups:
           - ""
           resources:
           - namespaces
@@ -182,7 +145,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: toolchain-operator
-                image: REPLACE_IMAGE
+                image: quay.io/codeready-toolchain/toolchain-operator:6cfa9ae
                 imagePullPolicy: Always
                 name: toolchain-operator
                 resources: {}
@@ -284,4 +247,4 @@ spec:
   maturity: alpha
   provider:
     name: Red Hat, Inc.
-  version: 0.0.1
+  version: 0.1.0
