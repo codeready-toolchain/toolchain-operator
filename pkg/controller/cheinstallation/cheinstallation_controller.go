@@ -3,6 +3,7 @@ package cheinstallation
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
@@ -99,6 +100,7 @@ type ReconcileCheInstallation struct {
 	client          client.Client
 	scheme          *runtime.Scheme
 	watchCheCluster func() error
+	mu              sync.Mutex
 }
 
 // Reconcile reads that state of the cluster for a CheInstallation object and makes changes based on the state read
@@ -223,17 +225,24 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, che
 	return false, nil
 }
 
+// ensureWatchCheCluster adds watch for CheCluster resource if CheCluster CRD is installed else return requeue with true
+// CheCluster CRD may takes time to get installed until CheOperator is installed successfully
+// Once watch addded for CheCluster, sub-sequent calls to ensureWatchCheCluster() will do nothing
 func (r *ReconcileCheInstallation) ensureWatchCheCluster() (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if r.watchCheCluster != nil {
 		cheClusterCRD := &apiextnv1beta1.CustomResourceDefinition{}
 		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "checlusters.org.eclipse.che"}, cheClusterCRD); err != nil {
 			if errors.IsNotFound(err) {
+				log.Info("requeue required", "message", err.Error())
 				return true, nil
 			}
 			return false, err
 		}
 		if err := r.watchCheCluster(); err != nil {
 			if meta.IsNoMatchError(err) {
+				log.Info("requeue required", "message", err.Error())
 				return true, nil
 			}
 			return false, err

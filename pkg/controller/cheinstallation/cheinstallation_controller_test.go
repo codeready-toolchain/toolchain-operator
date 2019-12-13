@@ -667,7 +667,7 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 	t.Run("add_watch_requeue_as_crd_not_found", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
-			return errs.NewNotFound(schema.GroupResource{Group: "Foo", Resource: "Foo"}, "Foo")
+			return errs.NewNotFound(schema.GroupResource{Resource: "Foo"}, "Foo")
 		}
 		r.watchCheCluster = func() error {
 			return nil
