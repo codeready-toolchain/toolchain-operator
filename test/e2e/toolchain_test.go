@@ -14,6 +14,7 @@ import (
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
+	"k8s.io/apimachinery/pkg/types"
 
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
@@ -141,7 +142,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallationToDelete(cheInstallation.Name)
+		err = await.WaitForCheInstallationToBeDeleted(cheInstallation.Name)
 		require.NoError(t, err)
 
 		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
@@ -256,7 +257,6 @@ func InitOperator(t *testing.T) (*framework.TestCtx, wait.ToolchainAwaitility) {
 	err := framework.AddToFrameworkScheme(apis.AddToScheme, icList)
 	require.NoError(t, err, "failed to add custom resource scheme to framework: %v", err)
 
-	t.Parallel()
 	ctx := framework.NewTestCtx(t)
 
 	err = ctx.InitializeClusterResources(cleanupOptions(ctx))
