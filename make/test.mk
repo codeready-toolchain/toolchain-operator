@@ -101,6 +101,8 @@ print-logs:
 .PHONY: e2e-setup
 e2e-setup: build-image
 	oc project $(TOOLCHAIN_NS) 1>/dev/null
+	# also, create a user, as Che operator needs that least 1 user exists in order to perform the installation
+	@-oc create user foo 2>/dev/null
 ifneq ($(IS_OS_3),)
 	oc apply -f ./deploy/service_account.yaml
 	oc apply -f ./deploy/role.yaml
@@ -113,13 +115,13 @@ ifneq ($(IS_OS_3),)
 else
 	# it is not using OS 3 so we will install operator via CSV
 	$(eval REPO_NAME := ${GO_PACKAGE_REPO_NAME})
-	sed -e 's|REPLACE_IMAGE|${IMAGE_NAME}|g;s|^  name: .*|&-${DATE_SUFFIX}|;s|^  configMap: .*|&-${DATE_SUFFIX}|' ./hack/deploy_csv.yaml > /tmp/${REPO_NAME}_deploy_csv_${DATE_SUFFIX}.yaml
+	sed -e 's|REPLACE_IMAGE|${IMAGE_NAME}|g' ./hack/deploy_csv.yaml > /tmp/${REPO_NAME}_deploy_csv_${DATE_SUFFIX}.yaml
 	cat /tmp/${REPO_NAME}_deploy_csv_${DATE_SUFFIX}.yaml | oc apply -f -
-	sed -e 's|REPLACE_NAMESPACE|${TOOLCHAIN_NS}|g;s|^  source: .*|&-${DATE_SUFFIX}|' ./hack/install_operator.yaml > /tmp/${REPO_NAME}_install_operator_${DATE_SUFFIX}.yaml
+	sed -e 's|REPLACE_NAMESPACE|${TOOLCHAIN_NS}|g' ./hack/install_operator.yaml > /tmp/${REPO_NAME}_install_operator_${DATE_SUFFIX}.yaml
 	cat /tmp/${REPO_NAME}_install_operator_${DATE_SUFFIX}.yaml | oc apply -f -
 	while [[ -z `oc get sa ${REPO_NAME} -n ${TOOLCHAIN_NS} 2>/dev/null` ]]; do \
 		if [[ $${NEXT_WAIT_TIME} -eq 300 ]]; then \
-		   CATALOGSOURCE_NAME=`oc get catalogsource --output=name -n openshift-marketplace | grep "${REPO_NAME}.*${DATE_SUFFIX}"`; \
+		   CATALOGSOURCE_NAME=`oc get catalogsource --output=name -n openshift-marketplace | grep "${REPO_NAME}"`; \
 		   SUBSCRIPTION_NAME=`oc get subscription --output=name -n ${TOOLCHAIN_NS} | grep "${REPO_NAME}"`; \
 		   echo "reached timeout of waiting for ServiceAccount ${REPO_NAME} to be available in namespace ${TOOLCHAIN_NS} - see following info for debugging:"; \
 		   echo "================================ CatalogSource =================================="; \
@@ -153,7 +155,8 @@ endif
 
 .PHONY: clean-e2e-resources
 clean-e2e-resources:
-	oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n openshift-marketplace
-	oc get subscription --output=name -n ${TOOLCHAIN_NS} |  grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n ${TOOLCHAIN_NS}
-	oc get subscription --output=name -n openshift-operators |  grep "openshift-pipelines-operator" | xargs --no-run-if-empty oc delete -n openshift-operators
-	oc delete project toolchain-workspaces --timeout=10s 2 > /dev/null || true
+	-oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs oc delete -n openshift-marketplace
+	-oc get subscription --output=name -n ${TOOLCHAIN_NS} |  grep "toolchain-operator" | xargs oc delete -n ${TOOLCHAIN_NS}
+	-oc get subscription --output=name -n openshift-operators |  grep "openshift-pipelines-operator" | xargs oc delete -n openshift-operators
+	-oc get csv --output=name -n openshift-operators |  grep "codeready-toolchain-operator" | xargs oc delete -n openshift-operators
+	oc delete project toolchain-workspaces --timeout=10s 2>/dev/null || true
