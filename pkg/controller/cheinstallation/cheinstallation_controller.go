@@ -81,7 +81,7 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 
 	err = watchCheCluster()
 	if err != nil {
-		if _, ok := err.(*meta.NoKindMatchError); !ok { // ignore NoKindMatchError
+		if !meta.IsNoMatchError(err) { // ignore NoKindMatchError
 			return err
 		}
 		r.watchCheCluster = watchCheCluster
@@ -135,8 +135,10 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, nil
 	}
 
-	if err := r.ensureWatchCheCluster(); err != nil {
-		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to add watch for CheCluster")
+	if requeue, err := r.ensureWatchCheCluster(); err != nil {
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to add watch for CheCluster")
+	} else if requeue {
+		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
 	if created, statusMsg, err := r.ensureCheCluster(reqLogger, cheInstallation); err != nil {
@@ -221,18 +223,24 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, che
 	return false, nil
 }
 
-func (r *ReconcileCheInstallation) ensureWatchCheCluster() error {
+func (r *ReconcileCheInstallation) ensureWatchCheCluster() (bool, error) {
 	if r.watchCheCluster != nil {
 		cheClusterCRD := &apiextnv1beta1.CustomResourceDefinition{}
 		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "checlusters.org.eclipse.che"}, cheClusterCRD); err != nil {
-			return err
+			if errors.IsNotFound(err) {
+				return true, nil
+			}
+			return false, err
 		}
 		if err := r.watchCheCluster(); err != nil {
-			return err
+			if meta.IsNoMatchError(err) {
+				return true, nil
+			}
+			return false, err
 		}
 		r.watchCheCluster = nil // make sure watchCheCluster() should NOT be called afterwards
 	}
-	return nil
+	return false, nil
 }
 
 func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, string, error) {

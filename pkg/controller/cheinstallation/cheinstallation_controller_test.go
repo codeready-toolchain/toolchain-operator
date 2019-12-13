@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"testing"
 	"time"
 
@@ -22,6 +23,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	v1 "k8s.io/api/core/v1"
+	errs "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -654,44 +657,79 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 		}
 
 		// test
-		err := r.ensureWatchCheCluster()
+		requeue, err := r.ensureWatchCheCluster()
 
 		require.NoError(t, err)
+		assert.False(t, requeue)
 		assert.Nil(t, r.watchCheCluster)
 	})
 
-	t.Run("add_watch_failed_as_crd_not_found", func(t *testing.T) {
+	t.Run("add_watch_requeue_as_crd_not_found", func(t *testing.T) {
 		cl, r := configureClient(t)
-		errMsg := "not found"
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
-			return fmt.Errorf(errMsg)
+			return errs.NewNotFound(schema.GroupResource{Group: "Foo", Resource: "Foo"}, "Foo")
 		}
 		r.watchCheCluster = func() error {
 			return nil
 		}
 
 		// test
-		err := r.ensureWatchCheCluster()
+		requeue, err := r.ensureWatchCheCluster()
 
-		require.Error(t, err)
-		assert.EqualError(t, err, errMsg)
+		require.NoError(t, err)
+		assert.True(t, requeue)
 	})
 
-	t.Run("add_watch_failed_as_kind_not_found", func(t *testing.T) {
+	t.Run("add_watch_failed_as_crd_get_failed", func(t *testing.T) {
+		cl, r := configureClient(t)
+		errMsg := "unknown"
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return fmt.Errorf(errMsg)
+		}
+		r.watchCheCluster = func() error {
+			return nil
+		}
+
+		// test
+		requeue, err := r.ensureWatchCheCluster()
+
+		require.Error(t, err)
+		assert.EqualError(t, err, errMsg)
+		assert.False(t, requeue)
+	})
+
+	t.Run("add_watch_requeue_as_kind_not_found", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 			return nil
 		}
-		errMsg := `no matches for kind "CheCluster" in version "org.eclipse.che/v1"`
+		r.watchCheCluster = func() error {
+			return &meta.NoKindMatchError{GroupKind: schema.GroupKind{Kind: "Foo"}}
+		}
+
+		// test
+		requeue, err := r.ensureWatchCheCluster()
+
+		require.NoError(t, err)
+		assert.True(t, requeue)
+	})
+
+	t.Run("add_watch_failed_with_unknown_error", func(t *testing.T) {
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return nil
+		}
+		errMsg := "unknown"
 		r.watchCheCluster = func() error {
 			return fmt.Errorf(errMsg)
 		}
 
 		// test
-		err := r.ensureWatchCheCluster()
+		requeue, err := r.ensureWatchCheCluster()
 
 		require.Error(t, err)
 		assert.EqualError(t, err, errMsg)
+		assert.False(t, requeue)
 	})
 }
 
