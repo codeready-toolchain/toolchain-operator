@@ -155,7 +155,7 @@ endif
 
 .PHONY: clean-e2e-resources
 clean-e2e-resources:
-	oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs oc delete -n openshift-marketplace
+	-oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs oc delete -n openshift-marketplace
 	oc get subscription --output=name -n ${TOOLCHAIN_NS} |  grep "toolchain-operator" | xargs oc delete -n ${TOOLCHAIN_NS}
 	-oc get subscription --output=name -n openshift-operators |  grep "openshift-pipelines-operator" | xargs oc delete -n openshift-operators
 	-oc get csv --output=name -n openshift-operators |  grep "codeready-toolchain-operator" | xargs oc delete -n openshift-operators
