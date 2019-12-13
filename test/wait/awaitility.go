@@ -28,16 +28,15 @@ const (
 )
 
 type ToolchainAwaitility struct {
-	T         *testing.T
-	Namespace string
-	Client    client.Reader
+	T      *testing.T
+	Client client.Reader
 }
 
 // WaitForCheInstallation waits until there is CheInstallation with the given name available
 func (a *ToolchainAwaitility) WaitForCheInstallation(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ic := &v1alpha1.CheInstallation{}
-		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic); err != nil {
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
 				a.T.Logf("waiting for availability of CheInstallation '%s'", name)
 				return false, nil
@@ -49,10 +48,10 @@ func (a *ToolchainAwaitility) WaitForCheInstallation(name string) error {
 	})
 }
 
-func (a *ToolchainAwaitility) WaitForCheInstallationToDelete(name string) error {
+func (a *ToolchainAwaitility) WaitForCheInstallationToBeDeleted(name string) error {
 	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
 		ic := &v1alpha1.CheInstallation{}
-		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic); err != nil {
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
 				a.T.Logf("CheInstallation '%s' deleted", name)
 				return true, nil
@@ -65,9 +64,25 @@ func (a *ToolchainAwaitility) WaitForCheInstallationToDelete(name string) error 
 	})
 }
 
+func (a *ToolchainAwaitility) WaitForTektonInstallationToBeDeleted(name string) error {
+	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		tektonInstallation := &v1alpha1.TektonInstallation{}
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, tektonInstallation); err != nil {
+			if errors.IsNotFound(err) {
+				a.T.Logf("TektonInstallation '%s' deleted", name)
+				return true, nil
+			}
+			return false, err
+		}
+		a.T.Logf("waiting for deletion of TektonInstallation '%s'", name)
+
+		return false, nil
+	})
+}
+
 func (a *ToolchainAwaitility) GetCheInstallation(name string) (*v1alpha1.CheInstallation, error) {
 	ic := &v1alpha1.CheInstallation{}
-	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: a.Namespace, Name: name}, ic)
+	err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic)
 	return ic, err
 }
 

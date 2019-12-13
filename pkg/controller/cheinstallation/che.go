@@ -15,9 +15,9 @@ import (
 
 const (
 	// InstallationName the name of the CheInstallation resource (cluster-scoped)
-	InstallationName = "toolchain-che-installation"
+	InstallationName = "toolchain-workspaces-installation"
 	// Namespace the namespace in which the OLM OperatorGroup and Subscription resources will be created
-	Namespace = "toolchain-che"
+	Namespace = "toolchain-workspaces"
 	// OperatorGroupName the name of the OLM OperatorGroup for Che
 	OperatorGroupName = InstallationName
 	// SubscriptionName the name of the OLM subscription for Che

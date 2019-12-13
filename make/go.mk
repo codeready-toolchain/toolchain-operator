@@ -8,7 +8,7 @@ export GO111MODULE
 
 .PHONY: build
 ## Build the operator
-build: $(OUT_DIR)/operator generate-csv
+build: $(OUT_DIR)/operator generate
 
 $(OUT_DIR)/operator:
 	$(Q)CGO_ENABLED=0 GOARCH=amd64 GOOS=linux \
@@ -20,16 +20,3 @@ $(OUT_DIR)/operator:
 .PHONY: vendor
 vendor:
 	$(Q)go mod vendor
-
-PATH_TO_GENERATE_FILE=../api/scripts/olm-catalog-generate.sh
-
-PHONY: generate-csv
-generate-csv:
-	$(eval GENERATE_PARAMS = -pr ../toolchain-operator -on codeready-toolchain-operator --allnamespaces true)
-ifneq ("$(wildcard $(PATH_TO_GENERATE_FILE))","")
-	@echo "generating CSV using script from local api repo..."
-	$(PATH_TO_GENERATE_FILE) ${GENERATE_PARAMS}
-else
-	@echo "generating CSV using script from GH api repo (using latest version in master)..."
-	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/olm-catalog-generate.sh | bash -s -- ${GENERATE_PARAMS}
-endif

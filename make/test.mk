@@ -6,7 +6,7 @@
 
 .PHONY: test
 ## runs the tests without coverage and excluding E2E tests
-test:
+test: generate
 	@echo "running the tests without coverage and excluding E2E tests..."
 	$(Q)go test ${V_FLAG} -race $(shell go list ./... | grep -v /test/e2e) -failfast
 
@@ -156,4 +156,4 @@ clean-e2e-resources:
 	oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n openshift-marketplace
 	oc get subscription --output=name -n ${TOOLCHAIN_NS} |  grep "toolchain-operator" | xargs --no-run-if-empty oc delete -n ${TOOLCHAIN_NS}
 	oc get subscription --output=name -n openshift-operators |  grep "openshift-pipelines-operator" | xargs --no-run-if-empty oc delete -n openshift-operators
-	oc delete project toolchain-che --timeout=10s || true
+	oc delete project toolchain-workspaces --timeout=10s 2 > /dev/null || true
