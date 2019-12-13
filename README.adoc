@@ -3,6 +3,8 @@
 image:https://goreportcard.com/badge/github.com/codeready-toolchain/toolchain-operator[Go Report Card, link="https://goreportcard.com/report/github.com/codeready-toolchain/toolchain-operator"]
 image:https://godoc.org/github.com/codeready-toolchain/toolchain-operator?status.png[GoDoc,link="https://godoc.org/github.com/codeready-toolchain/toolchain-operator"]
 image:https://codecov.io/gh/codeready-toolchain/toolchain-operator/branch/master/graph/badge.svg[Codecov.io,link="https://codecov.io/gh/codeready-toolchain/toolchain-operator"]
+image:https://travis-ci.org/codeready-toolchain/toolchain-operator.svg?branch=master["CD Build Status", link="https://travis-ci.org/codeready-toolchain/toolchain-operator"]
+image:https://quay.io/repository/codeready-toolchain/toolchain-operator/status["Docker Repository on Quay", link="https://quay.io/repository/codeready-toolchain/toolchain-operator"]
 
 == Build
 
