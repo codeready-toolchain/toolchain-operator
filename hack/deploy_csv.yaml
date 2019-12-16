@@ -67,7 +67,8 @@ data:
                     description: The configuration required for che operator
                     properties:
                       namespace:
-                        description: The namespace where the Che operator will be installed
+                        description: The namespace where the CodeReady Workspaces operator
+                          will be installed
                         type: string
                     required:
                     - namespace
@@ -209,6 +210,49 @@ data:
       kind: ClusterServiceVersion
       metadata:
         annotations:
+          alm-examples: |-
+            [
+              {
+                "apiVersion": "toolchain.openshift.dev/v1alpha1",
+                "kind": "CheInstallation",
+                "metadata": {
+                  "name": "toolchain-cheinstallation"
+                },
+                "spec": {
+                  "cheOperatorSpec": {
+                    "namespace": "toolchain-workspaces"
+                  }
+                },
+                "status": {
+                  "conditions": [
+                    {
+                      "lastTransitionTime": "2019-12-16T09:37:11Z",
+                      "reason": "Installed",
+                      "status": "True",
+                      "type": "CheReady"
+                    }
+                  ]
+                }
+              },
+              {
+                "apiVersion": "toolchain.openshift.dev/v1alpha1",
+                "kind": "TektonInstallation",
+                "metadata": {
+                  "name": "tekton-installation"
+                },
+                "spec": {},
+                "status": {
+                  "conditions": [
+                    {
+                      "lastTransitionTime": "2019-12-16T09:20:19Z",
+                      "reason": "Installed",
+                      "status": "True",
+                      "type": "TektonReady"
+                    }
+                  ]
+                }
+              }
+            ]
           capabilities: Basic Install
           categories: Developer Tools, Integration & Delivery, OpenShift Optional
           certified: "false"
@@ -233,19 +277,20 @@ data:
             kind: CheInstallation
             name: cheinstallations.toolchain.openshift.dev
             specDescriptors:
-            - description: The namespace where the Che operator will be installed
+            - description: The namespace where the CodeReady Workspaces operator will be
+                installed
               displayName: Namespace
               path: namespace
               x-descriptors:
               - urn:alm:descriptor:com.tectonic.ui:label
             statusDescriptors:
-            - description: Last known condition of the che operator installation
+            - description: Last known condition of the CodeReady Workspaces  operator installation
               displayName: Conditions
               path: conditions
               x-descriptors:
               - urn:alm:descriptor:io.kubernetes.conditions
             version: v1alpha1
-          - description: TektonInstallation defines how CodeReady Pipelines (Tekton) operator
+          - description: TektonInstallation defines how OpenShift Pipelines (Tekton) operator
               should be installed
             displayName: CodeReady Toolchain Tekton Installation
             kind: TektonInstallation
