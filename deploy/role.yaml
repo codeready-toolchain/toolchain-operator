@@ -79,3 +79,12 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - org.eclipse.che
+  resources:
+  - checlusters
+  verbs:
+  - get
+  - create
+  - list
+  - watch

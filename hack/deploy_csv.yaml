@@ -276,35 +276,6 @@ data:
             clusterPermissions:
             - rules:
               - apiGroups:
-                - operators.coreos.com
-                resources:
-                - subscriptions
-                - operatorgroups
-                verbs:
-                - get
-                - create
-                - list
-                - watch
-              - apiGroups:
-                - operators.coreos.com
-                resources:
-                - catalogsources
-                - clusterserviceversions
-                - installplans
-                verbs:
-                - get
-                - list
-                - watch
-              - apiGroups:
-                - org.eclipse.che
-                resources:
-                - checlusters
-                verbs:
-                - get
-                - create
-                - list
-                - watch
-              - apiGroups:
                 - apiextensions.k8s.io
                 resources:
                 - customresourcedefinitions
@@ -445,6 +416,15 @@ data:
                 - installplans
                 verbs:
                 - get
+                - list
+                - watch
+              - apiGroups:
+                - org.eclipse.che
+                resources:
+                - checlusters
+                verbs:
+                - get
+                - create
                 - list
                 - watch
               serviceAccountName: toolchain-operator
