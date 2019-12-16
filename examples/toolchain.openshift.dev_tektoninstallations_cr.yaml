@@ -1,0 +1,11 @@
+apiVersion: toolchain.openshift.dev/v1alpha1
+kind: TektonInstallation
+metadata:
+  name: tekton-installation
+spec: {}
+status:
+  conditions:
+  - lastTransitionTime: "2019-12-16T09:20:19Z"
+    reason: Installed
+    status: "True"
+    type: TektonReady
