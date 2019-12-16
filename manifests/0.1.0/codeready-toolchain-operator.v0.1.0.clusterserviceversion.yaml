@@ -6,14 +6,6 @@ metadata:
       [
         {
           "apiVersion": "toolchain.openshift.dev/v1alpha1",
-          "kind": "TektonInstallation",
-          "metadata": {
-            "name": "tekton-installation"
-          },
-          "spec": {}
-        },
-        {
-          "apiVersion": "toolchain.openshift.dev/v1alpha1",
           "kind": "CheInstallation",
           "metadata": {
             "name": "toolchain-cheinstallation"
@@ -22,6 +14,34 @@ metadata:
             "cheOperatorSpec": {
               "namespace": "toolchain-workspaces"
             }
+          },
+          "status": {
+            "conditions": [
+              {
+                "lastTransitionTime": "2019-12-16T09:37:11Z",
+                "reason": "Installed",
+                "status": "True",
+                "type": "CheReady"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "toolchain.openshift.dev/v1alpha1",
+          "kind": "TektonInstallation",
+          "metadata": {
+            "name": "tekton-installation"
+          },
+          "spec": {},
+          "status": {
+            "conditions": [
+              {
+                "lastTransitionTime": "2019-12-16T09:20:19Z",
+                "reason": "Installed",
+                "status": "True",
+                "type": "TektonReady"
+              }
+            ]
           }
         }
       ]
@@ -29,7 +49,7 @@ metadata:
     categories: Developer Tools, Integration & Delivery, OpenShift Optional
     certified: "false"
     containerImage: quay.io/codeready-toolchain/toolchain-operator:7e38fe9
-    createdAt: 2019-12-16T08:13:59Z
+    createdAt: 2019-12-16T10:18:31Z
     description: CodeReady Toolchain is a suite of dev tools and runtimes for development
       and deployment of cloud-native applications on OpenShift. CodeReady Toolchain
       provides an easy way to deploy and configure the set of Red Hat curated developer
