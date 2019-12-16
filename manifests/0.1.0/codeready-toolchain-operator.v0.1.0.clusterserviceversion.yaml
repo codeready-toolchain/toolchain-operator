@@ -6,6 +6,14 @@ metadata:
       [
         {
           "apiVersion": "toolchain.openshift.dev/v1alpha1",
+          "kind": "TektonInstallation",
+          "metadata": {
+            "name": "tekton-installation"
+          },
+          "spec": {}
+        },
+        {
+          "apiVersion": "toolchain.openshift.dev/v1alpha1",
           "kind": "CheInstallation",
           "metadata": {
             "name": "toolchain-cheinstallation"
@@ -15,21 +23,13 @@ metadata:
               "namespace": "toolchain-workspaces"
             }
           }
-        },
-        {
-          "apiVersion": "toolchain.openshift.dev/v1alpha1",
-          "kind": "TektonInstallation",
-          "metadata": {
-            "name": "tekton-installation"
-          },
-          "spec": {}
         }
       ]
     capabilities: Basic Install
     categories: Developer Tools, Integration & Delivery, OpenShift Optional
     certified: "false"
-    containerImage: quay.io/codeready-toolchain/toolchain-operator:6cfa9ae
-    createdAt: 2019-12-13T14:05:20Z
+    containerImage: quay.io/codeready-toolchain/toolchain-operator:7e38fe9
+    createdAt: 2019-12-16T08:13:59Z
     description: CodeReady Toolchain is a suite of dev tools and runtimes for development
       and deployment of cloud-native applications on OpenShift. CodeReady Toolchain
       provides an easy way to deploy and configure the set of Red Hat curated developer
@@ -93,6 +93,43 @@ spec:
       clusterPermissions:
       - rules:
         - apiGroups:
+          - operators.coreos.com
+          resources:
+          - subscriptions
+          - operatorgroups
+          verbs:
+          - get
+          - create
+          - list
+          - watch
+        - apiGroups:
+          - operators.coreos.com
+          resources:
+          - catalogsources
+          - clusterserviceversions
+          - installplans
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
+          - org.eclipse.che
+          resources:
+          - checlusters
+          verbs:
+          - get
+          - create
+          - list
+          - watch
+        - apiGroups:
+          - apiextensions.k8s.io
+          resources:
+          - customresourcedefinitions
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - ""
           resources:
           - namespaces
@@ -145,7 +182,7 @@ spec:
                       fieldPath: metadata.name
                 - name: OPERATOR_NAME
                   value: toolchain-operator
-                image: quay.io/codeready-toolchain/toolchain-operator:6cfa9ae
+                image: quay.io/codeready-toolchain/toolchain-operator:7e38fe9
                 imagePullPolicy: Always
                 name: toolchain-operator
                 resources: {}
