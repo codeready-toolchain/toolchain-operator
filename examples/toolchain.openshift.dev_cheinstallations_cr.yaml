@@ -1,0 +1,13 @@
+apiVersion: toolchain.openshift.dev/v1alpha1
+kind: CheInstallation
+metadata:
+  name: toolchain-cheinstallation
+spec:
+  cheOperatorSpec:
+    namespace: toolchain-workspaces
+status:
+  conditions:
+  - lastTransitionTime: "2019-12-16T09:37:11Z"
+    reason: Installed
+    status: "True"
+    type: CheReady

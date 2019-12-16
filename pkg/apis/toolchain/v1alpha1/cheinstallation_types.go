@@ -13,7 +13,7 @@ type CheInstallationSpec struct {
 }
 
 type CheOperator struct {
-	// The namespace where the Che operator will be installed
+	// The namespace where the CodeReady Workspaces operator will be installed
 	Namespace string `json:"namespace"`
 }
 
