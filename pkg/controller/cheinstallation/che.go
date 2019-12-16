@@ -9,6 +9,8 @@ import (
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 )
 
 const (
@@ -22,6 +24,12 @@ const (
 	SubscriptionName = "codeready-workspaces"
 	// StartingCSV keeps the CSV version the installation should start with
 	StartingCSV = "crwoperator.v2.0.0"
+	// CheClusterName the name of the CheCluster
+	CheClusterName = "codeready-workspaces"
+	// CheFlavorName the name of the CheCluster flavor
+	CheFlavorName = "codeready"
+	// AvailableStatus constant for Available status
+	AvailableStatus = "Available"
 )
 
 // NewInstallation returns a new CheInstallation resource
@@ -79,6 +87,43 @@ func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 			TargetNamespaces: []string{ns},
 		},
 	}
+}
+
+func NewCheCluster(ns string) *orgv1.CheCluster {
+	return &orgv1.CheCluster{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      CheClusterName,
+			Namespace: ns,
+			Labels:    toolchain.Labels(),
+		},
+
+		Spec: orgv1.CheClusterSpec{
+			Server: orgv1.CheClusterSpecServer{
+				CheFlavor:      CheFlavorName,
+				TlsSupport:     false,
+				SelfSignedCert: false,
+			},
+
+			Database: orgv1.CheClusterSpecDB{
+				ExternalDb: false,
+			},
+
+			Auth: orgv1.CheClusterSpecAuth{
+				OpenShiftoAuth:           true,
+				ExternalIdentityProvider: false,
+			},
+
+			Storage: orgv1.CheClusterSpecStorage{
+				PvcStrategy:       "per-workspace",
+				PvcClaimSize:      "1Gi",
+				PreCreateSubPaths: true,
+			},
+		},
+	}
+}
+
+func SubscriptionInstalling(message string) toolchainv1alpha1.Condition {
+	return v1alpha1.SubscriptionInstalling(v1alpha1.CheReady, v1alpha1.InstallingReason, message)
 }
 
 // SubscriptionCreated returns a status condition for the case where the Che installation succeeded

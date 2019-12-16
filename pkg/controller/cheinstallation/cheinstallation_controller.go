@@ -2,18 +2,22 @@ package cheinstallation
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"time"
 
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-
+	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	"github.com/go-logr/logr"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
 	v1 "k8s.io/api/core/v1"
+	apiextnv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -36,12 +40,12 @@ func Add(mgr manager.Manager) error {
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager) *ReconcileCheInstallation {
 	return &ReconcileCheInstallation{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 	// Create a new controller
 	c, err := controller.New("cheinstallation-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -72,6 +76,17 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		return err
 	}
 
+	watchCheCluster := func() error {
+		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner)
+	}
+
+	err = watchCheCluster()
+	if err != nil {
+		if !meta.IsNoMatchError(err) { // ignore NoKindMatchError
+			return err
+		}
+		r.watchCheCluster = watchCheCluster
+	}
 	return nil
 }
 
@@ -82,8 +97,10 @@ var _ reconcile.Reconciler = &ReconcileCheInstallation{}
 type ReconcileCheInstallation struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client          client.Client
+	scheme          *runtime.Scheme
+	watchCheCluster func() error
+	mu              sync.Mutex
 }
 
 // Reconcile reads that state of the cluster for a CheInstallation object and makes changes based on the state read
@@ -118,6 +135,20 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che subscription in namespace %s", cheInstallation.Spec.CheOperatorSpec.Namespace)
 	} else if created {
 		return reconcile.Result{}, nil
+	}
+
+	if requeue, err := r.ensureWatchCheCluster(); err != nil {
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to add watch for CheCluster")
+	} else if requeue {
+		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
+	}
+
+	if created, statusMsg, err := r.ensureCheCluster(reqLogger, cheInstallation); err != nil {
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionFailed, err, "failed to create che cluster in namespace %s", cheInstallation.Spec.CheOperatorSpec.Namespace)
+	} else if created { // TODO VN: created can be removed
+		return reconcile.Result{}, nil
+	} else if statusMsg != "" {
+		return reconcile.Result{}, r.statusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionInstalling, statusMsg)
 	}
 
 	return reconcile.Result{}, r.statusUpdate(reqLogger, cheInstallation, r.setStatusCheSubscriptionReady, "")
@@ -194,6 +225,80 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, che
 	return false, nil
 }
 
+// ensureWatchCheCluster adds watch for CheCluster resource if CheCluster CRD is installed else return requeue with true
+// CheCluster CRD may takes time to get installed until CheOperator is installed successfully
+// Once watch addded for CheCluster, sub-sequent calls to ensureWatchCheCluster() will do nothing
+func (r *ReconcileCheInstallation) ensureWatchCheCluster() (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.watchCheCluster != nil {
+		cheClusterCRD := &apiextnv1beta1.CustomResourceDefinition{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Name: "checlusters.org.eclipse.che"}, cheClusterCRD); err != nil {
+			if errors.IsNotFound(err) {
+				log.Info("requeue required", "message", err.Error())
+				return true, nil
+			}
+			return false, err
+		}
+		if err := r.watchCheCluster(); err != nil {
+			if meta.IsNoMatchError(err) {
+				log.Info("requeue required", "message", err.Error())
+				return true, nil
+			}
+			return false, err
+		}
+		r.watchCheCluster = nil // make sure watchCheCluster() should NOT be called afterwards
+	}
+	return false, nil
+}
+
+func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation) (bool, string, error) {
+	cluster := &orgv1.CheCluster{}
+	if err := r.client.Get(context.TODO(), types.NamespacedName{Name: CheClusterName, Namespace: cheInstallation.Spec.CheOperatorSpec.Namespace}, cluster); err != nil {
+		if errors.IsNotFound(err) {
+			cluster = NewCheCluster(cheInstallation.Spec.CheOperatorSpec.Namespace)
+			logger.Info("Creating CheCluster for che", "CheCluster.Namespace", cluster.Namespace, "CheCluster.Name", cluster.Name)
+			if err := controllerutil.SetControllerReference(cheInstallation, cluster, r.scheme); err != nil {
+				return false, getCheClusterStatus(nil), err
+			}
+			if err := r.client.Create(context.TODO(), cluster); err != nil {
+				if errors.IsAlreadyExists(err) {
+					return false, getCheClusterStatus(nil), nil
+				}
+				return false, getCheClusterStatus(nil), err
+			}
+			return true, getCheClusterStatus(cluster), nil
+		}
+		return false, getCheClusterStatus(nil), err
+	}
+	return false, getCheClusterStatus(cluster), nil
+}
+
+func getCheClusterStatus(cluster *orgv1.CheCluster) string {
+	if cluster == nil {
+		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
+	} else if cluster.Status == (orgv1.CheClusterStatus{}) {
+		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
+	} else if cluster.Status.CheClusterRunning != AvailableStatus {
+		if !cluster.Status.DbProvisoned {
+			return fmt.Sprintf("Provisioning Database for CheCluster '%s'", cluster.Name)
+		} else if !cluster.Status.KeycloakProvisoned {
+			return fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", cluster.Name)
+		} else if !cluster.Status.OpenShiftoAuthProvisioned {
+			return fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", cluster.Name)
+		} else if cluster.Status.DevfileRegistryURL == "" {
+			return fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", cluster.Name)
+		} else if cluster.Status.PluginRegistryURL == "" {
+			return fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", cluster.Name)
+		} else if cluster.Status.CheURL == "" {
+			return fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", cluster.Name)
+		} else {
+			return fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name)
+		}
+	}
+	return ""
+}
+
 // wrapErrorWithStatusUpdate wraps the error and update the install config status. If the update failed then logs the error.
 func (r *ReconcileCheInstallation) wrapErrorWithStatusUpdate(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation, statusUpdater func(cheInstallation *v1alpha1.CheInstallation, message string) error, err error, format string, args ...interface{}) error {
 	if err == nil {
@@ -221,6 +326,10 @@ func (r *ReconcileCheInstallation) updateStatusConditions(cheInstallation *v1alp
 		return nil
 	}
 	return r.client.Status().Update(context.TODO(), cheInstallation)
+}
+
+func (r *ReconcileCheInstallation) setStatusCheSubscriptionInstalling(cheInstallation *v1alpha1.CheInstallation, message string) error {
+	return r.updateStatusConditions(cheInstallation, SubscriptionInstalling(message))
 }
 
 func (r *ReconcileCheInstallation) setStatusCheSubscriptionFailed(cheInstallation *v1alpha1.CheInstallation, message string) error {

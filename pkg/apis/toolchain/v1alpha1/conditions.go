@@ -11,9 +11,19 @@ const (
 	TektonReady toolchainv1alpha1.ConditionType = "TektonReady"
 
 	// Status condition reasons
+	InstallingReason      = "Installing"
 	FailedToInstallReason = "FailedToInstall"
 	InstalledReason       = "Installed"
 )
+
+func SubscriptionInstalling(conditionType toolchainv1alpha1.ConditionType, reason, message string) toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:    conditionType,
+		Status:  v1.ConditionFalse,
+		Reason:  reason,
+		Message: message,
+	}
+}
 
 func SubscriptionCreated(conditionType toolchainv1alpha1.ConditionType, reason string) toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{

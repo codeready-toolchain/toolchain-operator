@@ -10,7 +10,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
-
+	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	v1 "k8s.io/api/core/v1"
@@ -21,8 +21,8 @@ import (
 )
 
 const (
+	Timeout              = time.Minute * 60
 	RetryInterval        = time.Second * 5
-	Timeout              = time.Second * 60
 	CleanupRetryInterval = time.Second * 1
 	CleanupTimeout       = time.Second * 5
 )
@@ -92,6 +92,12 @@ func (a *ToolchainAwaitility) GetSubscription(ns, name string) (*olmv1alpha1.Sub
 	return subscription, err
 }
 
+func (a *ToolchainAwaitility) GetCheCluster(ns, name string) (*orgv1.CheCluster, error) {
+	cheCluster := &orgv1.CheCluster{}
+	err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: name}, cheCluster)
+	return cheCluster, err
+}
+
 // CheInstallationWaitCondition represents a function checking if CheInstallation meets the given condition
 type CheInstallationWaitCondition func(a *ToolchainAwaitility, ic *v1alpha1.CheInstallation) bool
 
@@ -102,7 +108,6 @@ type TektonInstallationWaitCondition func(a *ToolchainAwaitility, ic *v1alpha1.T
 func UntilHasCheStatusCondition(conditions ...toolchainv1alpha1.Condition) CheInstallationWaitCondition {
 	return func(a *ToolchainAwaitility, ic *v1alpha1.CheInstallation) bool {
 		if len(ic.Status.Conditions) > 0 {
-			toolchain.AssertConditionsMatch(a.T, ic.Status.Conditions, conditions...)
 			if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
 				a.T.Logf("status conditions match in CheInstallation '%s`", ic.Name)
 				return true
@@ -116,7 +121,6 @@ func UntilHasCheStatusCondition(conditions ...toolchainv1alpha1.Condition) CheIn
 // UntilHasTektonStatusCondition checks if TektonInstallation status has the given set of conditions
 func UntilHasTektonStatusCondition(conditions ...toolchainv1alpha1.Condition) TektonInstallationWaitCondition {
 	return func(a *ToolchainAwaitility, ic *v1alpha1.TektonInstallation) bool {
-		toolchain.AssertConditionsMatch(a.T, ic.Status.Conditions, conditions...)
 		if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
 			a.T.Logf("status conditions match in TektonInstallation '%s`", ic.Name)
 			return true
@@ -208,6 +212,21 @@ func (a *ToolchainAwaitility) WaitForOperatorGroup(ns string, labels map[string]
 		}
 		a.T.Logf("waiting for availability of OperatorGroup with labels '%v' in namespace '%s'", labels, ns)
 		return false, nil
+	})
+}
+
+// WaitForCheCluster waits until there is CheCluster available with the given name and namespace
+func (a *ToolchainAwaitility) WaitForCheCluster(ns, name string) error {
+	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+		cluster := &orgv1.CheCluster{}
+		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: name}, cluster); err != nil {
+			if errors.IsNotFound(err) {
+				a.T.Logf("waiting for availability of CheCluster '%s' in namespace '%s'", name, ns)
+				return false, nil
+			}
+			return false, err
+		}
+		return true, nil
 	})
 }
 

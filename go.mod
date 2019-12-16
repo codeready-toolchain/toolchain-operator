@@ -3,6 +3,7 @@ module github.com/codeready-toolchain/toolchain-operator
 require (
 	github.com/codeready-toolchain/api v0.0.0-20191206004733-862cefb68396
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
+	github.com/eclipse/che-operator v0.0.0-20191127094847-557860435bb4
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.4
@@ -26,7 +27,7 @@ require (
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20191120175047-4206685974f2 // indirect
 	k8s.io/api v0.0.0
-	k8s.io/apiextensions-apiserver v0.0.0 // indirect
+	k8s.io/apiextensions-apiserver v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v11.0.1-0.20190409021438-1a26190bd76a+incompatible
 	k8s.io/code-generator v0.0.0-20191121015212-c4c8f8345c7e
