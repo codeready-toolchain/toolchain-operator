@@ -305,25 +305,25 @@ data:
         description: |
           # CodeReady Toolchain
           CodeReady Toolchain is a suite of dev tools and runtimes for development and deployment of cloud-native applications on OpenShift. CodeReady Toolchain provides an easy way to deploy and configure the set of Red Hat curated developer tools and runtimes to the OpenShift cluster. The developer tools can be accessed from the Dev Perspective of the OpenShift console.
-      
-      
+
+
           ## Bundled Developer Tools
           CodeReady Toolchain automatically installs and configures the following developer tool operators:
           * Red Hat CodeReady Workspaces
           * OpenShift Pipelines
-      
-      
+
+
           ## Installation
           CodeReady Toolchain Operator is a cluster-wide operator. It installs and configures the operators for the bundled developer tools to be available across all namespaces in the cluster. CodeReady Toolchain Operator and OpenShift Pipelines get installed in default `openshift-operators` namespace and Red Hat CodeReady Workspaces in single `toolchain-workspaces` namespace.
-      
-      
+
+
           ### Installation Pre-requisites
           * OAuth-based authentication has been enabled and configured for the OpenShift cluster.
           * One regular user (not the default kubeadmin) exists in the OpenShift cluster.
-      
+
           You can find information about configuring the cluster OAuth in [OpenShift Container Platform documentation](https://docs.openshift.com/container-platform/4.2/authentication/understanding-identity-provider.html).
-      
-      
+
+
           ##### _**Warning**: This operator should be installed in OpenShift Container Platform clusters only. Installing on OKD or other platforms will result in errors._
         displayName: Red Hat CodeReady Toolchain
         icon:
