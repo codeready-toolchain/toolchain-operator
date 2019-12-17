@@ -103,8 +103,10 @@ spec:
     * OpenShift Pipelines
     ## Installation
     CodeReady Toolchain Operator is a cluster-wide operator. It installs and configures the operators for the bundled developer tools to be available across all namespaces in the cluster. CodeReady Toolchain Operator and OpenShift Pipelines get installed in default `openshift-operators` namespace and Red Hat CodeReady Workspaces in single `toolchain-workspaces` namespace.
-    ##### Prerequisite:
-    * To finish the installation of Red Hat CodeReady Workspaces Operator, it is necessary that at least one real user exists in the OpenShift cluster.
+    ### Installation Pre-requisites
+    * OAuth-based authentication has been enabled and configured for the OpenShift cluster.
+    * One regular user (not the default kubeadmin) exists in the OpenShift cluster.
+    You can find information about configuring the cluster OAuth in [OpenShift Container Platform documentation](https://docs.openshift.com/container-platform/4.2/authentication/understanding-identity-provider.html).
     ###### _Warning: This operator should be installed in OpenShift Container Platform clusters only. Installing on OKD or other platforms will result in errors._
   displayName: Red Hat CodeReady Toolchain
   icon:
