@@ -105,8 +105,6 @@ e2e-setup: build-image
 	@-oc create user foo 2>/dev/null
 ifneq ($(IS_OS_3),)
 	oc apply -f ./deploy/service_account.yaml
-	oc apply -f ./deploy/role.yaml
-	oc apply -f ./deploy/role_binding.yaml
 	oc apply -f ./deploy/cluster_role.yaml
 	oc apply -f ./deploy/cluster_role_binding.yaml
 	sed -e 's|REPLACE_NAMESPACE|${TOOLCHAIN_NS}|g' ./deploy/cluster_role_binding.yaml | oc apply -f -
