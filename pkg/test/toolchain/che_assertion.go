@@ -65,3 +65,10 @@ func (a *CheInstallationAssertion) HasConditions(expected ...toolchainv1alpha1.C
 	AssertConditionsMatch(a.t, a.cheInstallation.Status.Conditions, expected...)
 	return a
 }
+
+func (a *CheInstallationAssertion) HasNoCondition() *CheInstallationAssertion {
+	err := a.loadCheInstallationAssertion()
+	require.NoError(a.t, err)
+	AssertConditionsMatch(a.t, a.cheInstallation.Status.Conditions)
+	return a
+}

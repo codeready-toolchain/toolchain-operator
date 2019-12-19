@@ -1,11 +1,12 @@
 package tektoninstallation
 
 import (
+	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
-	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 
-	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
+	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -47,12 +48,21 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 	}
 }
 
-// SubscriptionCreated returns a status condition for the case where the Tekton installation succeeded
-func SubscriptionCreated() toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionCreated(v1alpha1.TektonReady, v1alpha1.InstalledReason)
+// InstallationSucceeded returns a status condition for the case where the Tekton installation succeeded
+func InstallationSucceeded() toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:   v1alpha1.TektonReady,
+		Status: corev1.ConditionTrue,
+		Reason: v1alpha1.InstalledReason,
+	}
 }
 
-// SubscriptionFailed returns a status condition for the case where the Tekton installation failed
-func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionFailed(v1alpha1.TektonReady, v1alpha1.FailedToInstallReason, message)
+// InstallationFailed returns a status condition for the case where the Tekton installation failed
+func InstallationFailed(message string) toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:    v1alpha1.TektonReady,
+		Status:  corev1.ConditionFalse,
+		Reason:  v1alpha1.FailedToInstallReason,
+		Message: message,
+	}
 }
