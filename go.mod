@@ -1,7 +1,7 @@
 module github.com/codeready-toolchain/toolchain-operator
 
 require (
-	github.com/codeready-toolchain/api v0.0.0-20191206004733-862cefb68396
+	github.com/codeready-toolchain/api v0.0.0-20200106152046-f16301c72bc9
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
 	github.com/eclipse/che-operator v0.0.0-20191127094847-557860435bb4
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
@@ -37,8 +37,6 @@ require (
 	sigs.k8s.io/controller-runtime v0.2.2
 	sigs.k8s.io/controller-tools v0.2.4
 )
-
-replace github.com/codeready-toolchain/api => github.com/matousjobanek/api v0.0.0-20200106111804-df118aa90ee9
 
 // Pinned to kubernetes-1.14.1
 replace (
