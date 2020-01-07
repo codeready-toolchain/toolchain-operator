@@ -9,7 +9,7 @@ require (
 	github.com/go-openapi/spec v0.19.4
 	github.com/gobuffalo/flect v0.1.7 // indirect
 	github.com/gogo/protobuf v1.3.1 // indirect
-	github.com/golangci/golangci-lint v1.21.0
+	github.com/golangci/golangci-lint v1.21.0 // indirect
 	github.com/json-iterator/go v1.1.8 // indirect
 	github.com/mattn/go-isatty v0.0.10 // indirect
 	github.com/openshift/api v3.9.1-0.20190924102528-32369d4db2ad+incompatible // indirect
