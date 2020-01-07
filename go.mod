@@ -1,7 +1,7 @@
 module github.com/codeready-toolchain/toolchain-operator
 
 require (
-	github.com/codeready-toolchain/api v0.0.0-20191206004733-862cefb68396
+	github.com/codeready-toolchain/api v0.0.0-20200106152046-f16301c72bc9
 	github.com/codeready-toolchain/toolchain-common v0.0.0-20191010043304-822e291d04cb
 	github.com/eclipse/che-operator v0.0.0-20191127094847-557860435bb4
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
@@ -40,8 +40,10 @@ require (
 
 // Pinned to kubernetes-1.14.1
 replace (
-	github.com/openshift/api => github.com/openshift/api v3.9.1-0.20190717200738-0390d1e77d64+incompatible
-	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20190627172412-c44a8b61b9f4
+	// using 'github.com/openshift/api@release-4.2'
+	github.com/openshift/api => github.com/openshift/api v0.0.0-20190927182313-d4a64ec2cbd8
+	// using 'github.com/openshift/client-go@release-4.2'
+	github.com/openshift/client-go => github.com/openshift/client-go v0.0.0-20190813201236-5a5508328169
 	github.com/prometheus/prometheus => github.com/prometheus/prometheus v1.8.2-0.20190525122359-d20e84d0fb64
 
 	k8s.io/api => k8s.io/api v0.0.0-20190704095032-f4ca3d3bdf1d
