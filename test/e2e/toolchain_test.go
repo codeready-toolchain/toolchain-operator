@@ -55,7 +55,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
