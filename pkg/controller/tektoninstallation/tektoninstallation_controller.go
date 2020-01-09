@@ -97,7 +97,7 @@ func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logge
 	if err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace); err != nil {
 		return r.wrapErrorWithStatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
 	}
-	return r.StatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionReady, "")
+	return r.statusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionReady, "")
 }
 
 func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, ns string) error {
@@ -115,14 +115,14 @@ func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logge
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionReady(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, SubscriptionCreated())
+	return r.updateStatusConditions(tektonInstallation, InstallationSucceeded())
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, SubscriptionFailed(message))
+	return r.updateStatusConditions(tektonInstallation, InstallationFailed(message))
 }
 
-func (r *ReconcileTektonInstallation) StatusUpdate(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, statusUpdater func(tektonInstallation *v1alpha1.TektonInstallation, message string) error, msg string) error {
+func (r *ReconcileTektonInstallation) statusUpdate(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, statusUpdater func(tektonInstallation *v1alpha1.TektonInstallation, message string) error, msg string) error {
 	if err := statusUpdater(tektonInstallation, msg); err != nil {
 		logger.Error(err, "unable to update status")
 		return errs.Wrapf(err, "failed to update status")
