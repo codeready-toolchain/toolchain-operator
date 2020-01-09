@@ -30,6 +30,8 @@ const (
 	CheFlavorName = "codeready"
 	// AvailableStatus constant for Available status
 	AvailableStatus = "Available"
+	// CheClusterCRDName the fully qualified name of the CheCluster CRD
+	CheClusterCRDName = "checlusters.org.eclipse.che"
 )
 
 // NewInstallation returns a new CheInstallation resource
@@ -89,6 +91,7 @@ func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 	}
 }
 
+// NewCheCluster returns a nee CheCluster with the given namespace
 func NewCheCluster(ns string) *orgv1.CheCluster {
 	return &orgv1.CheCluster{
 		ObjectMeta: metav1.ObjectMeta{
@@ -122,16 +125,31 @@ func NewCheCluster(ns string) *orgv1.CheCluster {
 	}
 }
 
-func SubscriptionInstalling(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionInstalling(v1alpha1.CheReady, v1alpha1.InstallingReason, message)
+// Installing returns the status condition to set when Che is (still) being installed
+func Installing(message string) toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:    v1alpha1.CheReady,
+		Status:  v1.ConditionFalse,
+		Reason:  v1alpha1.InstallingReason,
+		Message: message,
+	}
 }
 
-// SubscriptionCreated returns a status condition for the case where the Che installation succeeded
-func SubscriptionCreated() toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionCreated(v1alpha1.CheReady, v1alpha1.InstalledReason)
+// InstallationSucceeded returns a status condition for the case where the Che installation succeeded
+func InstallationSucceeded() toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:   v1alpha1.CheReady,
+		Status: v1.ConditionTrue,
+		Reason: v1alpha1.InstalledReason,
+	}
 }
 
-// SubscriptionFailed returns a status condition for the case where the Che installation failed
-func SubscriptionFailed(message string) toolchainv1alpha1.Condition {
-	return v1alpha1.SubscriptionFailed(v1alpha1.CheReady, v1alpha1.FailedToInstallReason, message)
+// InstallationFailed returns a status condition for the case where the Che installation failed
+func InstallationFailed(message string) toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:    v1alpha1.CheReady,
+		Status:  v1.ConditionFalse,
+		Reason:  v1alpha1.FailedToInstallReason,
+		Message: message,
+	}
 }

@@ -55,7 +55,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
@@ -126,7 +126,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete CheCluster %s in namespace %s", cluster.Name, cluster.Namespace)
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
@@ -162,7 +162,7 @@ func TestToolchain(t *testing.T) {
 		// given
 		// TektonInstallation should already exist
 		// when
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.SubscriptionCreated()))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
 		// then
 		require.NoError(t, err)
 
@@ -183,7 +183,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForSubscription(tektoninstallation.SubscriptionNamespace, tektoninstallation.SubscriptionName)
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.SubscriptionCreated()))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 
 		checkTektonResources(t, f.Client.Client, tektonSub)
