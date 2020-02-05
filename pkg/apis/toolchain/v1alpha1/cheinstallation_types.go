@@ -23,6 +23,11 @@ type CheInstallationStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	// +optional
+
+	// CheServerURL the URL of the Che Server, once the installation completed
+	// +optional
+	CheServerURL string `json:"CheServerURL,omitempty"`
 
 	// Conditions is an array of current CheInstallation conditions
 	// Supported condition types:

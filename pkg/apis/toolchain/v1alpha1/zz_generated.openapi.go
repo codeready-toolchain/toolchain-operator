@@ -109,6 +109,13 @@ func schema_pkg_apis_toolchain_v1alpha1_CheInstallationStatus(ref common.Referen
 				Description: "CheInstallationStatus defines the observed state of CheInstallation",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
+					"CheServerURL": {
+						SchemaProps: spec.SchemaProps{
+							Description: "CheServerURL the URL of the Che Server, once the installation completed",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"conditions": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{

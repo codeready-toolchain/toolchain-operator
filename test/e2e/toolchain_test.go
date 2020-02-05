@@ -79,7 +79,7 @@ func TestToolchain(t *testing.T) {
 	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	// })
 
-	t.Run("should recreate deleted operatorgroup for Che", func(t *testing.T) {
+	t.Run("should recreate deleted operator group for che", func(t *testing.T) {
 		// given
 		ogList := &olmv1.OperatorGroupList{}
 		err := await.Client.List(context.TODO(), ogList, client.InNamespace(cheOperatorNS), client.MatchingLabels(toolchain.Labels()))
@@ -208,9 +208,12 @@ func checkCheResources(t *testing.T, client client.Client, cheOperatorNs string,
 			HasSpec(cheSub.Spec)
 	}
 	if cheCluster != nil {
-		AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, client).
+		cheCluster := AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, client).
 			Exists().
-			HasRunningStatus(cheinstallation.AvailableStatus)
+			HasRunningStatus(cheinstallation.AvailableStatus).
+			Get()
+		AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+			HasServerURL(cheCluster.Status.CheURL)
 	}
 }
 

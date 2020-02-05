@@ -59,6 +59,10 @@ spec:
         status:
           description: CheInstallationStatus defines the observed state of CheInstallation
           properties:
+            CheServerURL:
+              description: CheServerURL the URL of the Che Server, once the installation
+                completed
+              type: string
             conditions:
               description: 'Conditions is an array of current CheInstallation conditions
                 Supported condition types: CheReady'

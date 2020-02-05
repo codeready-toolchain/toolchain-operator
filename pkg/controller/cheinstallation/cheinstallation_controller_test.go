@@ -542,6 +542,7 @@ func TestReconcile(t *testing.T) {
 		cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
 		cheCluster := NewCheCluster(cheOperatorNS)
 		cheCluster.Status.CheClusterRunning = AvailableStatus
+		cheCluster.Status.CheURL = "https://che.cluster"
 		cl, r := configureClient(t, cheInstallation,
 			newCheNamespace(cheOperatorNS, v1.NamespaceActive),
 			NewOperatorGroup(cheOperatorNS),
@@ -567,7 +568,8 @@ func TestReconcile(t *testing.T) {
 			HasSpec(NewSubscription(cheOperatorNS).Spec)
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
 			HasConditions(InstallationSucceeded()).
-			HasFinalizer(toolchainv1alpha1.FinalizerName)
+			HasFinalizer(toolchainv1alpha1.FinalizerName).
+			HasServerURL(cheCluster.Status.CheURL)
 	})
 
 }
@@ -799,13 +801,7 @@ func TestCreateNamespaceForChe(t *testing.T) {
 
 func TestGetCheClusterStatus(t *testing.T) {
 
-	t.Run("status unknown as nil input", func(t *testing.T) {
-		installed, msg := getCheClusterStatus(nil)
-		assert.False(t, installed)
-		assert.Contains(t, msg, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
-	})
-
-	t.Run("status unknown as blank status", func(t *testing.T) {
+	t.Run("reason unknown as blank status", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			Status: orgv1.CheClusterStatus{},
 		}
@@ -937,6 +933,26 @@ func TestGetCheClusterStatus(t *testing.T) {
 		installed, msg := getCheClusterStatus(cluster)
 		assert.False(t, installed)
 		assert.Contains(t, msg, fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name))
+	})
+
+	t.Run("che cluster running status", func(t *testing.T) {
+		cluster := &orgv1.CheCluster{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "codeready-workspaces",
+			},
+			Status: orgv1.CheClusterStatus{
+				CheClusterRunning:         "Available",
+				DbProvisoned:              true,
+				KeycloakProvisoned:        true,
+				OpenShiftoAuthProvisioned: true,
+				DevfileRegistryURL:        "some_url",
+				PluginRegistryURL:         "some_url",
+				CheURL:                    "some_url",
+			},
+		}
+		installed, reason := getCheClusterStatus(cluster)
+		assert.True(t, installed)
+		assert.Empty(t, reason)
 	})
 }
 

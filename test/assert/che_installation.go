@@ -82,6 +82,13 @@ func (a *CheInstallationAssertion) HasConditions(expected ...toolchainv1alpha1.C
 func (a *CheInstallationAssertion) HasNoCondition() *CheInstallationAssertion {
 	err := a.loadCheInstallationAssertion()
 	require.NoError(a.t, err)
-	AssertConditionsMatch(a.t, a.cheInstallation.Status.Conditions)
+	AssertConditionsEmpty(a.t, a.cheInstallation.Status.Conditions)
+	return a
+}
+
+func (a *CheInstallationAssertion) HasServerURL(want string) *CheInstallationAssertion {
+	err := a.loadCheInstallationAssertion()
+	require.NoError(a.t, err)
+	assert.Equal(a.t, want, a.cheInstallation.Status.CheServerURL)
 	return a
 }

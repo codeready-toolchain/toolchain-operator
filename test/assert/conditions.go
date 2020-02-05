@@ -24,6 +24,11 @@ func AssertConditionsMatch(t *testing.T, actual []toolchainv1alpha1.Condition, e
 	}
 }
 
+// AssertConditionsEmpty verifies that the actual conditions are empty
+func AssertConditionsEmpty(t *testing.T, actual []toolchainv1alpha1.Condition) {
+	require.Empty(t, actual)
+}
+
 // AssertContainsCondition asserts that the specified list of conditions contains the specified condition.
 // LastTransitionTime is ignored.
 func AssertContainsCondition(t *testing.T, conditions []toolchainv1alpha1.Condition, contains toolchainv1alpha1.Condition) {
