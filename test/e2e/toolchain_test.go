@@ -48,7 +48,7 @@ func TestToolchain(t *testing.T) {
 
 	f := framework.Global
 
-	t.Run("should create operator group and subscription for che with CheInstallation", func(t *testing.T) {
+	t.Run("should create operator group and subscription for Che with CheInstallation", func(t *testing.T) {
 		// when
 		// CheInstallation should already exist
 
@@ -61,7 +61,7 @@ func TestToolchain(t *testing.T) {
 	})
 
 	// TODO enable this test. The issue is Namespace when deleted, stuck in Terminating Phase
-	// t.Run("should recreate che operator's ns operatorgroup subscription when ns deleted", func(t *testing.T) {
+	// t.Run("should recreate Che operator's ns operatorgroup subscription when ns deleted", func(t *testing.T) {
 	// 	// given
 	// 	ns := &v1.Namespace{}
 	// 	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheOperatorNS}, ns)
@@ -81,7 +81,7 @@ func TestToolchain(t *testing.T) {
 	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub)
 	// })
 
-	t.Run("should recreate deleted operatorgroup for che", func(t *testing.T) {
+	t.Run("should recreate deleted operatorgroup for Che", func(t *testing.T) {
 		// given
 		ogList := &olmv1.OperatorGroupList{}
 		err := await.Client.List(context.TODO(), ogList, client.InNamespace(cheOperatorNS), client.MatchingLabels(toolchain.Labels()))
@@ -99,7 +99,7 @@ func TestToolchain(t *testing.T) {
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, nil, nil)
 	})
 
-	t.Run("should recreate deleted subscription for che", func(t *testing.T) {
+	t.Run("should recreate deleted subscription for Che", func(t *testing.T) {
 		// given
 		cheSubscription, err := await.GetSubscription(cheSub.Namespace, cheSub.Name)
 		require.NoError(t, err)
@@ -115,7 +115,7 @@ func TestToolchain(t *testing.T) {
 		checkCheResources(t, f.Client.Client, cheOperatorNS, nil, cheSub, nil)
 	})
 
-	t.Run("should recreate deleted checluster for che", func(t *testing.T) {
+	t.Run("should recreate deleted checluster for Che", func(t *testing.T) {
 		// given
 		cluster, err := await.GetCheCluster(cheCluster.Namespace, cheCluster.Name)
 		require.NoError(t, err)
@@ -131,7 +131,7 @@ func TestToolchain(t *testing.T) {
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
 
-	t.Run("should remove operatorgroup, subscription and CheCluster for che with CheInstallation deletion", func(t *testing.T) {
+	t.Run("should remove operatorgroup, subscription and CheCluster for Che with CheInstallation deletion", func(t *testing.T) {
 		// given
 		cheInstallation, err := await.GetCheInstallation(cheInstallation.Name)
 		require.NoError(t, err)
