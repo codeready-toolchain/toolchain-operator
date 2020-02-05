@@ -75,19 +75,23 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 		return err
 	}
 
-	watchCheCluster := func() error {
-		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner)
-	}
-
-	err = watchCheCluster()
-	if err != nil {
-		if !meta.IsNoMatchError(err) { // ignore NoKindMatchError
-			return err
+	watchCheCluster = func(r *ReconcileCheInstallation) error {
+		err := c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, enqueueRequestForOwner)
+		if err != nil {
+			if !meta.IsNoMatchError(err) { // ignore NoKindMatchError
+				log.Info("CheGroup resource type does not exist yet", "message", err.Error())
+				return err
+			}
+			r.watchingCheCluster = true
 		}
-		r.watchCheCluster = watchCheCluster
+		return nil
 	}
-	return nil
+	// attempt to watch `CheCluster` resources, but fail safely if the CRD is not available yet, otherwise return the error
+	return watchCheCluster(r)
+
 }
+
+var watchCheCluster func(r *ReconcileCheInstallation) error
 
 // blank assignment to verify that ReconcileCheInstallation implements reconcile.Reconciler
 var _ reconcile.Reconciler = &ReconcileCheInstallation{}
@@ -96,10 +100,10 @@ var _ reconcile.Reconciler = &ReconcileCheInstallation{}
 type ReconcileCheInstallation struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client          client.Client
-	scheme          *runtime.Scheme
-	watchCheCluster func() error
-	mu              sync.Mutex
+	client             client.Client
+	scheme             *runtime.Scheme
+	watchingCheCluster bool
+	mu                 sync.Mutex
 }
 
 // Reconcile reads that state of the cluster for a CheInstallation object and makes changes based on the state read
@@ -218,16 +222,12 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, che
 func (r *ReconcileCheInstallation) ensureWatchCheCluster() (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.watchCheCluster != nil {
-		if err := r.watchCheCluster(); err != nil {
-			if meta.IsNoMatchError(err) {
-				log.Info("CheGroup resource type does not exist yet", "message", err.Error())
-				return true, nil
-			}
+	if !r.watchingCheCluster {
+		if err := watchCheCluster(r); err != nil {
 			log.Info("Unexpected error while creating a watcher on the CheGroup resources", "message", err.Error())
 			return false, err
 		}
-		r.watchCheCluster = nil // make sure watchCheCluster() should NOT be called afterwards
+		r.watchingCheCluster = true // make sure watchCheCluster() will NOT be called afterwards
 	}
 	log.Info("Added a watcher on the CheGroup resources")
 	return false, nil
@@ -248,16 +248,14 @@ func (r *ReconcileCheInstallation) ensureCheCluster(logger logr.Logger, cheInsta
 			return false, getCheClusterStatus(c), nil
 		}
 		logger.Info("Unexpected error while creating a CheCluster for che", "CheCluster.Namespace", cluster.Namespace, "CheCluster.Name", cluster.Name)
-		return false, getCheClusterStatus(nil), err
+		return false, "", err
 	}
-	logger.Info("Created a CheCluster for che", "CheCluster.Namespace", cluster.Namespace, "CheCluster.Name", cluster.Name)
+	logger.Info("Created a CheCluster for Che", "CheCluster.Namespace", cluster.Namespace, "CheCluster.Name", cluster.Name)
 	return true, getCheClusterStatus(cluster), nil
 }
 
 func getCheClusterStatus(cluster *orgv1.CheCluster) string {
-	if cluster == nil {
-		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
-	} else if cluster.Status == (orgv1.CheClusterStatus{}) {
+	if cluster == nil || cluster.Status == (orgv1.CheClusterStatus{}) {
 		return fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName)
 	} else if cluster.Status.CheClusterRunning != AvailableStatus {
 		switch {
