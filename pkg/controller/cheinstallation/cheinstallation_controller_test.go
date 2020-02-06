@@ -44,9 +44,9 @@ func init() {
 func TestReconcile(t *testing.T) {
 
 	// reconciling on Che Installation resource
-	t.Run("che installation", func(t *testing.T) {
+	t.Run("Che installation", func(t *testing.T) {
 
-		t.Run("should not reconcile without che installation", func(t *testing.T) {
+		t.Run("should not reconcile without Che installation", func(t *testing.T) {
 			// given
 			cheInstallation := NewInstallation()
 			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
@@ -89,7 +89,7 @@ func TestReconcile(t *testing.T) {
 	// reconciling on namespace
 	t.Run("namespace", func(t *testing.T) {
 
-		t.Run("should create che namespace", func(t *testing.T) {
+		t.Run("should create Che namespace", func(t *testing.T) {
 			// given
 			cheInstallation := NewInstallation()
 			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
@@ -163,7 +163,7 @@ func TestReconcile(t *testing.T) {
 	// reconciling on Che OperatorGroup resource
 	t.Run("operator group", func(t *testing.T) {
 
-		t.Run("should create che operator group", func(t *testing.T) {
+		t.Run("should create Che operator group", func(t *testing.T) {
 			// given
 			cheInstallation := NewInstallation()
 			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
@@ -223,7 +223,7 @@ func TestReconcile(t *testing.T) {
 	// reconciling on Che subscription resource
 	t.Run("subscription", func(t *testing.T) {
 
-		t.Run("should create che subscription", func(t *testing.T) {
+		t.Run("should create Che subscription", func(t *testing.T) {
 			// given
 			cheInstallation := NewInstallation()
 			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
@@ -250,13 +250,13 @@ func TestReconcile(t *testing.T) {
 				HasSpec(NewSubscription(cheOperatorNS).Spec)
 		})
 
-		t.Run("should update status when failed to create che subscription", func(t *testing.T) {
+		t.Run("should update status when failed to create Che subscription", func(t *testing.T) {
 			// given
 			cheInstallation := NewInstallation()
 			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
 			cl, r := configureClient(t, cheInstallation, newCheNamespace(cheOperatorNS, v1.NamespaceActive), NewOperatorGroup(cheOperatorNS))
 			request := newReconcileRequest(cheInstallation)
-			errMsg := "something went wrong while creating che subscription"
+			errMsg := "something went wrong while creating Che subscription"
 			cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 				if sub, ok := obj.(*olmv1alpha1.Subscription); ok && sub.Name == SubscriptionName {
 					return errors.New(errMsg)
@@ -268,7 +268,7 @@ func TestReconcile(t *testing.T) {
 			_, err := r.Reconcile(request)
 
 			// then
-			assert.EqualError(t, err, fmt.Sprintf("failed to create che subscription in namespace %s: %s", Namespace, errMsg))
+			assert.EqualError(t, err, fmt.Sprintf("failed to create Che subscription in namespace %s: %s", Namespace, errMsg))
 			AssertThatNamespace(t, Namespace, cl).
 				Exists().
 				HasLabels(toolchain.Labels())
@@ -602,7 +602,7 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
 		cheOperatorGroup := NewOperatorGroup(cheOperatorNS)
 		cl, r := configureClient(t, cheInstallation, cheOperatorGroup)
-		errMsg := "something went wrong while creating che subscription"
+		errMsg := "something went wrong while creating Che subscription"
 		cl.MockCreate = func(ctx context.Context, obj runtime.Object, opts ...client.CreateOption) error {
 			// return an error when the object to create is a Subscription
 			return errors.New(errMsg)

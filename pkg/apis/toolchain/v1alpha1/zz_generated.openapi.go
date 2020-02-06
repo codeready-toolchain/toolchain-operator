@@ -89,7 +89,7 @@ func schema_pkg_apis_toolchain_v1alpha1_CheInstallationSpec(ref common.Reference
 				Properties: map[string]spec.Schema{
 					"cheOperatorSpec": {
 						SchemaProps: spec.SchemaProps{
-							Description: "The configuration required for che operator",
+							Description: "The configuration required for Che operator",
 							Ref:         ref("github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1.CheOperator"),
 						},
 					},

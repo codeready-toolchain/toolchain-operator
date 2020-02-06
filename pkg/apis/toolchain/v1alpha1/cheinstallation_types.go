@@ -8,7 +8,7 @@ import (
 // CheInstallationSpec defines the desired state of CheInstallation
 // +k8s:openapi-gen=true
 type CheInstallationSpec struct {
-	// The configuration required for che operator
+	// The configuration required for Che operator
 	CheOperatorSpec CheOperator `json:"cheOperatorSpec"`
 }
 

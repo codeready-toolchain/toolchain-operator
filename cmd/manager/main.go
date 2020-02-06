@@ -90,7 +90,7 @@ func main() {
 	}
 	// Create a new Cmd to provide shared dependencies and start components
 	mgr, err := manager.New(cfg, manager.Options{
-		//	Namespace:          namespace, we'll need to build cache to inform from any namespace as che operator is installing in any ns
+		//	Namespace:          namespace, we'll need to build cache to inform from any namespace as Che operator is installing in any ns
 		MapperProvider:     restmapper.NewDynamicRESTMapper,
 		MetricsBindAddress: fmt.Sprintf("%s:%d", metricsHost, metricsPort),
 	})

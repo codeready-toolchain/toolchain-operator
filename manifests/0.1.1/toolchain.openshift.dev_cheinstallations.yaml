@@ -44,7 +44,7 @@ spec:
           description: CheInstallationSpec defines the desired state of CheInstallation
           properties:
             cheOperatorSpec:
-              description: The configuration required for che operator
+              description: The configuration required for Che operator
               properties:
                 namespace:
                   description: The namespace where the CodeReady Workspaces operator

@@ -38,11 +38,11 @@ const (
 func NewInstallation() *v1alpha1.CheInstallation {
 	return &v1alpha1.CheInstallation{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: InstallationName, // che installation resource is cluster-scoped, so no namespace is defined
+			Name: InstallationName, // Che installation resource is cluster-scoped, so no namespace is defined
 		},
 		Spec: v1alpha1.CheInstallationSpec{
 			CheOperatorSpec: v1alpha1.CheOperator{
-				Namespace: Namespace, // the namespace in which the che operatorgroup and subscription resources will be created
+				Namespace: Namespace, // the namespace in which the Che operatorgroup and subscription resources will be created
 			},
 		},
 	}
