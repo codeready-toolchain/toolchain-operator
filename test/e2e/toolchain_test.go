@@ -14,8 +14,6 @@ import (
 	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test/wait"
-	"k8s.io/apimachinery/pkg/types"
-
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -131,33 +129,6 @@ func TestToolchain(t *testing.T) {
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
 
-	t.Run("should remove operatorgroup, subscription and CheCluster for Che with CheInstallation deletion", func(t *testing.T) {
-		// given
-		cheInstallation, err := await.GetCheInstallation(cheInstallation.Name)
-		require.NoError(t, err)
-
-		// when
-		err = f.Client.Delete(context.TODO(), cheInstallation)
-
-		// then
-		require.NoError(t, err, "failed to create toolchain CheInstallation")
-
-		err = await.WaitForCheInstallationToBeDeleted(cheInstallation.Name)
-		require.NoError(t, err)
-
-		AssertThatOperatorGroup(t, cheOg.Namespace, cheOg.Name, f.Client).
-			DoesNotExist()
-
-		AssertThatSubscription(t, cheSub.Namespace, cheSub.Name, f.Client).
-			DoesNotExist()
-
-		AssertThatNamespace(t, cheOperatorNS, f.Client).
-			DoesNotExist()
-
-		AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, f.Client).
-			DoesNotExist()
-	})
-
 	t.Run("should create subscription for tekton with TektonInstallation", func(t *testing.T) {
 		// given
 		// TektonInstallation should already exist
@@ -189,14 +160,10 @@ func TestToolchain(t *testing.T) {
 		checkTektonResources(t, f.Client.Client, tektonSub)
 	})
 
-	t.Run("should remove both Tekton and Che when toolchain operator is deleted", func(t *testing.T) {
-		// given
-		toolchainSubscription := &olmv1alpha1.Subscription{}
-		err := f.Client.Get(context.TODO(), types.NamespacedName{Namespace: "openshift-operators", Name: "subscription-codeready-toolchain-operator"}, toolchainSubscription)
-		require.NoError(t, err)
-
+	t.Run("should remove both Tekton and Che when CheInstallation and TektonInstallation are deleted", func(t *testing.T) {
 		// when
-		err = f.Client.Delete(context.TODO(), toolchainSubscription)
+		err = f.Client.Delete(context.TODO(), cheInstallation)
+		err = f.Client.Delete(context.TODO(), tektonInstallation)
 
 		// then
 		require.NoError(t, err)
