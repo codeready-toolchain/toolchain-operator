@@ -3,7 +3,7 @@ module github.com/codeready-toolchain/toolchain-operator
 require (
 	github.com/appscode/jsonpatch v0.0.0-20190108182946-7c0e3b262f30 // indirect
 	github.com/codeready-toolchain/api v0.0.0-20200106152046-f16301c72bc9
-	github.com/codeready-toolchain/toolchain-common v0.0.0-20200131162853-984d8595ee4e
+	github.com/codeready-toolchain/toolchain-common v0.0.0-20200206162805-0a6b2c1ec908
 	github.com/eclipse/che-operator v0.0.0-20191127094847-557860435bb4
 	github.com/emicklei/go-restful v2.11.1+incompatible // indirect
 	github.com/go-logr/logr v0.1.0

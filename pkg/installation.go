@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"github.com/codeready-toolchain/toolchain-common/pkg/template"
+	applyCl "github.com/codeready-toolchain/toolchain-common/pkg/client"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 
@@ -26,20 +26,20 @@ func CreateInstallationResources(cl client.Client, scheme *runtime.Scheme, log l
 	tektonInstallation := tektoninstallation.NewInstallation()
 	cheInstallation := cheinstallation.NewInstallation()
 
-	processor := template.NewProcessor(cl, scheme)
+	applyClient := applyCl.NewApplyClient(cl, scheme)
 
 	// we cannot set the owner reference for the *Installation resources because fo this issue: https://issues.redhat.com/browse/CRT-454
 
 	// create the TektonInstallation resource, stop if something wrong happened
 	log.Info("Creating the Tekton installation resource")
-	if _, err := processor.ApplySingle(tektonInstallation, true, nil); err != nil {
+	if _, err := applyClient.CreateOrUpdateObject(tektonInstallation, true, nil); err != nil {
 		return errors.Wrap(err, "Failed to create the 'TektonInstallation' custom resource")
 	}
 	log.Info("Tekton Installation resource created")
 
 	// create the CheInstallation resource, stop if something wrong happened
 	log.Info("Creating the Che installation resource")
-	if _, err := processor.ApplySingle(cheInstallation, true, nil); err != nil {
+	if _, err := applyClient.CreateOrUpdateObject(cheInstallation, true, nil); err != nil {
 		return errors.Wrap(err, "Failed to create the 'CheInstallation' custom resource")
 	}
 	log.Info("Che Installation resource created")
