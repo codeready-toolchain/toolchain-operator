@@ -1,18 +1,14 @@
 package pkg
 
 import (
-	"context"
-
+	applyCl "github.com/codeready-toolchain/toolchain-common/pkg/client"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 const (
@@ -30,33 +26,20 @@ func CreateInstallationResources(cl client.Client, scheme *runtime.Scheme, log l
 	tektonInstallation := tektoninstallation.NewInstallation()
 	cheInstallation := cheinstallation.NewInstallation()
 
-	subscriptions := &v1alpha1.SubscriptionList{}
-	err := cl.List(context.TODO(), subscriptions, client.InNamespace(defaultOpenShiftOperatorsNamespace))
-	if err != nil {
-		return errors.Wrap(err, "unable to list the subscriptions")
-	}
-	for _, subscription := range subscriptions.Items {
-		if subscription.Spec.Package == codereadyToolchainPackageName {
-			if err := controllerutil.SetControllerReference(&subscription, tektonInstallation, scheme); err != nil {
-				return errors.Wrap(err, "unable to set the owner reference to Tekton Installation")
-			}
-			if err := controllerutil.SetControllerReference(&subscription, cheInstallation, scheme); err != nil {
-				return errors.Wrap(err, "unable to set the owner reference to Che Installation")
-			}
-			break
-		}
-	}
+	applyClient := applyCl.NewApplyClient(cl, scheme)
+
+	// we cannot set the owner reference for the *Installation resources because fo this issue: https://issues.redhat.com/browse/CRT-454
 
 	// create the TektonInstallation resource, stop if something wrong happened
 	log.Info("Creating the Tekton installation resource")
-	if err = cl.Create(context.TODO(), tektonInstallation); err != nil && !apierrors.IsAlreadyExists(err) {
+	if _, err := applyClient.CreateOrUpdateObject(tektonInstallation, true, nil); err != nil {
 		return errors.Wrap(err, "Failed to create the 'TektonInstallation' custom resource")
 	}
 	log.Info("Tekton Installation resource created")
 
 	// create the CheInstallation resource, stop if something wrong happened
 	log.Info("Creating the Che installation resource")
-	if err = cl.Create(context.TODO(), cheInstallation); err != nil && !apierrors.IsAlreadyExists(err) {
+	if _, err := applyClient.CreateOrUpdateObject(cheInstallation, true, nil); err != nil {
 		return errors.Wrap(err, "Failed to create the 'CheInstallation' custom resource")
 	}
 	log.Info("Che Installation resource created")
