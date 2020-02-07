@@ -1,28 +1,31 @@
-CSV_VERSION_TO_GENERATE := 0.1.1
+CSV_VERSION_TO_GENERATE := 0.1.2
+DATE_SUFFIX := $(shell date +'%d%H%M%S')
 COMMUNITY_OPERATORS_DIR=../../operator-framework/community-operators/community-operators/codeready-toolchain-operator
 
-PATH_TO_GENERATE_FILE=../api/scripts/olm-catalog-generate.sh
+PATH_TO_CREATE_RELEASE_FILE= scripts/create-release-bundle.sh
+PATH_TO_PUSH_MANIFESTS_FILE= scripts/push-to-quay-manifests.sh
+PATH_TO_CREATE_HACK_FILE= scripts/generate-deploy-hack.sh
 
 PHONY: create-release-manifest
 create-release-manifest:
 	$(eval CREATE_PARAMS = -pr ../toolchain-operator -on codeready-toolchain-operator  --next-version ${CSV_VERSION_TO_GENERATE})
-ifneq ("$(wildcard $(PATH_TO_GENERATE_FILE))","")
+ifneq ("$(wildcard ../api/$(PATH_TO_CREATE_RELEASE_FILE))","")
 	@echo "creating release manifest in ./manifest/ directory using script from local api repo..."
-	../api/scripts/create-release-bundle.sh ${CREATE_PARAMS}
+	../api/${PATH_TO_CREATE_RELEASE_FILE} ${CREATE_PARAMS}
 else
 	@echo "creating release manifest in ./manifest/ directory using script from GH api repo (using latest version in master)..."
-	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/create-release-bundle.sh | bash -s -- ${CREATE_PARAMS}
+	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/${PATH_TO_CREATE_RELEASE_FILE} | bash -s -- ${CREATE_PARAMS}
 endif
 
 PHONY: push-latest-release-manifest
 push-latest-release-manifest:
 	$(eval PUSH_PARAMS = -pr ../toolchain-operator -on codeready-toolchain-operator)
-ifneq ("$(wildcard $(PATH_TO_GENERATE_FILE))","")
+ifneq ("$(wildcard ../api/$(PATH_TO_PUSH_MANIFESTS_FILE))","")
 	@echo "pushing the latest release manifest from ./manifest/ directory using script from local api repo..."
-	../api/scripts/push-to-quay-manifests.sh ${PUSH_PARAMS}
+	../api/${PATH_TO_PUSH_MANIFESTS_FILE} ${PUSH_PARAMS}
 else
 	@echo "ushing the latest release manifest from ./manifest/ directory using script from GH api repo (using latest version in master)..."
-	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/scripts/push-to-quay-manifests.sh | bash -s -- ${PUSH_PARAMS}
+	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/${PATH_TO_PUSH_MANIFESTS_FILE} | bash -s -- ${PUSH_PARAMS}
 endif
 
 PHONY: copy-manifests-to-community-operators
@@ -38,7 +41,15 @@ delete-release-manifest-from-os:
 	oc delete catalogsource source-codeready-toolchain-operator -n openshift-marketplace 2>/dev/null || true
 	oc delete configmap cm-codeready-toolchain-operator -n openshift-marketplace 2>/dev/null || true
 
-.PHONY: add-release-manifest-to-os
+.PHONY: add-release-manifests-to-os
 ## Creates ServiceCatalog with a ConfigMap that contains operator CSV and all CRDs and image location set to current OS registry
-add-release-manifest-to-os:
-	cat /tmp/hack_deploy_codeready-toolchain-operator_${CSV_VERSION_TO_GENERATE}/deploy_csv.yaml | oc apply -f -
+add-release-manifests-to-os:
+	$(eval CREATE_PARAMS = -crds ./deploy/crds -csvs ./manifests/ -pf ./manifests/codeready-toolchain-operator.package.yaml -hd /tmp/hack_deploy_crt-operator_${DATE_SUFFIX} -on codeready-toolchain-operator)
+ifneq ("$(wildcard ../api/$(PATH_TO_CREATE_HACK_FILE))","")
+	@echo "creating release manifest in ./manifest/ directory using script from local api repo..."
+	../api/${PATH_TO_CREATE_HACK_FILE} ${CREATE_PARAMS}
+else
+	@echo "creating release manifest in ./manifest/ directory using script from GH api repo (using latest version in master)..."
+	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/${PATH_TO_CREATE_HACK_FILE} | bash -s -- ${CREATE_PARAMS}
+endif
+	cat /tmp/hack_deploy_crt-operator_${DATE_SUFFIX}/deploy_csv.yaml | oc apply -f -
