@@ -16,6 +16,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
 )
 
@@ -40,9 +41,10 @@ func TestCreateInstallationResources(t *testing.T) {
 		},
 	}
 
-	t.Run("when subscription is available then assign", func(t *testing.T) {
+	t.Run("when the *Installation resources are not present then it creates them", func(t *testing.T) {
 		// given
-		client := test.NewFakeClient(t, subscription)
+
+		client := test.NewFakeClient(t)
 
 		// when
 		err = pkg.CreateInstallationResources(client, s, logf.Log)
@@ -50,14 +52,39 @@ func TestCreateInstallationResources(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		testolm.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
-			HasOwnerRef(subscription)
+			HasNoOwnerRef()
 		testolm.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
-			HasOwnerRef(subscription)
+			HasNoOwnerRef()
 	})
 
-	t.Run("when subscription is not available then don't assign", func(t *testing.T) {
+	t.Run("when subscription is set as owner reference then it should be removed", func(t *testing.T) {
 		// given
-		client := test.NewFakeClient(t)
+		tektonInstallation := tektoninstallation.NewInstallation()
+		err := controllerutil.SetControllerReference(subscription, tektonInstallation, s)
+		require.NoError(t, err)
+		cheInstallation := cheinstallation.NewInstallation()
+		err = controllerutil.SetControllerReference(subscription, cheInstallation, s)
+		require.NoError(t, err)
+
+		client := test.NewFakeClient(t, subscription, tektonInstallation, cheInstallation)
+
+		// when
+		err = pkg.CreateInstallationResources(client, s, logf.Log)
+
+		// then
+		require.NoError(t, err)
+		testolm.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
+			HasNoOwnerRef()
+		testolm.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+			HasNoOwnerRef()
+	})
+
+	t.Run("when owner reference is not set then it doesn't add anything", func(t *testing.T) {
+		// given
+		tektonInstallation := tektoninstallation.NewInstallation()
+		cheInstallation := cheinstallation.NewInstallation()
+
+		client := test.NewFakeClient(t, tektonInstallation, cheInstallation)
 
 		// when
 		err = pkg.CreateInstallationResources(client, s, logf.Log)
