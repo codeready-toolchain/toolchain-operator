@@ -5,6 +5,7 @@ build/_test
 # generated files
 **/*_assets.go
 
+deploy/test/empty.yaml
 
 # Created by https://www.gitignore.io/api/go,vim,emacs,visualstudiocode
 ### Emacs ###
