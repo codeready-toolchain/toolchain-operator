@@ -65,7 +65,7 @@ spec:
     owned:
     - description: CheInstallation defines how CodeReady Workspaces (Che) operator
         should be installed
-      displayName: CodeReady Toolchain Che Installation
+      displayName: CodeReady Workspaces Installation
       kind: CheInstallation
       name: cheinstallations.toolchain.openshift.dev
       specDescriptors:
@@ -84,7 +84,7 @@ spec:
       version: v1alpha1
     - description: TektonInstallation defines how OpenShift Pipelines (Tekton) operator
         should be installed
-      displayName: CodeReady Toolchain Tekton Installation
+      displayName: OpenShift Pipelines Installation
       kind: TektonInstallation
       name: tektoninstallations.toolchain.openshift.dev
       statusDescriptors:
