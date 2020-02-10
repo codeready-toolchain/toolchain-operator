@@ -8,7 +8,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 	"github.com/codeready-toolchain/toolchain-operator/test"
-	testolm "github.com/codeready-toolchain/toolchain-operator/test/olm"
+	"github.com/codeready-toolchain/toolchain-operator/test/assert"
 
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	uuid "github.com/satori/go.uuid"
@@ -51,9 +51,9 @@ func TestCreateInstallationResources(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		testolm.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
+		assert.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
 			HasNoOwnerRef()
-		testolm.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+		assert.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
 			HasNoOwnerRef()
 	})
 
@@ -73,9 +73,9 @@ func TestCreateInstallationResources(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		testolm.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
+		assert.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
 			HasNoOwnerRef()
-		testolm.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+		assert.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
 			HasNoOwnerRef()
 	})
 
@@ -91,9 +91,9 @@ func TestCreateInstallationResources(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		testolm.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
+		assert.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
 			HasNoOwnerRef()
-		testolm.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+		assert.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
 			HasNoOwnerRef()
 	})
 }

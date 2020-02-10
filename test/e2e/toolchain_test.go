@@ -11,7 +11,7 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test"
-	. "github.com/codeready-toolchain/toolchain-operator/test/olm"
+	. "github.com/codeready-toolchain/toolchain-operator/test/assert"
 
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
