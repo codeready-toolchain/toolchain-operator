@@ -5,9 +5,9 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
-	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 
 	"github.com/go-logr/logr"
+	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/pkg/errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"

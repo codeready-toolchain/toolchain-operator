@@ -7,13 +7,13 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+	"github.com/codeready-toolchain/toolchain-operator/test"
+	testolm "github.com/codeready-toolchain/toolchain-operator/test/olm"
 
 	"github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	logf "sigs.k8s.io/controller-runtime/pkg/runtime/log"
@@ -49,9 +49,9 @@ func TestCreateInstallationResources(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		toolchain.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
+		testolm.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
 			HasOwnerRef(subscription)
-		toolchain.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+		testolm.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
 			HasOwnerRef(subscription)
 	})
 
@@ -64,9 +64,9 @@ func TestCreateInstallationResources(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		toolchain.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
+		testolm.AssertThatTektonInstallation(t, "", tektoninstallation.InstallationName, client).
 			HasNoOwnerRef()
-		toolchain.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+		testolm.AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
 			HasNoOwnerRef()
 	})
 }

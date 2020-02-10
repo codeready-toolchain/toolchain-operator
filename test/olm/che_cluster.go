@@ -2,14 +2,13 @@ package olm
 
 import (
 	"context"
-	testwait "github.com/codeready-toolchain/toolchain-operator/test/wait"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -42,7 +41,7 @@ func (a *CheClusterAssertion) HasRunningStatus(want string) *CheClusterAssertion
 }
 
 func (a *CheClusterAssertion) DoesNotExist() *CheClusterAssertion {
-	err := testwait.PollOnceOrUntilCondition(func() (done bool, err error) {
+	err := PollOnceOrUntilCondition(func() (done bool, err error) {
 		err = a.loadCheClusterAssertion()
 		if err != nil {
 			if errors.IsNotFound(err) {
