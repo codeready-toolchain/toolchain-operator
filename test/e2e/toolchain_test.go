@@ -9,11 +9,10 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/tektoninstallation"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
-	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/k8s"
-	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
-	"github.com/codeready-toolchain/toolchain-operator/test/wait"
+	"github.com/codeready-toolchain/toolchain-operator/test"
+	. "github.com/codeready-toolchain/toolchain-operator/test/assert"
+
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -53,7 +52,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to create toolchain CheInstallation")
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
@@ -74,7 +73,7 @@ func TestToolchain(t *testing.T) {
 	// 	err = await.WaitForNamespace(cheOperatorNS, v1.NamespaceActive)
 	// 	require.NoError(t, err)
 
-	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
+	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
 	// 	require.NoError(t, err)
 	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub)
 	// })
@@ -124,7 +123,7 @@ func TestToolchain(t *testing.T) {
 		// then
 		require.NoError(t, err, "failed to delete CheCluster %s in namespace %s", cluster.Name, cluster.Namespace)
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, wait.UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
+		err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
@@ -133,7 +132,7 @@ func TestToolchain(t *testing.T) {
 		// given
 		// TektonInstallation should already exist
 		// when
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
 		// then
 		require.NoError(t, err)
 
@@ -154,7 +153,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForSubscription(tektoninstallation.SubscriptionNamespace, tektoninstallation.SubscriptionName)
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, wait.UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
+		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 
 		checkTektonResources(t, f.Client.Client, tektonSub)
@@ -219,7 +218,7 @@ func checkTektonResources(t *testing.T, client client.Client, tektonSub *olmv1al
 		HasSpec(tektonSub.Spec)
 }
 
-func InitOperator(t *testing.T) (*framework.TestCtx, wait.ToolchainAwaitility) {
+func InitOperator(t *testing.T) (*framework.TestCtx, ToolchainAwaitility) {
 	icList := &v1alpha1.CheInstallationList{}
 	err := framework.AddToFrameworkScheme(apis.AddToScheme, icList)
 	require.NoError(t, err, "failed to add custom resource scheme to framework: %v", err)
@@ -235,12 +234,12 @@ func InitOperator(t *testing.T) (*framework.TestCtx, wait.ToolchainAwaitility) {
 
 	// get global framework variables
 	f := framework.Global
-	await := wait.ToolchainAwaitility{
+	await := ToolchainAwaitility{
 		T:      t,
 		Client: f.Client,
 	}
 	// wait for toolchain-operator to be ready
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "toolchain-operator", 1, wait.RetryInterval, wait.Timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "toolchain-operator", 1, RetryInterval, Timeout)
 	require.NoError(t, err, "failed while waiting for toolchain-operator deployment")
 	t.Log("toolchain-operator is ready and running state")
 
@@ -248,5 +247,5 @@ func InitOperator(t *testing.T) (*framework.TestCtx, wait.ToolchainAwaitility) {
 }
 
 func cleanupOptions(ctx *framework.TestCtx) *framework.CleanupOptions {
-	return &framework.CleanupOptions{TestContext: ctx, Timeout: wait.CleanupTimeout, RetryInterval: wait.CleanupRetryInterval}
+	return &framework.CleanupOptions{TestContext: ctx, Timeout: CleanupTimeout, RetryInterval: CleanupRetryInterval}
 }

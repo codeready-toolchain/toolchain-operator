@@ -1,15 +1,16 @@
-package olm
+package assert
 
 import (
 	"context"
+	"testing"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
-	testwait "github.com/codeready-toolchain/toolchain-operator/test/wait"
+
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 type OperatorGroupAssertion struct {
@@ -39,7 +40,7 @@ func AssertThatOperatorGroup(t *testing.T, ns, name string, client client.Reader
 }
 
 func (a *OperatorGroupAssertion) DoesNotExist() *OperatorGroupAssertion {
-	err := testwait.PollOnceOrUntilCondition(func() (done bool, err error) {
+	err := PollOnceOrUntilCondition(func() (done bool, err error) {
 		err = a.loadOperatorGroupAssertion()
 		if len(a.ogList) == 0 {
 			a.t.Logf("operatorgroup deleted")

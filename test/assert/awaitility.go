@@ -1,4 +1,4 @@
-package wait
+package assert
 
 import (
 	"context"
@@ -8,8 +8,8 @@ import (
 
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+	"github.com/codeready-toolchain/toolchain-operator/test"
+
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
@@ -108,7 +108,7 @@ type TektonInstallationWaitCondition func(a *ToolchainAwaitility, ic *v1alpha1.T
 func UntilHasCheStatusCondition(conditions ...toolchainv1alpha1.Condition) CheInstallationWaitCondition {
 	return func(a *ToolchainAwaitility, ic *v1alpha1.CheInstallation) bool {
 		if len(ic.Status.Conditions) > 0 {
-			if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
+			if ConditionsMatch(ic.Status.Conditions, conditions...) {
 				a.T.Logf("status conditions match in CheInstallation '%s`", ic.Name)
 				return true
 			}
@@ -121,7 +121,7 @@ func UntilHasCheStatusCondition(conditions ...toolchainv1alpha1.Condition) CheIn
 // UntilHasTektonStatusCondition checks if TektonInstallation status has the given set of conditions
 func UntilHasTektonStatusCondition(conditions ...toolchainv1alpha1.Condition) TektonInstallationWaitCondition {
 	return func(a *ToolchainAwaitility, ic *v1alpha1.TektonInstallation) bool {
-		if toolchain.ConditionsMatch(ic.Status.Conditions, conditions...) {
+		if ConditionsMatch(ic.Status.Conditions, conditions...) {
 			a.T.Logf("status conditions match in TektonInstallation '%s`", ic.Name)
 			return true
 		}
