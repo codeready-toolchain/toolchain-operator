@@ -22,9 +22,6 @@ type CheInstallationAssertion struct {
 }
 
 func (a *CheInstallationAssertion) loadCheInstallationAssertion() error {
-	if a.cheInstallation != nil {
-		return nil
-	}
 	ic := &v1alpha1.CheInstallation{}
 	err := a.client.Get(context.TODO(), a.namespacedName, ic)
 	a.cheInstallation = ic
