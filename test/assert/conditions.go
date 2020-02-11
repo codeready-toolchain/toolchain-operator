@@ -1,11 +1,13 @@
-package toolchain
+package assert
 
 import (
 	"fmt"
+	"testing"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 // TODo - This is copied as it is, due to issues of controller-runtime's client.Client. There is update on some methods of client.Client, which causes compile error. This can be removed once we updated controller-runtime for common

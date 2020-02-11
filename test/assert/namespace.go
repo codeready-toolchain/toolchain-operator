@@ -1,16 +1,16 @@
-package k8s
+package assert
 
 import (
 	"context"
-	testwait "github.com/codeready-toolchain/toolchain-operator/test/wait"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 type NamespaceAssertion struct {
@@ -39,7 +39,7 @@ func AssertThatNamespace(t *testing.T, name string, client client.Reader) *Names
 }
 
 func (a *NamespaceAssertion) DoesNotExist() *NamespaceAssertion {
-	err := testwait.PollOnceOrUntilCondition(func() (done bool, err error) {
+	err := PollOnceOrUntilCondition(func() (done bool, err error) {
 		err = a.loadNamespaceAssertion()
 		if err != nil {
 			if errors.IsNotFound(err) {
