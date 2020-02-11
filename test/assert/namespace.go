@@ -21,9 +21,6 @@ type NamespaceAssertion struct {
 }
 
 func (a *NamespaceAssertion) loadNamespaceAssertion() error {
-	if a.namespace != nil {
-		return nil
-	}
 	ns := &v1.Namespace{}
 	err := a.client.Get(context.TODO(), a.namespacedName, ns)
 	a.namespace = ns

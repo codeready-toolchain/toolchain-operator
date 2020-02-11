@@ -21,9 +21,6 @@ type OperatorGroupAssertion struct {
 }
 
 func (a *OperatorGroupAssertion) loadOperatorGroupAssertion() error {
-	if a.ogList != nil {
-		return nil
-	}
 	ogList := &olmv1.OperatorGroupList{}
 	err := a.client.List(context.TODO(), ogList, client.InNamespace(a.namespacedName.Namespace), client.MatchingLabels(toolchain.Labels()))
 

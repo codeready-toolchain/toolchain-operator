@@ -60,9 +60,6 @@ func (a *CheClusterAssertion) DoesNotExist() *CheClusterAssertion {
 }
 
 func (a *CheClusterAssertion) loadCheClusterAssertion() error {
-	if a.cheCluster != nil {
-		return nil
-	}
 	cheCluster := &orgv1.CheCluster{}
 	err := a.client.Get(context.TODO(), a.namespacedName, cheCluster)
 	a.cheCluster = cheCluster
