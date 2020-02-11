@@ -9,9 +9,8 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	"github.com/codeready-toolchain/toolchain-operator/pkg/test"
-	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/olm"
-	. "github.com/codeready-toolchain/toolchain-operator/pkg/test/toolchain"
+	"github.com/codeready-toolchain/toolchain-operator/test"
+	. "github.com/codeready-toolchain/toolchain-operator/test/assert"
 
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"

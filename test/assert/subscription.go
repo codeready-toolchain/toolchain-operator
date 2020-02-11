@@ -1,8 +1,9 @@
-package olm
+package assert
 
 import (
 	"context"
-	testwait "github.com/codeready-toolchain/toolchain-operator/test/wait"
+	"testing"
+
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -10,7 +11,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"testing"
 )
 
 type SubscriptionAssertion struct {
@@ -39,7 +39,7 @@ func AssertThatSubscription(t *testing.T, ns, name string, client client.Reader)
 }
 
 func (a *SubscriptionAssertion) DoesNotExist() *SubscriptionAssertion {
-	err := testwait.PollOnceOrUntilCondition(func() (done bool, err error) {
+	err := PollOnceOrUntilCondition(func() (done bool, err error) {
 		err = a.loadSubscriptionAssertion()
 		if err != nil {
 			if errors.IsNotFound(err) {
