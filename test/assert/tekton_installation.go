@@ -24,9 +24,6 @@ type TektonInstallationAssertion struct {
 }
 
 func (a *TektonInstallationAssertion) loadTektonInstallationAssertion() error {
-	if a.tektonInstallation != nil {
-		return nil
-	}
 	ti := &v1alpha1.TektonInstallation{}
 	err := a.client.Get(context.TODO(), a.namespacedName, ti)
 	a.tektonInstallation = ti

@@ -21,9 +21,6 @@ type SubscriptionAssertion struct {
 }
 
 func (a *SubscriptionAssertion) loadSubscriptionAssertion() error {
-	if a.subscription != nil {
-		return nil
-	}
 	subscription := &olmv1alpha1.Subscription{}
 	err := a.client.Get(context.TODO(), a.namespacedName, subscription)
 	a.subscription = subscription
