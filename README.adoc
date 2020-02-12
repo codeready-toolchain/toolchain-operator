@@ -61,3 +61,55 @@ ci-operator --config ../../openshift/release/ci-operator/config/codeready-toolch
 assuming that the https://github.com/openshift/release[OpenShift Release] repo was checked you.
 
 NOTE: you can ignore the RBAC issues that are displayed in the console
+
+
+=== Releasing a new version of toolchain-operator
+
+All released operator bundles are stored in the link:./manifests/[manifests/] directory. The already released versions shouldn't be changed.
+There are multiple makefile targets that will help you with releasing a new version of toolchain-operator - to see them go to link:./make/manifests.mk[manifests.mk].
+
+==== Prerequisites
+
+* having https://github.com/operator-framework/operator-courier[operator-courier] installed
+* having https://github.com/operator-framework/operator-sdk[operator-sdk] of version v0.11.0 installed
+* clone https://github.com/operator-framework/community-operators[community-operators] repo in `${GOPATH}/src/github.com/operator-framework/community-operators`
+
+
+==== Steps
+
+===== 1. Create release manifest
+First of all, you need to create a new release - go to the link:./make/manifests.mk[manifests.mk] and check the `CSV_VERSION_TO_GENERATE` variable if it matches your required version.
+If it does then run `make create-release-manifest` - it will create a new release manifest within link:./manifests/[manifests/] directory.
+
+===== 2. Test the release manifest
+Verify the created manifest, if it contains everything that would you expect, then you can also verify the installation and upgrade directly in your dev cluster.
+To do that run `make add-release-manifests-to-os` - it will deploy manifests into your cluster, so you can install the operator.
+If you want to also test the upgrade, create a subscription with the `startingCSV` equal to some of the previous releases - eq. run:
+```yaml
+cat <<EOF | oc apply -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: subscription-codeready-toolchain-operator
+  namespace: openshift-operators
+spec:
+  channel: alpha
+  installPlanApproval: Automatic
+  name: codeready-toolchain-operator
+  source: source-codeready-toolchain-operator
+  sourceNamespace: openshift-marketplace
+  startingCSV: codeready-toolchain-operator.v0.1.0
+EOF
+```
+To delete the CSVs from the cluster, you can run `make delete-release-manifest-from-os`.
+
+If you want to also try to install it from the quay.io using the `OperatorSource` you can push the bundle into your quay namespace using `make push-latest-release-manifest`
+
+===== 3. Create PR in community-operators
+As soon as you verify that the release is working correctly, you can create a PR with a new release in https://github.com/operator-framework/community-operators[community-operators] repo.
+To copy the manifests to the repo use `make copy-manifests-to-community-operators` and then create a PR there. Please follow the instructions that are written in the template of the PR description.
+Open also a PR with the manifests inside of the toolchain-operator repository.
+
+===== 4. Merge PR in toolchain-operator and verify
+Once the PR in community-operators repo is merged, then the release will be available in Operator Hub.
+So, merge the PR in toolchain-operator repo and verify the new release in your dev cluster.
