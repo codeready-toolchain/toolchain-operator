@@ -18,7 +18,7 @@ import (
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
 	"github.com/redhat-cop/operator-utils/pkg/util"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -67,7 +67,7 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 		OwnerType:    &v1alpha1.CheInstallation{},
 	}
 
-	if err := c.Watch(&source.Kind{Type: &v1.Namespace{}}, enqueueRequestForOwner); err != nil {
+	if err := c.Watch(&source.Kind{Type: &corev1.Namespace{}}, enqueueRequestForOwner); err != nil {
 		return err
 	}
 
@@ -210,9 +210,12 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 	if err := r.client.Create(context.TODO(), namespace); err != nil {
 		if errors.IsAlreadyExists(err) {
 			logger.Info("Namespace for Che operator already exists", "Namespace", cheOpNamespace)
-			ns := v1.Namespace{}
+			ns := corev1.Namespace{}
 			if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, &ns); err != nil {
 				return false, err
+			}
+			if ns.Status.Phase != corev1.NamespaceActive {
+				return true, nil // requeue until namespace is active (again)
 			}
 			return false, nil
 		}
