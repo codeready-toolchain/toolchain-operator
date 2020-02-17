@@ -115,6 +115,6 @@ Increment the `CSV_VERSION_TO_GENERATE` variable in the link:./make/manifests.mk
 ===== 5. Open PR in toolchain-operator
 Open also a PR with the manifests (and all other changes) inside of the toolchain-operator repository.
 
-===== 6. Wait for community-operators PR being merged
+===== 6. Wait for community-operators PR to be merged
 Once the PR in community-operators repo is merged, then the release will be available in Operator Hub.
 So, merge the PR in toolchain-operator repo and verify the new release in your dev cluster.
