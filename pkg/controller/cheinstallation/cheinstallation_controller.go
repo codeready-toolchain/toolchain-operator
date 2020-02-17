@@ -140,7 +140,7 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		} else if deleted {
 			return reconcile.Result{}, r.setStatusCheInstallationTerminating(cheInstallation, "deleting CheCluster resource")
 		} else {
-			// CheCluster resource as already deleted, we can now remove the finalizer on the CheInstallation
+			// CheCluster resource is already deleted, we can now remove the finalizer on the CheInstallation
 			util.RemoveFinalizer(cheInstallation, toolchainv1alpha1.FinalizerName)
 			if err := r.client.Update(context.Background(), cheInstallation); err != nil {
 				return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheInstallationTerminating, err, "failed to remove finalizer")
