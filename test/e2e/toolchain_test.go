@@ -13,8 +13,6 @@ import (
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test"
 	. "github.com/codeready-toolchain/toolchain-operator/test/assert"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/types"
 
 	orgv1 "github.com/eclipse/che-operator/pkg/apis/org/v1"
 	olmv1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1"
@@ -63,27 +61,27 @@ func TestToolchain(t *testing.T) {
 	})
 
 	// TODO enable this test. The issue is Namespace when deleted, stuck in Terminating Phase
-	t.Run("should recreate Che operator ns operatorgroup subscription when ns deleted", func(t *testing.T) {
-		// given
-		ns := &v1.Namespace{}
-		err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheOperatorNS}, ns)
-		require.NoError(t, err)
+	// t.Run("should recreate Che operator ns operatorgroup subscription when ns deleted", func(t *testing.T) {
+	// 	// given
+	// 	ns := &v1.Namespace{}
+	// 	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheOperatorNS}, ns)
+	// 	require.NoError(t, err)
 
-		// when
-		err = f.Client.Delete(context.TODO(), ns)
+	// 	// when
+	// 	err = f.Client.Delete(context.TODO(), ns)
 
-		// then
-		require.NoError(t, err, "failed to delete Che Operator Namespace")
+	// 	// then
+	// 	require.NoError(t, err, "failed to delete Che Operator Namespace")
 
-		err = await.WaitForNamespace(cheOperatorNS, v1.NamespaceActive)
-		require.NoError(t, err)
+	// 	err = await.WaitForNamespace(cheOperatorNS, v1.NamespaceActive)
+	// 	require.NoError(t, err)
 
-		err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
-		require.NoError(t, err)
-		cluster, err := await.GetCheCluster(cheCluster.Namespace, cheCluster.Name)
-		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cluster)
-	})
+	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
+	// 	require.NoError(t, err)
+	// 	cluster, err := await.GetCheCluster(cheCluster.Namespace, cheCluster.Name)
+	// 	require.NoError(t, err)
+	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cluster)
+	// })
 
 	t.Run("should recreate deleted operatorgroup for Che", func(t *testing.T) {
 		// given
