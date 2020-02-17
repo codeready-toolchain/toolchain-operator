@@ -214,7 +214,7 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 			if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, &ns); err != nil {
 				return false, err
 			}
-			return true, nil
+			return false, nil
 		}
 		logger.Info("Unexpected error while creating a namespace for Che operator", "Namespace", cheOpNamespace, "message", err.Error())
 		return false, err

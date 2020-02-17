@@ -11,6 +11,7 @@ import (
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
+	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test"
 	. "github.com/codeready-toolchain/toolchain-operator/test/assert"
@@ -489,25 +490,11 @@ func TestReconcile(t *testing.T) {
 			cheInstallation.SetDeletionTimestamp(&deletionTS) // mark resource as deleted
 			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
 			cheCluster := NewCheCluster(cheOperatorNS)
-			cl, r := configureClient(t, cheInstallation,
+			_, r := configureClient(t, cheInstallation,
 				newCheNamespace(cheOperatorNS, v1.NamespaceActive),
 				NewOperatorGroup(cheOperatorNS),
 				NewSubscription(cheOperatorNS),
 				cheCluster)
-			// make sure that the client sets the `deletionTimeStamp` when a CheCluster resource is deleted
-			cl.MockDelete = func(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error {
-				fmt.Printf("deleting resource of type '%T'\n", obj)
-				if obj, ok := obj.(*orgv1.CheCluster); ok {
-					// mark namespaces as deleted...
-					deletionTS := metav1.NewTime(time.Now())
-					obj.SetDeletionTimestamp(&deletionTS)
-					// ... but replace them in the fake client cache yet instead of deleting them
-					return cl.Client.Update(ctx, obj)
-				}
-				return cl.Client.Delete(ctx, obj, opts...)
-			}
-			require.Nil(t, cheCluster.DeletionTimestamp)
-			// when
 			request := newReconcileRequest(cheInstallation)
 
 			// when
@@ -515,14 +502,28 @@ func TestReconcile(t *testing.T) {
 
 			// then
 			require.NoError(t, err)
-			updateCheCluster := orgv1.CheCluster{}
+			// expect CheCluster to be not found
+			updatedCheCluster := orgv1.CheCluster{}
 			err = r.client.Get(context.TODO(), types.NamespacedName{
 				Namespace: cheCluster.Namespace,
 				Name:      cheCluster.Name,
-			}, &updateCheCluster)
-			require.NoError(t, err)
+			}, &updatedCheCluster)
+			require.Error(t, err)
+			assert.True(t, apierrors.IsNotFound(err))
 
-			assert.NotNil(t, updateCheCluster.DeletionTimestamp)
+			// assume another reconcile loop happens when the CheCluster is deleted for good
+			request = newReconcileRequest(cheInstallation)
+			// when
+			_, err = r.Reconcile(request)
+			// then
+			require.NoError(t, err)
+			// in that case, expect CheInstallation to have no finalizers
+			updatedCheInstallation := toolchainv1alpha1.CheInstallation{}
+			err = r.client.Get(context.TODO(), types.NamespacedName{
+				Name: cheInstallation.Name,
+			}, &updatedCheInstallation)
+			require.NoError(t, err)
+			assert.Empty(t, updatedCheInstallation.GetFinalizers())
 		})
 	})
 
