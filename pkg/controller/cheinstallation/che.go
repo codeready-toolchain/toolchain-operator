@@ -38,7 +38,8 @@ const (
 func NewInstallation() *v1alpha1.CheInstallation {
 	return &v1alpha1.CheInstallation{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: InstallationName, // Che installation resource is cluster-scoped, so no namespace is defined
+			Name:       InstallationName, // Che installation resource is cluster-scoped, so no namespace is defined
+			Finalizers: []string{toolchainv1alpha1.FinalizerName},
 		},
 		Spec: v1alpha1.CheInstallationSpec{
 			CheOperatorSpec: v1alpha1.CheOperator{
@@ -131,6 +132,16 @@ func Installing(message string) toolchainv1alpha1.Condition {
 		Type:    v1alpha1.CheReady,
 		Status:  v1.ConditionFalse,
 		Reason:  v1alpha1.InstallingReason,
+		Message: message,
+	}
+}
+
+// Terminating returns the status condition to set when Che is (still) being uninstalled
+func Terminating(message string) toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:    v1alpha1.CheReady,
+		Status:  v1.ConditionFalse,
+		Reason:  v1alpha1.TerminatingReason,
 		Message: message,
 	}
 }

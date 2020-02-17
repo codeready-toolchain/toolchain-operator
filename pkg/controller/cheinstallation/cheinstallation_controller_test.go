@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -306,7 +307,8 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).Exists()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'"))
 		})
 
 		t.Run("should requeue if CRD does not exist when adding watcher", func(t *testing.T) {
@@ -387,8 +389,11 @@ func TestReconcile(t *testing.T) {
 			require.NoError(t, err)
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
-			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).Exists()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).
+				Exists().
+				HasNoOwnerRef()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'"))
 		})
 
 		t.Run("should update status with existing checluster", func(t *testing.T) {
@@ -444,7 +449,8 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(InstallationFailed(errMsg))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(InstallationFailed(errMsg))
 		})
 
 		t.Run("should update status when failed to get existing checluster", func(t *testing.T) {
@@ -474,6 +480,49 @@ func TestReconcile(t *testing.T) {
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(InstallationFailed("checlusters.org.eclipse.che \"codeready-workspaces\" not found"))
+		})
+
+		t.Run("should delete CheCluster when deleting CheInstallation", func(t *testing.T) {
+			// given
+			cheInstallation := NewInstallation()
+			deletionTS := metav1.NewTime(time.Now())
+			cheInstallation.SetDeletionTimestamp(&deletionTS) // mark resource as deleted
+			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
+			cheCluster := NewCheCluster(cheOperatorNS)
+			cl, r := configureClient(t, cheInstallation,
+				newCheNamespace(cheOperatorNS, v1.NamespaceActive),
+				NewOperatorGroup(cheOperatorNS),
+				NewSubscription(cheOperatorNS),
+				cheCluster)
+			// make sure that the client sets the `deletionTimeStamp` when a CheCluster resource is deleted
+			cl.MockDelete = func(ctx context.Context, obj runtime.Object, opts ...client.DeleteOption) error {
+				fmt.Printf("deleting resource of type '%T'\n", obj)
+				if obj, ok := obj.(*orgv1.CheCluster); ok {
+					// mark namespaces as deleted...
+					deletionTS := metav1.NewTime(time.Now())
+					obj.SetDeletionTimestamp(&deletionTS)
+					// ... but replace them in the fake client cache yet instead of deleting them
+					return cl.Client.Update(ctx, obj)
+				}
+				return cl.Client.Delete(ctx, obj, opts...)
+			}
+			require.Nil(t, cheCluster.DeletionTimestamp)
+			// when
+			request := newReconcileRequest(cheInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			updateCheCluster := orgv1.CheCluster{}
+			err = r.client.Get(context.TODO(), types.NamespacedName{
+				Namespace: cheCluster.Namespace,
+				Name:      cheCluster.Name,
+			}, &updateCheCluster)
+			require.NoError(t, err)
+
+			assert.NotNil(t, updateCheCluster.DeletionTimestamp)
 		})
 	})
 
@@ -708,20 +757,23 @@ func TestCreateNamespaceForChe(t *testing.T) {
 }
 
 func TestGetCheClusterStatus(t *testing.T) {
-	t.Run("status_unknown_as_nil_input", func(t *testing.T) {
-		got := getCheClusterStatus(nil)
-		assert.Contains(t, got, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
+
+	t.Run("status unknown as nil input", func(t *testing.T) {
+		installed, msg := getCheClusterStatus(nil)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
 	})
 
-	t.Run("stauts_unknown_as_blank_status", func(t *testing.T) {
+	t.Run("status unknown as blank status", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			Status: orgv1.CheClusterStatus{},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
 	})
 
-	t.Run("db_not_provision", func(t *testing.T) {
+	t.Run("db not provisioned", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -731,11 +783,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				DbProvisoned:      false,
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning Database for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning Database for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("keycloak_not_provision", func(t *testing.T) {
+	t.Run("keycloak not provisioned", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -746,11 +799,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				KeycloakProvisoned: false,
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("openshift_auth_not_provision", func(t *testing.T) {
+	t.Run("openshift auth not provisioned", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -762,11 +816,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				OpenShiftoAuthProvisioned: false,
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("devfile_registry_url_not_set", func(t *testing.T) {
+	t.Run("devfile registry URL not set", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -779,11 +834,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				DevfileRegistryURL:        "",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("plugin_registry_url_not_set", func(t *testing.T) {
+	t.Run("Plugin registry URL not set", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -797,11 +853,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				PluginRegistryURL:         "",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("che_url_not_set", func(t *testing.T) {
+	t.Run("Che URL not set", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -816,11 +873,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				CheURL:                    "",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("status_", func(t *testing.T) {
+	t.Run("status unavailable", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -835,8 +893,9 @@ func TestGetCheClusterStatus(t *testing.T) {
 				CheURL:                    "some_url",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name))
 	})
 }
 

@@ -13,6 +13,7 @@ const (
 	// Status condition reasons
 
 	InstallingReason      = "Installing"
+	TerminatingReason     = "Terminating"
 	FailedToInstallReason = "FailedToInstall"
 	InstalledReason       = "Installed"
 )
