@@ -133,7 +133,7 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 		if err := r.addFinalizer(reqLogger, cheInstallation); err != nil {
 			return reconcile.Result{}, err
 		}
-	} else if util.IsBeingDeleted(cheInstallation) && util.HasFinalizer(cheInstallation, toolchainv1alpha1.FinalizerName) { // Che Installation is being deleted, but before that we should delete the Che Operator namespace explicitely
+	} else if util.HasFinalizer(cheInstallation, toolchainv1alpha1.FinalizerName) { // Che Installation is being deleted, but before that we should delete the Che Operator namespace explicitely
 		reqLogger.Info("Terminating CheInstallation")
 		if deleted, err := r.ensureCheClusterDeletion(reqLogger, cheInstallation); err != nil {
 			return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, cheInstallation, r.setStatusCheInstallationFailed, err, "failed to delete CheCluster resource in namespace %s", cheInstallation.Spec.CheOperatorSpec.Namespace)
