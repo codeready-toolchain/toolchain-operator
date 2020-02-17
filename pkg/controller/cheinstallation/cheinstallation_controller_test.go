@@ -7,11 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
+	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
-	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
 	"github.com/codeready-toolchain/toolchain-operator/test"
 	. "github.com/codeready-toolchain/toolchain-operator/test/assert"
@@ -28,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -309,7 +308,8 @@ func TestReconcile(t *testing.T) {
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).Exists()
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'"))
+				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should requeue if CRD does not exist when adding watcher", func(t *testing.T) {
@@ -518,7 +518,7 @@ func TestReconcile(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			// in that case, expect CheInstallation to have no finalizers
-			updatedCheInstallation := toolchainv1alpha1.CheInstallation{}
+			updatedCheInstallation := v1alpha1.CheInstallation{}
 			err = r.client.Get(context.TODO(), types.NamespacedName{
 				Name: cheInstallation.Name,
 			}, &updatedCheInstallation)
