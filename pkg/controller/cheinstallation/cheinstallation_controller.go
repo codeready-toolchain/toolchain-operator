@@ -147,6 +147,9 @@ func (r *ReconcileCheInstallation) Reconcile(request reconcile.Request) (reconci
 			}
 			return reconcile.Result{}, nil
 		}
+	} else {
+		reqLogger.Info("CheInstallation already in termination")
+		return reconcile.Result{}, nil
 	}
 
 	if requeue, err := r.ensureCheNamespace(reqLogger, cheInstallation); err != nil {
@@ -211,13 +214,7 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 			if err := r.client.Get(context.TODO(), types.NamespacedName{Name: cheOpNamespace}, &ns); err != nil {
 				return false, err
 			}
-			if ns.Status.Phase != v1.NamespaceActive {
-				logger.Info("Namespace is not in active state - deleting remaining CheCluster resource", "namespace", ns.Name, "phase", ns.Status.Phase)
-				// return 'true' in any case, as we don't want to continue with the current reconciliation loop
-				_, err = r.ensureCheClusterDeletion(logger, cheInstallation)
-				return true, err
-			}
-			return false, nil
+			return true, nil
 		}
 		logger.Info("Unexpected error while creating a namespace for Che operator", "Namespace", cheOpNamespace, "message", err.Error())
 		return false, err
