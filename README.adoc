@@ -108,8 +108,13 @@ If you want to also try to install it from the quay.io using the `OperatorSource
 ===== 3. Create PR in community-operators
 As soon as you verify that the release is working correctly, you can create a PR with a new release in https://github.com/operator-framework/community-operators[community-operators] repo.
 To copy the manifests to the repo use `make copy-manifests-to-community-operators` and then create a PR there. Please follow the instructions that are written in the template of the PR description.
-Open also a PR with the manifests inside of the toolchain-operator repository.
 
-===== 4. Merge PR in toolchain-operator and verify
+===== 4. Prepare for the next release
+Increment the `CSV_VERSION_TO_GENERATE` variable in the link:./make/manifests.mk[manifests.mk] file to the next expected version.
+
+===== 5. Open PR in toolchain-operator
+Open also a PR with the manifests (and all other changes) inside of the toolchain-operator repository.
+
+===== 6. Wait for community-operators PR to be merged
 Once the PR in community-operators repo is merged, then the release will be available in Operator Hub.
 So, merge the PR in toolchain-operator repo and verify the new release in your dev cluster.
