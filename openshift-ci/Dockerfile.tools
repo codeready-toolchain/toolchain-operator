@@ -29,7 +29,14 @@ RUN yum install epel-release -y \
     yamllint \
     python36-virtualenv \
     jq \
+    pip3 \
     && yum clean all
+
+# Install yq that will be used for parsing/reading yaml files.
+RUN pip3 install yq
+
+# Install operator-courier that will be used in CD for nightly builds
+RUN pip3 install operator-courier
 
 # download, verify and install openshift client tools (oc and kubectl)
 WORKDIR /tmp
