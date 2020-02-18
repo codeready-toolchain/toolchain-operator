@@ -154,7 +154,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatNamespace(t, Namespace, cl).Exists()
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).DoesNotExist()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 	})
@@ -184,6 +186,9 @@ func TestReconcile(t *testing.T) {
 				HasSpec(NewOperatorGroup(cheOperatorNS).Spec)
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				DoesNotExist()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to create operator group", func(t *testing.T) {
@@ -212,9 +217,9 @@ func TestReconcile(t *testing.T) {
 				DoesNotExist()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				DoesNotExist()
-
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(InstallationFailed(errMsg))
+				HasConditions(InstallationFailed(errMsg)).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 	})
@@ -247,6 +252,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				Exists().
 				HasSpec(NewSubscription(cheOperatorNS).Spec)
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to create Che subscription", func(t *testing.T) {
@@ -278,7 +286,8 @@ func TestReconcile(t *testing.T) {
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				DoesNotExist()
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(InstallationFailed(errMsg))
+				HasConditions(InstallationFailed(errMsg)).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 	})
 
@@ -336,7 +345,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update Che installation status when adding watcher failed for unknown reason", func(t *testing.T) {
@@ -364,7 +375,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(InstallationFailed("unexpected error"))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(InstallationFailed("unexpected error")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 	})
 
@@ -394,7 +407,8 @@ func TestReconcile(t *testing.T) {
 				Exists().
 				HasNoOwnerRef()
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'"))
+				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status with existing checluster", func(t *testing.T) {
@@ -420,7 +434,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).Exists()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(Installing(fmt.Sprintf("Provisioning Database for CheCluster '%s'", cheCluster.Name)))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(Installing(fmt.Sprintf("Provisioning Database for CheCluster '%s'", cheCluster.Name))).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to create checluster", func(t *testing.T) {
@@ -451,7 +467,8 @@ func TestReconcile(t *testing.T) {
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(InstallationFailed(errMsg))
+				HasConditions(InstallationFailed(errMsg)).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to get existing checluster", func(t *testing.T) {
@@ -480,7 +497,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(InstallationFailed("checlusters.org.eclipse.che \"codeready-workspaces\" not found"))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(InstallationFailed("checlusters.org.eclipse.che \"codeready-workspaces\" not found")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should delete CheCluster when deleting CheInstallation", func(t *testing.T) {
@@ -512,7 +531,8 @@ func TestReconcile(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			// in that case, expect CheInstallation to have no finalizer
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoFinalizer()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoFinalizer()
 		})
 	})
 
@@ -546,7 +566,8 @@ func TestReconcile(t *testing.T) {
 			Exists().
 			HasSpec(NewSubscription(cheOperatorNS).Spec)
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-			HasConditions(InstallationSucceeded())
+			HasConditions(InstallationSucceeded()).
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 }
@@ -569,6 +590,9 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 			Exists().
 			HasSize(1).
 			HasSpec(NewOperatorGroup(cheOperatorNS).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail if operator group already exists", func(t *testing.T) {
@@ -590,6 +614,9 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 			Exists().
 			HasSize(1).
 			HasSpec(NewOperatorGroup(cheInstallation.Spec.CheOperatorSpec.Namespace).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should fail to create operator group when error occurs", func(t *testing.T) {
@@ -609,6 +636,9 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		require.EqualError(t, err, errMsg)
 		AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).
 			DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 }
@@ -631,6 +661,9 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 			Exists().
 			HasSpec(NewSubscription(cheOperatorNS).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should fail to create subscription", func(t *testing.T) {
@@ -653,6 +686,9 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		assert.False(t, created)
 		AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 			DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail if subscription already exists", func(t *testing.T) {
@@ -672,6 +708,9 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 			Exists().
 			HasSpec(NewSubscription(cheOperatorNS).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 }
@@ -692,6 +731,9 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		AssertThatNamespace(t, Namespace, cl).
 			Exists().
 			HasLabels(toolchain.Labels())
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail if ns exists", func(t *testing.T) {
@@ -709,6 +751,9 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		AssertThatNamespace(t, Namespace, cl).
 			Exists().
 			HasLabels(toolchain.Labels())
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail as ns is in termination state", func(t *testing.T) {
@@ -724,6 +769,9 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, requeue)
 		AssertThatNamespace(t, Namespace, cl).Exists()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should fail to create ns", func(t *testing.T) {
@@ -743,6 +791,9 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		assert.False(t, requeue)
 		AssertThatNamespace(t, Namespace, cl).
 			DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 }
 
