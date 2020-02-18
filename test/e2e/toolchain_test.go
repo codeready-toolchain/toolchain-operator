@@ -55,9 +55,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 		require.NoError(t, err)
-		cluster, err := await.GetCheCluster(cheCluster.Namespace, cheCluster.Name)
-		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cluster)
+		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
 
 	// TODO enable this test. The issue is Namespace when deleted, stuck in Terminating Phase
@@ -78,9 +76,7 @@ func TestToolchain(t *testing.T) {
 
 	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 	// 	require.NoError(t, err)
-	// 	cluster, err := await.GetCheCluster(cheCluster.Namespace, cheCluster.Name)
-	// 	require.NoError(t, err)
-	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cluster)
+	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	// })
 
 	t.Run("should recreate deleted operatorgroup for Che", func(t *testing.T) {
@@ -130,9 +126,7 @@ func TestToolchain(t *testing.T) {
 
 		err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 		require.NoError(t, err)
-		cluster, err = await.GetCheCluster(cheCluster.Namespace, cheCluster.Name)
-		require.NoError(t, err)
-		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cluster)
+		checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	})
 
 	t.Run("should create subscription for tekton with TektonInstallation", func(t *testing.T) {
