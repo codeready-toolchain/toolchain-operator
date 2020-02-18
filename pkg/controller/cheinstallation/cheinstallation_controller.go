@@ -215,7 +215,8 @@ func (r *ReconcileCheInstallation) ensureCheNamespace(logger logr.Logger, cheIns
 				return false, err
 			}
 			if ns.Status.Phase != corev1.NamespaceActive {
-				return true, nil // requeue until namespace is active (again)
+				logger.Info("Namespace is not in active state", "namespace", ns.Name, "phase", ns.Status.Phase)
+				return true, nil // requeue until the namespace is active
 			}
 			return false, nil
 		}
