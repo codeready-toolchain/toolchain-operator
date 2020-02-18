@@ -44,6 +44,14 @@ func (a *CheInstallationAssertion) HasFinalizer(finalizer string) *CheInstallati
 	return a
 }
 
+// HasNoFinalizer verifies that the Che installation has the no finalizer
+func (a *CheInstallationAssertion) HasNoFinalizer() *CheInstallationAssertion {
+	err := a.loadCheInstallationAssertion()
+	require.NoError(a.t, err)
+	assert.Empty(a.t, a.cheInstallation.ObjectMeta.GetFinalizers())
+	return a
+}
+
 // HasOwnerRef verifies that the Che installation has the expected ownerReference
 func (a *CheInstallationAssertion) HasOwnerRef(sub *opsv1alpha1.Subscription) *CheInstallationAssertion {
 	err := a.loadCheInstallationAssertion()

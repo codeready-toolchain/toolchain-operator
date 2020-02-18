@@ -490,7 +490,7 @@ func TestReconcile(t *testing.T) {
 			cheInstallation.SetDeletionTimestamp(&deletionTS) // mark resource as deleted
 			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
 			cheCluster := NewCheCluster(cheOperatorNS)
-			_, r := configureClient(t, cheInstallation,
+			cl, r := configureClient(t, cheInstallation,
 				newCheNamespace(cheOperatorNS, v1.NamespaceActive),
 				NewOperatorGroup(cheOperatorNS),
 				NewSubscription(cheOperatorNS),
@@ -503,13 +503,7 @@ func TestReconcile(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			// expect CheCluster to be not found
-			updatedCheCluster := orgv1.CheCluster{}
-			err = r.client.Get(context.TODO(), types.NamespacedName{
-				Namespace: cheCluster.Namespace,
-				Name:      cheCluster.Name,
-			}, &updatedCheCluster)
-			require.Error(t, err)
-			assert.True(t, apierrors.IsNotFound(err))
+			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
 
 			// assume another reconcile loop happens when the CheCluster is deleted for good
 			request = newReconcileRequest(cheInstallation)
@@ -517,13 +511,8 @@ func TestReconcile(t *testing.T) {
 			_, err = r.Reconcile(request)
 			// then
 			require.NoError(t, err)
-			// in that case, expect CheInstallation to have no finalizers
-			updatedCheInstallation := v1alpha1.CheInstallation{}
-			err = r.client.Get(context.TODO(), types.NamespacedName{
-				Name: cheInstallation.Name,
-			}, &updatedCheInstallation)
-			require.NoError(t, err)
-			assert.Empty(t, updatedCheInstallation.GetFinalizers())
+			// in that case, expect CheInstallation to have no finalizer
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoFinalizer()
 		})
 	})
 
