@@ -5,6 +5,7 @@ COMMUNITY_OPERATORS_DIR=../../operator-framework/community-operators/community-o
 PATH_TO_CREATE_RELEASE_FILE= scripts/create-release-bundle.sh
 PATH_TO_PUSH_MANIFEST_FILE= scripts/push-to-quay-manifest.sh
 PATH_TO_CREATE_HACK_FILE= scripts/generate-deploy-hack.sh
+PATH_TO_PUSH_NIGHTLY_FILE=scripts/push-to-quay-nightly.sh
 
 PHONY: create-release-manifest
 ## Creates release manifest in ./manifest/ directory
@@ -57,3 +58,15 @@ else
 	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/${PATH_TO_CREATE_HACK_FILE} | bash -s -- ${CREATE_PARAMS}
 endif
 	cat /tmp/hack_deploy_crt-operator_${DATE_SUFFIX}/deploy_csv.yaml | oc apply -f -
+
+.PHONY: push-to-quay-nightly
+## Creates a new version of CSV and pushes it to quay
+push-to-quay-nightly:
+	$(eval PUSH_PARAMS = -pr ../toolchain-operator/ -on codeready-toolchain-operator -qn ${QUAY_NAMESPACE})
+ifneq ("$(wildcard ../api/$(PATH_TO_PUSH_NIGHTLY_FILE))","")
+	@echo "pushing to quay in nightly channel using script from local api repo..."
+	../api/${PATH_TO_PUSH_NIGHTLY_FILE} ${PUSH_PARAMS}
+else
+	@echo "pushing to quay in nightly channel using script from GH api repo (using latest version in master)..."
+	curl -sSL https://raw.githubusercontent.com/codeready-toolchain/api/master/${PATH_TO_PUSH_NIGHTLY_FILE} | bash -s -- ${PUSH_PARAMS}
+endif
