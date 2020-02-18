@@ -48,7 +48,7 @@ func (a *OperatorGroupAssertion) DoesNotExist() *OperatorGroupAssertion {
 	})
 
 	require.NoError(a.t, err)
-	assert.Len(a.t, a.ogList, 0)
+	assert.Empty(a.t, a.ogList)
 	return a
 }
 

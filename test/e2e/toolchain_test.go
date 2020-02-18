@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/controller/cheinstallation"
@@ -58,24 +59,24 @@ func TestToolchain(t *testing.T) {
 	})
 
 	// TODO enable this test. The issue is Namespace when deleted, stuck in Terminating Phase
-	// t.Run("should recreate Che operator's ns operatorgroup subscription when ns deleted", func(t *testing.T) {
+	// t.Run("should recreate Che operator ns operatorgroup subscription when ns deleted", func(t *testing.T) {
 	// 	// given
 	// 	ns := &v1.Namespace{}
 	// 	err := f.Client.Get(context.TODO(), types.NamespacedName{Name: cheOperatorNS}, ns)
 	// 	require.NoError(t, err)
 
-	// // 	// when
-	// // 	err = f.Client.Delete(context.TODO(), ns)
+	// 	// when
+	// 	err = f.Client.Delete(context.TODO(), ns)
 
-	// // 	// then
-	// // 	require.NoError(t, err, "failed to delete Che Operator Namespace")
+	// 	// then
+	// 	require.NoError(t, err, "failed to delete Che Operator Namespace")
 
 	// 	err = await.WaitForNamespace(cheOperatorNS, v1.NamespaceActive)
 	// 	require.NoError(t, err)
 
-	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.SubscriptionCreated()))
+	// 	err = await.WaitForCheInstallConditions(cheInstallation.Name, UntilHasCheStatusCondition(cheinstallation.InstallationSucceeded()))
 	// 	require.NoError(t, err)
-	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub)
+	// 	checkCheResources(t, f.Client.Client, cheOperatorNS, cheOg, cheSub, cheCluster)
 	// })
 
 	t.Run("should recreate deleted operatorgroup for Che", func(t *testing.T) {
@@ -189,6 +190,8 @@ func TestToolchain(t *testing.T) {
 
 func checkCheResources(t *testing.T, client client.Client, cheOperatorNs string, cheOg *olmv1.OperatorGroup, cheSub *olmv1alpha1.Subscription, cheCluster *orgv1.CheCluster) {
 	t.Helper()
+	AssertThatCheInstallation(t, "", cheinstallation.InstallationName, client).
+		HasFinalizer(toolchainv1alpha1.FinalizerName)
 	AssertThatNamespace(t, cheOperatorNs, client).
 		Exists().
 		HasLabels(toolchain.Labels())

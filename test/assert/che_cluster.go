@@ -34,6 +34,13 @@ func (a *CheClusterAssertion) Exists() *CheClusterAssertion {
 	return a
 }
 
+func (a *CheClusterAssertion) HasNoOwnerRef() *CheClusterAssertion {
+	err := a.loadCheClusterAssertion()
+	require.NoError(a.t, err)
+	assert.Empty(a.t, a.cheCluster.ObjectMeta.OwnerReferences)
+	return a
+}
+
 func (a *CheClusterAssertion) HasRunningStatus(want string) *CheClusterAssertion {
 	a.Exists()
 	assert.Equal(a.t, want, a.cheCluster.Status.CheClusterRunning)
