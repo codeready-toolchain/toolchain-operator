@@ -153,8 +153,9 @@ endif
 
 .PHONY: clean-e2e-resources
 clean-e2e-resources:
-	oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs oc delete -n openshift-marketplace 2>/dev/null || true
-	oc get subscription --output=name -n ${TOOLCHAIN_NS} |  grep "toolchain-operator" | xargs oc delete -n ${TOOLCHAIN_NS} 2>/dev/null || true
-	oc get subscription --output=name -n openshift-operators |  grep "openshift-pipelines-operator" | xargs oc delete -n openshift-operators 2>/dev/null || true
-	oc get csv --output=name -n openshift-operators |  grep "codeready-toolchain-operator" | xargs oc delete -n openshift-operators 2>/dev/null || true
+	-oc get catalogsource --output=name -n openshift-marketplace | grep "toolchain-operator" | xargs oc delete -n openshift-marketplace 2>/dev/null || true
+	-oc get subscription --output=name -n ${TOOLCHAIN_NS} | grep "toolchain-operator" | xargs oc delete -n ${TOOLCHAIN_NS} 2>/dev/null || true
+	-oc get subscription --output=name -n openshift-operators | grep "openshift-pipelines-operator" | xargs oc delete -n openshift-operators 2>/dev/null || true
+	-oc get csv --output=name -n openshift-operators | grep "codeready-toolchain-operator" | xargs oc delete -n openshift-operators 2>/dev/null || true
+	-oc get clusterrole --output=name  | grep "codeready-toolchain-operator" | xargs oc delete 2>/dev/null || true
 	oc delete project toolchain-workspaces --timeout=10s 2>/dev/null || true

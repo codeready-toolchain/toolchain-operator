@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
+	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
@@ -26,6 +26,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -153,7 +154,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatNamespace(t, Namespace, cl).Exists()
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).DoesNotExist()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 	})
@@ -183,6 +186,9 @@ func TestReconcile(t *testing.T) {
 				HasSpec(NewOperatorGroup(cheOperatorNS).Spec)
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				DoesNotExist()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to create operator group", func(t *testing.T) {
@@ -211,9 +217,9 @@ func TestReconcile(t *testing.T) {
 				DoesNotExist()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				DoesNotExist()
-
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(InstallationFailed(errMsg))
+				HasConditions(InstallationFailed(errMsg)).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 	})
@@ -246,6 +252,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				Exists().
 				HasSpec(NewSubscription(cheOperatorNS).Spec)
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to create Che subscription", func(t *testing.T) {
@@ -277,7 +286,8 @@ func TestReconcile(t *testing.T) {
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 				DoesNotExist()
 			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-				HasConditions(InstallationFailed(errMsg))
+				HasConditions(InstallationFailed(errMsg)).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 	})
 
@@ -306,7 +316,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).Exists()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should requeue if CRD does not exist when adding watcher", func(t *testing.T) {
@@ -333,7 +345,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoCondition().
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update Che installation status when adding watcher failed for unknown reason", func(t *testing.T) {
@@ -361,7 +375,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(InstallationFailed("unexpected error"))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(InstallationFailed("unexpected error")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 	})
 
@@ -387,8 +403,12 @@ func TestReconcile(t *testing.T) {
 			require.NoError(t, err)
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
-			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).Exists()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasNoCondition()
+			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).
+				Exists().
+				HasNoOwnerRef()
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(Installing("Status is unknown for CheCluster 'codeready-workspaces'")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status with existing checluster", func(t *testing.T) {
@@ -414,7 +434,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).Exists()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(Installing(fmt.Sprintf("Provisioning Database for CheCluster '%s'", cheCluster.Name)))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(Installing(fmt.Sprintf("Provisioning Database for CheCluster '%s'", cheCluster.Name))).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to create checluster", func(t *testing.T) {
@@ -444,7 +466,9 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(InstallationFailed(errMsg))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(InstallationFailed(errMsg)).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
 		})
 
 		t.Run("should update status when failed to get existing checluster", func(t *testing.T) {
@@ -473,7 +497,42 @@ func TestReconcile(t *testing.T) {
 			AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).Exists()
 			AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).Exists()
 			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
-			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).HasConditions(InstallationFailed("checlusters.org.eclipse.che \"codeready-workspaces\" not found"))
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasConditions(InstallationFailed("checlusters.org.eclipse.che \"codeready-workspaces\" not found")).
+				HasFinalizer(toolchainv1alpha1.FinalizerName)
+		})
+
+		t.Run("should delete CheCluster when deleting CheInstallation", func(t *testing.T) {
+			// given
+			cheInstallation := NewInstallation()
+			deletionTS := metav1.NewTime(time.Now())
+			cheInstallation.SetDeletionTimestamp(&deletionTS) // mark resource as deleted
+			cheOperatorNS := cheInstallation.Spec.CheOperatorSpec.Namespace
+			cheCluster := NewCheCluster(cheOperatorNS)
+			cl, r := configureClient(t, cheInstallation,
+				newCheNamespace(cheOperatorNS, v1.NamespaceActive),
+				NewOperatorGroup(cheOperatorNS),
+				NewSubscription(cheOperatorNS),
+				cheCluster)
+			request := newReconcileRequest(cheInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			// expect CheCluster to be not found
+			AssertThatCheCluster(t, cheCluster.Namespace, cheCluster.Name, cl).DoesNotExist()
+
+			// assume another reconcile loop happens when the CheCluster is deleted for good
+			request = newReconcileRequest(cheInstallation)
+			// when
+			_, err = r.Reconcile(request)
+			// then
+			require.NoError(t, err)
+			// in that case, expect CheInstallation to have no finalizer
+			AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+				HasNoFinalizer()
 		})
 	})
 
@@ -507,7 +566,8 @@ func TestReconcile(t *testing.T) {
 			Exists().
 			HasSpec(NewSubscription(cheOperatorNS).Spec)
 		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
-			HasConditions(InstallationSucceeded())
+			HasConditions(InstallationSucceeded()).
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 }
@@ -530,6 +590,9 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 			Exists().
 			HasSize(1).
 			HasSpec(NewOperatorGroup(cheOperatorNS).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail if operator group already exists", func(t *testing.T) {
@@ -551,6 +614,9 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 			Exists().
 			HasSize(1).
 			HasSpec(NewOperatorGroup(cheInstallation.Spec.CheOperatorSpec.Namespace).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should fail to create operator group when error occurs", func(t *testing.T) {
@@ -570,6 +636,9 @@ func TestCreateOperatorGroupForChe(t *testing.T) {
 		require.EqualError(t, err, errMsg)
 		AssertThatOperatorGroup(t, cheOperatorNS, OperatorGroupName, cl).
 			DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 }
@@ -592,6 +661,9 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 			Exists().
 			HasSpec(NewSubscription(cheOperatorNS).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should fail to create subscription", func(t *testing.T) {
@@ -614,6 +686,9 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		assert.False(t, created)
 		AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 			DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail if subscription already exists", func(t *testing.T) {
@@ -633,6 +708,9 @@ func TestCreateSubscriptionForChe(t *testing.T) {
 		AssertThatSubscription(t, cheOperatorNS, SubscriptionName, cl).
 			Exists().
 			HasSpec(NewSubscription(cheOperatorNS).Spec)
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 }
@@ -653,6 +731,9 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		AssertThatNamespace(t, Namespace, cl).
 			Exists().
 			HasLabels(toolchain.Labels())
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail if ns exists", func(t *testing.T) {
@@ -670,6 +751,9 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		AssertThatNamespace(t, Namespace, cl).
 			Exists().
 			HasLabels(toolchain.Labels())
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should not fail as ns is in termination state", func(t *testing.T) {
@@ -685,6 +769,9 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		require.NoError(t, err)
 		assert.True(t, requeue)
 		AssertThatNamespace(t, Namespace, cl).Exists()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 
 	t.Run("should fail to create ns", func(t *testing.T) {
@@ -704,24 +791,30 @@ func TestCreateNamespaceForChe(t *testing.T) {
 		assert.False(t, requeue)
 		AssertThatNamespace(t, Namespace, cl).
 			DoesNotExist()
+		AssertThatCheInstallation(t, cheInstallation.Namespace, cheInstallation.Name, cl).
+			HasNoCondition().
+			HasFinalizer(toolchainv1alpha1.FinalizerName)
 	})
 }
 
 func TestGetCheClusterStatus(t *testing.T) {
-	t.Run("status_unknown_as_nil_input", func(t *testing.T) {
-		got := getCheClusterStatus(nil)
-		assert.Contains(t, got, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
+
+	t.Run("status unknown as nil input", func(t *testing.T) {
+		installed, msg := getCheClusterStatus(nil)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
 	})
 
-	t.Run("stauts_unknown_as_blank_status", func(t *testing.T) {
+	t.Run("status unknown as blank status", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			Status: orgv1.CheClusterStatus{},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Status is unknown for CheCluster '%s'", CheClusterName))
 	})
 
-	t.Run("db_not_provision", func(t *testing.T) {
+	t.Run("db not provisioned", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -731,11 +824,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				DbProvisoned:      false,
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning Database for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning Database for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("keycloak_not_provision", func(t *testing.T) {
+	t.Run("keycloak not provisioned", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -746,11 +840,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				KeycloakProvisoned: false,
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning Keycloak for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("openshift_auth_not_provision", func(t *testing.T) {
+	t.Run("openshift auth not provisioned", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -762,11 +857,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				OpenShiftoAuthProvisioned: false,
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning OpenShiftoAuth for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("devfile_registry_url_not_set", func(t *testing.T) {
+	t.Run("devfile registry URL not set", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -779,11 +875,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				DevfileRegistryURL:        "",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning DevfileRegistry for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("plugin_registry_url_not_set", func(t *testing.T) {
+	t.Run("Plugin registry URL not set", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -797,11 +894,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				PluginRegistryURL:         "",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning PluginRegistry for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("che_url_not_set", func(t *testing.T) {
+	t.Run("Che URL not set", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -816,11 +914,12 @@ func TestGetCheClusterStatus(t *testing.T) {
 				CheURL:                    "",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("Provisioning CheServer for CheCluster '%s'", cluster.Name))
 	})
 
-	t.Run("status_", func(t *testing.T) {
+	t.Run("status unavailable", func(t *testing.T) {
 		cluster := &orgv1.CheCluster{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "codeready-workspaces",
@@ -835,8 +934,9 @@ func TestGetCheClusterStatus(t *testing.T) {
 				CheURL:                    "some_url",
 			},
 		}
-		got := getCheClusterStatus(cluster)
-		assert.Contains(t, got, fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name))
+		installed, msg := getCheClusterStatus(cluster)
+		assert.False(t, installed)
+		assert.Contains(t, msg, fmt.Sprintf("CheCluster running status is '%s' for CheCluster '%s'", cluster.Status.CheClusterRunning, cluster.Name))
 	})
 }
 
