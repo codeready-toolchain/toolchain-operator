@@ -27,7 +27,7 @@ type CheInstallationStatus struct {
 
 	// CheServerURL the URL of the Che Server, once the installation completed
 	// +optional
-	CheServerURL string `json:"CheServerURL,omitempty"`
+	CheServerURL string `json:"cheServerURL,omitempty"`
 
 	// Conditions is an array of current CheInstallation conditions
 	// Supported condition types:
