@@ -68,7 +68,7 @@ data:
               status:
                 description: CheInstallationStatus defines the observed state of CheInstallation
                 properties:
-                  CheServerURL:
+                  cheServerURL:
                     description: CheServerURL the URL of the Che Server, once the installation
                       completed
                     type: string
@@ -282,8 +282,8 @@ data:
               path: conditions
               x-descriptors:
               - urn:alm:descriptor:io.kubernetes.conditions
-            - description: The URL to Che
-              displayName: Che URL
+            - description: Route to access CodeReady Workspaces
+              displayName: CodeReady Workspaces URL
               path: CheServerURL
               x-descriptors:
               - urn:alm:descriptor:org.w3:link
