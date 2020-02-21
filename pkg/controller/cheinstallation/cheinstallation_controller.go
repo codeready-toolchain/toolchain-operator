@@ -346,11 +346,11 @@ func getCheClusterStatus(cluster *che.CheCluster) (bool, string) {
 }
 
 // wrapErrorWithStatusUpdate wraps the error and update the install config status. If the update failed then logs the error.
-func (r *ReconcileCheInstallation) wrapErrorWithStatusUpdate(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation, statusUpdater func(cheInstallation *v1alpha1.CheInstallation, message string) error, err error, format string, args ...interface{}) error {
+func (r *ReconcileCheInstallation) wrapErrorWithStatusUpdate(logger logr.Logger, cheInstallation *v1alpha1.CheInstallation, updateStatus updateStatusFunc, err error, format string, args ...interface{}) error {
 	if err == nil {
 		return nil
 	}
-	if err := statusUpdater(cheInstallation, err.Error()); err != nil {
+	if err := updateStatus(cheInstallation, err.Error()); err != nil {
 		logger.Error(err, "status update failed")
 	}
 	return errs.Wrapf(err, format, args...)
@@ -385,11 +385,14 @@ func (r *ReconcileCheInstallation) setStatusCheInstallationFailed(cheInstallatio
 }
 
 func (r *ReconcileCheInstallation) setStatusCheInstallationTerminating(cheInstallation *v1alpha1.CheInstallation, message string) error {
+	// make sure the status.CheServerURL is reset during uninstall
+	cheInstallation.Status.CheServerURL = ""
 	return r.updateStatusConditions(cheInstallation, Terminating(message))
 }
 
 func (r *ReconcileCheInstallation) setStatusCheInstallationSucceeded(cheCluster *che.CheCluster) updateStatusFunc {
 	return func(cheInstallation *v1alpha1.CheInstallation, message string) error {
+		cheInstallation.Status.CheServerURL = cheCluster.Status.CheURL
 		return r.updateStatusConditions(cheInstallation, InstallationSucceeded())
 	}
 }

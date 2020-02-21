@@ -28,6 +28,12 @@ func AssertThatCheCluster(t *testing.T, ns, name string, client client.Reader) *
 	}
 }
 
+func (a *CheClusterAssertion) Get() *orgv1.CheCluster {
+	err := a.loadCheClusterAssertion()
+	require.NoError(a.t, err)
+	return a.cheCluster
+}
+
 func (a *CheClusterAssertion) Exists() *CheClusterAssertion {
 	err := a.loadCheClusterAssertion()
 	require.NoError(a.t, err)
@@ -44,6 +50,12 @@ func (a *CheClusterAssertion) HasNoOwnerRef() *CheClusterAssertion {
 func (a *CheClusterAssertion) HasRunningStatus(want string) *CheClusterAssertion {
 	a.Exists()
 	assert.Equal(a.t, want, a.cheCluster.Status.CheClusterRunning)
+	return a
+}
+
+func (a *CheClusterAssertion) HasServerURL(want string) *CheClusterAssertion {
+	a.Exists()
+	assert.Equal(a.t, want, a.cheCluster.Status.CheURL)
 	return a
 }
 
