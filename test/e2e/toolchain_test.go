@@ -245,7 +245,7 @@ func InitOperator(t *testing.T) (*framework.TestCtx, ToolchainAwaitility) {
 		Client: f.Client,
 	}
 	// wait for toolchain-operator to be ready
-	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "toolchain-operator", 1, RetryInterval, Timeout)
+	err = e2eutil.WaitForOperatorDeployment(t, f.KubeClient, namespace, "toolchain-operator", 1, RetryInterval, OperatorTimeout)
 	require.NoError(t, err, "failed while waiting for toolchain-operator deployment")
 	t.Log("toolchain-operator is ready and running state")
 

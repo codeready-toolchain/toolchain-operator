@@ -55,7 +55,7 @@ func (in *CheInstallation) DeepCopyObject() runtime.Object {
 func (in *CheInstallationList) DeepCopyInto(out *CheInstallationList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]CheInstallation, len(*in))
@@ -172,7 +172,7 @@ func (in *TektonInstallation) DeepCopyObject() runtime.Object {
 func (in *TektonInstallationList) DeepCopyInto(out *TektonInstallationList) {
 	*out = *in
 	out.TypeMeta = in.TypeMeta
-	out.ListMeta = in.ListMeta
+	in.ListMeta.DeepCopyInto(&out.ListMeta)
 	if in.Items != nil {
 		in, out := &in.Items, &out.Items
 		*out = make([]TektonInstallation, len(*in))

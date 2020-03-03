@@ -330,9 +330,14 @@ func TestReconcile(t *testing.T) {
 				newCheNamespace(cheOperatorNS, v1.NamespaceActive),
 				NewOperatorGroup(cheOperatorNS),
 				NewSubscription(cheOperatorNS))
-			e := meta.NoKindMatchError{GroupKind: schema.GroupKind{Kind: "Foo"}}
 			r.watchCheCluster = func() error {
-				return &e
+				return nil
+			}
+			cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+				if key == (types.NamespacedName{Namespace: "default", Name: "default"}) {
+					return &meta.NoKindMatchError{GroupKind: schema.GroupKind{Kind: "Foo"}}
+				}
+				return cl.Client.Get(ctx, key, obj)
 			}
 			request := newReconcileRequest(cheInstallation)
 
@@ -978,12 +983,11 @@ func TestEnsureWatchCheCluster(t *testing.T) {
 	t.Run("add_watch_requeue_as_kind_not_found", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
-			return nil
-		}
-		r.watchCheCluster = func() error {
 			return &meta.NoKindMatchError{GroupKind: schema.GroupKind{Kind: "Foo"}}
 		}
-
+		r.watchCheCluster = func() error {
+			return nil
+		}
 		// test
 		requeue, err := r.ensureWatchCheCluster()
 

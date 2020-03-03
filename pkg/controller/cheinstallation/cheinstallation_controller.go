@@ -84,16 +84,19 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, commoncontroller.MapToOwnerByLabel("", "provider"))
 	}
 
-	err = watchCheCluster()
+	cheCluster := &orgv1.CheCluster{}
+	err = mgr.GetClient().Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "deafult"}, cheCluster)
 	if err != nil {
-		if !meta.IsNoMatchError(err) { // ignore NoKindMatchError
+		if meta.IsNoMatchError(err) { // CheCluster CRD is not installed yet. Postpone the watcher.
+			log.Info("Postponing watcher on CheCluster resources")
+			r.watchCheCluster = watchCheCluster
+		} else if !errors.IsNotFound(err) { // ignore NotFound
 			return err
 		}
-		log.Info("Postponing watcher on CheCluster resources")
-		r.watchCheCluster = watchCheCluster
 	} else {
 		log.Info("Added a watcher on the CheCluster resources")
 	}
+
 	return nil
 }
 
@@ -263,16 +266,23 @@ func (r *ReconcileCheInstallation) ensureCheSubscription(logger logr.Logger, che
 
 // ensureWatchCheCluster adds watch for CheCluster resource if CheCluster CRD is installed else return requeue with true
 // CheCluster CRD may takes time to get installed until CheOperator is installed successfully
-// Once watch addded for CheCluster, sub-sequent calls to ensureWatchCheCluster() will do nothing
+// Once watch added for CheCluster, sub-sequent calls to ensureWatchCheCluster() will do nothing
 func (r *ReconcileCheInstallation) ensureWatchCheCluster() (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.watchCheCluster != nil {
-		if err := r.watchCheCluster(); err != nil {
+		cheCluster := &orgv1.CheCluster{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "default"}, cheCluster); err != nil {
 			if meta.IsNoMatchError(err) {
 				log.Info("CheGroup resource type does not exist yet", "message", err.Error())
 				return true, nil
 			}
+			if !errors.IsNotFound(err) { // ignore NotFound
+				log.Info("Unexpected error while getting a CheCluster to ensure a CheCluster watcher can be created", "message", err.Error())
+				return false, err
+			}
+		}
+		if err := r.watchCheCluster(); err != nil {
 			log.Info("Unexpected error while creating a watcher on the CheGroup resources", "message", err.Error())
 			return false, err
 		}

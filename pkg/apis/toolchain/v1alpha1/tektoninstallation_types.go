@@ -29,12 +29,14 @@ type TektonInstallationStatus struct {
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// TektonInstallation is the Schema for the tektoninstallations API
+// TektonInstallation defines how OpenShift Pipelines (Tekton) operator should be installed
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=tektoninstallations,scope=Cluster
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type==\"TektonReady\")].status"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type==\"TektonReady\")].reason"
+// +kubebuilder:validation:XPreserveUnknownFields
+// +operator-sdk:gen-csv:customresourcedefinitions.displayName="OpenShift Pipelines Installation"
 type TektonInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

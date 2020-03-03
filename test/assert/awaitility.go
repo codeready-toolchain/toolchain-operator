@@ -21,10 +21,12 @@ import (
 )
 
 const (
-	Timeout              = time.Minute * 60
-	RetryInterval        = time.Second * 5
-	CleanupRetryInterval = time.Second * 1
-	CleanupTimeout       = time.Second * 5
+	CheInstallationTimeout = time.Minute * 20
+	OperatorTimeout        = time.Second * 120
+	Timeout                = time.Second * 180
+	RetryInterval          = time.Second * 1
+	CleanupRetryInterval   = time.Second * 1
+	CleanupTimeout         = time.Second * 5
 )
 
 type ToolchainAwaitility struct {
@@ -34,7 +36,7 @@ type ToolchainAwaitility struct {
 
 // WaitForCheInstallation waits until there is CheInstallation with the given name available
 func (a *ToolchainAwaitility) WaitForCheInstallation(name string) error {
-	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+	return wait.Poll(RetryInterval, CheInstallationTimeout, func() (done bool, err error) {
 		ic := &v1alpha1.CheInstallation{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ic); err != nil {
 			if errors.IsNotFound(err) {
@@ -132,7 +134,7 @@ func UntilHasTektonStatusCondition(conditions ...toolchainv1alpha1.Condition) Te
 
 // WaitForCheInstallConditions waits until there is CheInstallation available with the given name and meeting the set of given wait-conditions
 func (a *ToolchainAwaitility) WaitForCheInstallConditions(name string, waitCond ...CheInstallationWaitCondition) error {
-	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+	return wait.Poll(RetryInterval, CheInstallationTimeout, func() (done bool, err error) {
 		ci := &v1alpha1.CheInstallation{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Name: name}, ci); err != nil {
 			if errors.IsNotFound(err) {
@@ -217,7 +219,7 @@ func (a *ToolchainAwaitility) WaitForOperatorGroup(ns string, labels map[string]
 
 // WaitForCheCluster waits until there is CheCluster available with the given name and namespace
 func (a *ToolchainAwaitility) WaitForCheCluster(ns, name string) error {
-	return wait.Poll(RetryInterval, Timeout, func() (done bool, err error) {
+	return wait.Poll(RetryInterval, CheInstallationTimeout, func() (done bool, err error) {
 		cluster := &orgv1.CheCluster{}
 		if err := a.Client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: name}, cluster); err != nil {
 			if errors.IsNotFound(err) {
