@@ -22,8 +22,6 @@ const (
 	StartingCSV = "openshift-pipelines-operator.v0.8.2"
 	// TektonClusterName the name of the TektonCluster
 	TektonClusterName = "cluster"
-	// TektonFlavorName the name of the TektonCluster flavor
-	TektonFlavorName = "codeready"
 )
 
 // NewInstallation returns a new TektonInstallation resource

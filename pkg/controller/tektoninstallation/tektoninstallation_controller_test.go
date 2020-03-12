@@ -79,7 +79,7 @@ func TestTektonInstallationController(t *testing.T) {
 					Code: "applied-addons",
 				},
 				config.ConfigCondition{
-					Code: "installed",
+					Code: config.InstalledStatus,
 				},
 				config.ConfigCondition{
 					Code: "validated-pipeline",
@@ -109,7 +109,7 @@ func TestTektonInstallationController(t *testing.T) {
 			// given
 			tektonInstallation := NewInstallation()
 			installingCode := config.ConfigCondition{
-				Code: "installing",
+				Code: config.InstallingStatus,
 			}
 			tektonCluster := NewTektonCluster(installingCode)
 			cl, r := configureClient(t, tektonInstallation,
@@ -135,7 +135,7 @@ func TestTektonInstallationController(t *testing.T) {
 			// given
 			tektonInstallation := NewInstallation()
 			errorCode := config.ConfigCondition{
-				Code: "error",
+				Code: config.ErrorStatus,
 			}
 			tektonCluster := NewTektonCluster(errorCode)
 			cl, r := configureClient(t, tektonInstallation,
@@ -157,7 +157,7 @@ func TestTektonInstallationController(t *testing.T) {
 				HasConditions(InstallationFailed(""))
 		})
 
-		t.Run("unknown tekton installation status", func(t *testing.T) {
+		t.Run("unknown status with tekton installation", func(t *testing.T) {
 			// given
 			tektonInstallation := NewInstallation()
 			unknownCode := config.ConfigCondition{

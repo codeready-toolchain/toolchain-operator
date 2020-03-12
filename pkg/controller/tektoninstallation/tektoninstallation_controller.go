@@ -135,12 +135,12 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 
 	status := getTektonClusterStatus(cluster)
 	switch status {
-	case "installed":
+	case config.InstalledStatus:
 		reqLogger.Info("done with Tekton installation")
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "")
-	case "installing":
+	case config.InstallingStatus:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, "")
-	case "error":
+	case config.ErrorStatus:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, "")
 	default:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationUnknown, "")
@@ -197,14 +197,16 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonCluster() (bool, error) {
 	return false, nil
 }
 
-func getTektonClusterStatus(cluster *config.Config) string {
+func getTektonClusterStatus(cluster *config.Config) config.InstallStatus {
+	var status config.InstallStatus = "unknown"
 	for _, conditions := range cluster.Status.Conditions {
-		code := string(conditions.Code)
-		if code == "installed" || code == "installing" || code == "error" {
-			return code
+		code := conditions.Code
+		if code == config.InstalledStatus || code == config.InstallingStatus || code == config.ErrorStatus {
+			status = code
+			break
 		}
 	}
-	return "unknown"
+	return status
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
