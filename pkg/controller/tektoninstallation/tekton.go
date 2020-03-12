@@ -4,6 +4,7 @@ import (
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
+	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
 
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
@@ -19,6 +20,10 @@ const (
 	SubscriptionName = "openshift-pipelines-operator"
 	// StartingCSV keeps the CSV version the installation should start with
 	StartingCSV = "openshift-pipelines-operator.v0.8.2"
+	// TektonClusterName the name of the TektonCluster
+	TektonClusterName = "cluster"
+	// TektonFlavorName the name of the TektonCluster flavor
+	TektonFlavorName = "codeready"
 )
 
 // NewInstallation returns a new TektonInstallation resource
@@ -57,6 +62,24 @@ func InstallationSucceeded() toolchainv1alpha1.Condition {
 	}
 }
 
+// InstallationInstalling returns a status condition for the case where the Tekton is installing
+func InstallationInstalling() toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:   v1alpha1.TektonReady,
+		Status: corev1.ConditionFalse,
+		Reason: v1alpha1.InstallingReason,
+	}
+}
+
+func InstallationSubscriptionCreated() toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:    v1alpha1.TektonReady,
+		Status:  corev1.ConditionFalse,
+		Reason:  v1alpha1.InstallingReason,
+		Message: "Subscription created",
+	}
+}
+
 // InstallationFailed returns a status condition for the case where the Tekton installation failed
 func InstallationFailed(message string) toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{
@@ -64,5 +87,31 @@ func InstallationFailed(message string) toolchainv1alpha1.Condition {
 		Status:  corev1.ConditionFalse,
 		Reason:  v1alpha1.FailedToInstallReason,
 		Message: message,
+	}
+}
+
+// InstallationUnknown returns a status condition for the case where the Tekton installation status is unknown
+func InstallationUnknown() toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:   v1alpha1.TektonReady,
+		Status: corev1.ConditionFalse,
+		Reason: v1alpha1.UnknownReason,
+	}
+}
+
+// NewCheCluster returns a nee CheCluster with the given namespace
+func NewTektonCluster(conditions ...config.ConfigCondition) *config.Config {
+	return &config.Config{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   TektonClusterName,
+			Labels: toolchain.Labels(),
+		},
+		Spec: config.ConfigSpec{
+			TargetNamespace: "",
+		},
+		Status: config.ConfigStatus{
+			Conditions: conditions,
+		},
 	}
 }

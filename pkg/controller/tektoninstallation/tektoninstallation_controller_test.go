@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/test"
@@ -64,6 +66,122 @@ func TestTektonInstallationController(t *testing.T) {
 				HasConditions(InstallationSucceeded())
 		})
 
+	})
+
+	// reconciling on tektoncluster resource watcher
+	t.Run("tektoncluster watcher", func(t *testing.T) {
+
+		t.Run("installed tekton installation", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			installedCode := []config.ConfigCondition{
+				config.ConfigCondition{
+					Code: "applied-addons",
+				},
+				config.ConfigCondition{
+					Code: "installed",
+				},
+				config.ConfigCondition{
+					Code: "validated-pipeline",
+				},
+			}
+			tektonCluster := NewTektonCluster(installedCode...)
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonCluster)
+			r.watchTektonCluster = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
+			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(InstallationSucceeded())
+		})
+
+		t.Run("installing tekton installation", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			installingCode := config.ConfigCondition{
+				Code: "installing",
+			}
+			tektonCluster := NewTektonCluster(installingCode)
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonCluster)
+			r.watchTektonCluster = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
+			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(InstallationInstalling())
+		})
+
+		t.Run("error with tekton installation", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			errorCode := config.ConfigCondition{
+				Code: "error",
+			}
+			tektonCluster := NewTektonCluster(errorCode)
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonCluster)
+			r.watchTektonCluster = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
+			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(InstallationFailed(""))
+		})
+
+		t.Run("unknown tekton installation status", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			unknownCode := config.ConfigCondition{
+				Code: "applied-addons",
+			}
+			tektonCluster := NewTektonCluster(unknownCode)
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonCluster)
+			r.watchTektonCluster = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
+			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(InstallationUnknown())
+		})
 	})
 }
 
