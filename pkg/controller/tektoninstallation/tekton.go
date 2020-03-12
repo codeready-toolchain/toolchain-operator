@@ -97,7 +97,7 @@ func InstallationUnknown() toolchainv1alpha1.Condition {
 	}
 }
 
-// NewCheCluster returns a nee CheCluster with the given namespace
+// NewTektonCluster returns a new TektonCluster with the given namespace
 func NewTektonCluster(conditions ...config.ConfigCondition) *config.Config {
 	return &config.Config{
 		TypeMeta: metav1.TypeMeta{},

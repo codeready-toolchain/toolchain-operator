@@ -4,10 +4,8 @@ import (
 	"context"
 	"testing"
 
-	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
-
 	"github.com/stretchr/testify/require"
-
+	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

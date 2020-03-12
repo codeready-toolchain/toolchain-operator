@@ -5,22 +5,18 @@ import (
 	"sync"
 	"time"
 
-	commoncontroller "github.com/codeready-toolchain/toolchain-common/pkg/controller"
-
-	"k8s.io/apimachinery/pkg/api/meta"
-
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
+	commoncontroller "github.com/codeready-toolchain/toolchain-common/pkg/controller"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 
 	"github.com/go-logr/logr"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
-
 	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
-
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -67,7 +63,7 @@ func add(mgr manager.Manager, r *ReconcileTektonInstallation) error {
 	}
 
 	watchTektonCluster := func() error {
-		// make sure that there's a label with this key on the CheCluster in order to trigger a new reconcile loop
+		// make sure that there's a label with this key on the TektonCluster in order to trigger a new reconcile loop
 		return c.Watch(&source.Kind{Type: &config.Config{}}, commoncontroller.MapToOwnerByLabel("", "provider"))
 	}
 

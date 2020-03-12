@@ -92,7 +92,7 @@ func NewOperatorGroup(ns string) *olmv1.OperatorGroup {
 	}
 }
 
-// NewCheCluster returns a nee CheCluster with the given namespace
+// NewCheCluster returns a new CheCluster with the given namespace
 func NewCheCluster(ns string) *orgv1.CheCluster {
 	return &orgv1.CheCluster{
 		ObjectMeta: metav1.ObjectMeta{
