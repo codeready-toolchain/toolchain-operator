@@ -270,7 +270,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		require.True(t, created)
+		require.False(t, created)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 			Exists().
