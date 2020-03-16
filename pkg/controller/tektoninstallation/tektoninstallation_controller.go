@@ -131,8 +131,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
-	status := getTektonClusterStatus(cluster)
-	switch status {
+	switch getTektonClusterStatus(cluster) {
 	case config.InstalledStatus:
 		reqLogger.Info("done with Tekton installation")
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "tekton installation succeeded")
@@ -145,7 +144,8 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	}
 }
 
-// EnsureTektonSubscription ensures that there is an OLM Subscription resource for Tekton
+// EnsureTektonSubscription ensures that there is an OLM Subscription resource for Tekton.
+// Returns boolean indicating whether or not the subscription was created.
 func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation) (bool, error) {
 	tektonSubNamespace := SubscriptionNamespace
 	created, err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace)
