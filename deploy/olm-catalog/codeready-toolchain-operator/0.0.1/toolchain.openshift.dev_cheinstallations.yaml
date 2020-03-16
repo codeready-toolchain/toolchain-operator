@@ -63,12 +63,11 @@ spec:
           description: CheInstallationStatus defines the observed state of CheInstallation
           properties:
             cheServerURL:
-              description: CheServerURL the URL of the Che Server, once the installation
-                completed
+              description: Route to access CodeReady Workspaces
               type: string
             conditions:
-              description: 'Conditions is an array of current CheInstallation conditions
-                Supported condition types: CheReady'
+              description: 'Last known condition of the CodeReady Workspaces  operator
+                installation. Supported condition types: CheReady'
               items:
                 properties:
                   lastTransitionTime:
