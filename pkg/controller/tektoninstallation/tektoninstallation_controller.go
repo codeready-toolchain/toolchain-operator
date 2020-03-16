@@ -128,6 +128,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	cluster := &config.Config{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonClusterName}, cluster)
 	if err != nil {
+		reqLogger.Info("requeue to retrieve cluster resource", "tektonclustername", TektonClusterName)
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
