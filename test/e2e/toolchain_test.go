@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 
-	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
-
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -22,6 +20,7 @@ import (
 	framework "github.com/operator-framework/operator-sdk/pkg/test"
 	"github.com/operator-framework/operator-sdk/pkg/test/e2eutil"
 	"github.com/stretchr/testify/require"
+	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -42,14 +41,14 @@ func TestToolchain(t *testing.T) {
 	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNS)
 	cheSub := cheinstallation.NewSubscription(cheOperatorNS)
 	cheCluster := cheinstallation.NewCheCluster(cheOperatorNS)
-	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
+	tektonInstallation := tektoninstallation.NewInstallation()
 	installedCode := []config.ConfigCondition{
 		config.ConfigCondition{
 			Code: config.InstalledStatus,
 		},
 	}
 	tektoninstallation.NewTektonCluster(installedCode...)
-	tektonInstallation := tektoninstallation.NewInstallation()
+	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
 	f := framework.Global
 
