@@ -141,6 +141,14 @@ spec:
           - list
           - watch
         - apiGroups:
+          - operator.tekton.dev
+          resources:
+          - config
+          verbs:
+          - get
+          - list
+          - watch
+        - apiGroups:
           - operators.coreos.com
           resources:
           - catalogsources

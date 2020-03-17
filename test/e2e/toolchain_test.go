@@ -5,6 +5,8 @@ import (
 	"os"
 	"testing"
 
+	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
+
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -41,7 +43,12 @@ func TestToolchain(t *testing.T) {
 	cheSub := cheinstallation.NewSubscription(cheOperatorNS)
 	cheCluster := cheinstallation.NewCheCluster(cheOperatorNS)
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
-
+	installedCode := []config.ConfigCondition{
+		config.ConfigCondition{
+			Code: config.InstalledStatus,
+		},
+	}
+	tektoninstallation.NewTektonCluster(installedCode...)
 	tektonInstallation := tektoninstallation.NewInstallation()
 
 	f := framework.Global
@@ -222,6 +229,7 @@ func checkTektonResources(t *testing.T, client client.Client, tektonSub *olmv1al
 	AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, client).
 		Exists().
 		HasSpec(tektonSub.Spec)
+	AssertThatTektonCluster(t, tektoninstallation.TektonClusterName, client)
 }
 
 func InitOperator(t *testing.T) (*framework.TestCtx, ToolchainAwaitility) {
