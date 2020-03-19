@@ -39,6 +39,7 @@ var log = logf.Log.WithName("controller_cheinstallation")
 // Add creates a new CheInstallation Controller and adds it to the Manager. The Manager will set fields on the Controller
 // and Start it when the Manager is Started.
 func Add(mgr manager.Manager) error {
+	log.Info("Adding new CheInstallation reconciler")
 	return add(mgr, newReconciler(mgr))
 }
 
@@ -54,7 +55,7 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 	if err != nil {
 		return err
 	}
-
+	log.Info("configuring watcher on CheInstallations")
 	// Watch for changes to primary resource CheInstallation
 	err = c.Watch(&source.Kind{Type: &v1alpha1.CheInstallation{}}, &handler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{})
 	if err != nil {
@@ -67,36 +68,28 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 		OwnerType:    &v1alpha1.CheInstallation{},
 	}
 
+	log.Info("configuring watcher on Namespaces")
 	if err := c.Watch(&source.Kind{Type: &corev1.Namespace{}}, enqueueRequestForOwner); err != nil {
 		return err
 	}
 
+	log.Info("configuring watcher on Operator Groups")
 	if err := c.Watch(&source.Kind{Type: &olmv1.OperatorGroup{}}, enqueueRequestForOwner); err != nil {
 		return err
 	}
 
+	log.Info("configuring watcher on Che Subscriptions")
 	if err := c.Watch(&source.Kind{Type: &olmv1alpha1.Subscription{}}, enqueueRequestForOwner); err != nil {
 		return err
 	}
 
-	watchCheCluster := func() error {
+	log.Info("configuring watcher on CheClusters (if applicable)")
+	r.watchCheCluster = func() error {
 		// make sure that there's a label with this key on the CheCluster in order to trigger a new reconcile loop
 		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, commoncontroller.MapToOwnerByLabel("", "provider"))
 	}
 
-	cheCluster := &orgv1.CheCluster{}
-	err = mgr.GetClient().Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "deafult"}, cheCluster)
-	if err != nil {
-		if meta.IsNoMatchError(err) { // CheCluster CRD is not installed yet. Postpone the watcher.
-			log.Info("Postponing watcher on CheCluster resources")
-			r.watchCheCluster = watchCheCluster
-		} else if !errors.IsNotFound(err) { // ignore NotFound
-			return err
-		}
-	} else {
-		log.Info("Added a watcher on the CheCluster resources")
-	}
-
+	log.Info("CheInstallation reconciler successfully added")
 	return nil
 }
 

@@ -40,6 +40,7 @@ func Add(mgr manager.Manager) error {
 
 // newReconciler returns a new reconcile.Reconciler
 func newReconciler(mgr manager.Manager) *ReconcileTektonInstallation {
+	log.Info("Adding new TektonInstallation reconciler")
 	return &ReconcileTektonInstallation{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
@@ -52,36 +53,29 @@ func add(mgr manager.Manager, r *ReconcileTektonInstallation) error {
 	}
 
 	// Watch for changes to primary resource TektonInstallation
+	log.Info("configuring watcher on TektonInstallations")
 	if err := c.Watch(&source.Kind{Type: &v1alpha1.TektonInstallation{}}, &handler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
 		return err
 	}
 
 	// Watch for changes to secondary resource
+	log.Info("configuring watcher on Tekton Subscriptions")
 	enqueueRequestForOwner := &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &toolchainv1alpha1.TektonInstallation{},
 	}
 
-	watchTektonCluster := func() error {
+	if err := c.Watch(&source.Kind{Type: &olmv1alpha1.Subscription{}}, enqueueRequestForOwner); err != nil {
+		return err
+	}
+
+	r.watchTektonCluster = func() error {
 		// make sure that there's a label with this key on the TektonCluster in order to trigger a new reconcile loop
 		return c.Watch(&source.Kind{Type: &config.Config{}}, commoncontroller.MapToOwnerByLabel("", "provider"))
 	}
 
-	cluster := &config.Config{}
-	err = mgr.GetClient().Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "deafult"}, cluster)
-	if err != nil {
-		if meta.IsNoMatchError(err) { // TektonCluster CRD is not installed yet. Postpone the watcher.
-			log.Info("Postponing watcher on TektonCluster resources")
-			r.watchTektonCluster = watchTektonCluster
-		} else if !errors.IsNotFound(err) { // ignore NotFound
-			return err
-		}
-	} else {
-		log.Info("Added a watcher on the TektonCluster resources")
-	}
-
-	return c.Watch(&source.Kind{Type: &olmv1alpha1.Subscription{}}, enqueueRequestForOwner)
-
+	log.Info("TektonInstallation reconciler successfully added")
+	return nil
 }
 
 // blank assignment to verify that ReconcileTektonInstallation implements reconcile.Reconciler
