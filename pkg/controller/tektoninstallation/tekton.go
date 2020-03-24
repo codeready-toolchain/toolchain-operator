@@ -19,7 +19,7 @@ const (
 	// SubscriptionName the name for of TekTon Subscription resource
 	SubscriptionName = "openshift-pipelines-operator"
 	// StartingCSV keeps the CSV version the installation should start with
-	StartingCSV = "openshift-pipelines-operator.v0.8.2"
+	StartingCSV = "openshift-pipelines-operator.v0.10.7"
 	// TektonClusterName the name of the TektonCluster resource
 	TektonClusterName = "cluster"
 )
