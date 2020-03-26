@@ -67,8 +67,8 @@ func TestTektonInstallationController(t *testing.T) {
 
 	})
 
-	// reconciling on tektoncluster resource watcher
-	t.Run("tektoncluster watcher", func(t *testing.T) {
+	// reconciling on tektonconfig resource watcher
+	t.Run("tektonconfig watcher", func(t *testing.T) {
 
 		t.Run("installed tekton installation", func(t *testing.T) {
 			// given
@@ -84,11 +84,11 @@ func TestTektonInstallationController(t *testing.T) {
 					Code: "validated-pipeline",
 				},
 			}
-			tektonCluster := NewTektonConfig(installedCode...)
+			tektonConfig := NewTektonConfig(installedCode...)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
-				tektonCluster)
-			r.watchTektonCluster = func() error {
+				tektonConfig)
+			r.watchTektonConfig = func() error {
 				return nil
 			}
 			request := newReconcileRequest(tektonInstallation)
@@ -99,7 +99,7 @@ func TestTektonInstallationController(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
-			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonConfig(t, tektonConfig.Name, cl).Exists()
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
 				HasConditions(InstallationSucceeded())
 		})
@@ -110,11 +110,11 @@ func TestTektonInstallationController(t *testing.T) {
 			installingCode := config.ConfigCondition{
 				Code: config.InstallingStatus,
 			}
-			tektonCluster := NewTektonConfig(installingCode)
+			tektonConfig := NewTektonConfig(installingCode)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
-				tektonCluster)
-			r.watchTektonCluster = func() error {
+				tektonConfig)
+			r.watchTektonConfig = func() error {
 				return nil
 			}
 			request := newReconcileRequest(tektonInstallation)
@@ -125,7 +125,7 @@ func TestTektonInstallationController(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
-			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonConfig(t, tektonConfig.Name, cl).Exists()
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
 				HasConditions(InstallationInstalling())
 		})
@@ -136,11 +136,11 @@ func TestTektonInstallationController(t *testing.T) {
 			errorCode := config.ConfigCondition{
 				Code: config.ErrorStatus,
 			}
-			tektonCluster := NewTektonConfig(errorCode)
+			tektonConfig := NewTektonConfig(errorCode)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
-				tektonCluster)
-			r.watchTektonCluster = func() error {
+				tektonConfig)
+			r.watchTektonConfig = func() error {
 				return nil
 			}
 			request := newReconcileRequest(tektonInstallation)
@@ -151,7 +151,7 @@ func TestTektonInstallationController(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
-			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonConfig(t, tektonConfig.Name, cl).Exists()
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
 				HasConditions(InstallationFailed("tekton installation failed with error"))
 		})
@@ -162,11 +162,11 @@ func TestTektonInstallationController(t *testing.T) {
 			unknownCode := config.ConfigCondition{
 				Code: "applied-addons",
 			}
-			tektonCluster := NewTektonConfig(unknownCode)
+			tektonConfig := NewTektonConfig(unknownCode)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
-				tektonCluster)
-			r.watchTektonCluster = func() error {
+				tektonConfig)
+			r.watchTektonConfig = func() error {
 				return nil
 			}
 			request := newReconcileRequest(tektonInstallation)
@@ -177,7 +177,7 @@ func TestTektonInstallationController(t *testing.T) {
 			// then
 			require.NoError(t, err)
 			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
-			AssertThatTektonCluster(t, tektonCluster.Name, cl).Exists()
+			AssertThatTektonConfig(t, tektonConfig.Name, cl).Exists()
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
 				HasConditions(InstallationUnknown())
 		})

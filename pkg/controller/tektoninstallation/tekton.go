@@ -20,8 +20,8 @@ const (
 	SubscriptionName = "openshift-pipelines-operator"
 	// StartingCSV keeps the CSV version the installation should start with
 	StartingCSV = "openshift-pipelines-operator.v0.10.7"
-	// TektonClusterName the name of the TektonCluster resource
-	TektonClusterName = "cluster"
+	// TektonConfigName the name of the TektonConfig resource
+	TektonConfigName = "cluster"
 )
 
 // NewInstallation returns a new TektonInstallation resource
@@ -102,7 +102,7 @@ func NewTektonConfig(conditions ...config.ConfigCondition) *config.Config {
 	return &config.Config{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   TektonClusterName,
+			Name:   TektonConfigName,
 			Labels: toolchain.Labels(),
 		},
 		Spec: config.ConfigSpec{

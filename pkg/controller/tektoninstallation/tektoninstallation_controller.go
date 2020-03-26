@@ -69,8 +69,8 @@ func add(mgr manager.Manager, r *ReconcileTektonInstallation) error {
 		return err
 	}
 
-	r.watchTektonCluster = func() error {
-		// make sure that there's a label with this key on the TektonCluster in order to trigger a new reconcile loop
+	r.watchTektonConfig = func() error {
+		// make sure that there's a label with this key on the TektonConfig in order to trigger a new reconcile loop
 		return c.Watch(&source.Kind{Type: &config.Config{}}, commoncontroller.MapToOwnerByLabel("", "provider"))
 	}
 
@@ -85,10 +85,10 @@ var _ reconcile.Reconciler = &ReconcileTektonInstallation{}
 type ReconcileTektonInstallation struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client             client.Client
-	scheme             *runtime.Scheme
-	watchTektonCluster func() error
-	mu                 sync.Mutex
+	client            client.Client
+	scheme            *runtime.Scheme
+	watchTektonConfig func() error
+	mu                sync.Mutex
 }
 
 // Reconcile reads that state of the cluster for a TektonInstallation object and makes changes based on the state read
@@ -113,20 +113,20 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonSubscriptionCreated, "created tekton subscription")
 	}
 
-	if requeue, err := r.ensureWatchTektonCluster(); err != nil {
-		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to add watch for TektonCluster")
+	if requeue, err := r.ensureWatchTektonConfig(); err != nil {
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to add watch for TektonConfig")
 	} else if requeue {
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
 	cluster := &config.Config{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonClusterName}, cluster)
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, cluster)
 	if err != nil {
-		reqLogger.Info("requeue to retrieve cluster resource", "tektonclustername", TektonClusterName)
+		reqLogger.Info("requeue to retrieve cluster resource", "tektonconfigname", TektonConfigName)
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
-	switch getTektonClusterStatus(cluster) {
+	switch getTektonConfigStatus(cluster) {
 	case config.InstalledStatus:
 		reqLogger.Info("done with Tekton installation")
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "tekton installation succeeded")
@@ -168,10 +168,10 @@ func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logge
 	return false, err
 }
 
-func (r *ReconcileTektonInstallation) ensureWatchTektonCluster() (bool, error) {
+func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.watchTektonCluster != nil {
+	if r.watchTektonConfig != nil {
 		configCondition := &config.Config{}
 		if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "default"}, configCondition); err != nil {
 			if meta.IsNoMatchError(err) {
@@ -179,22 +179,22 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonCluster() (bool, error) {
 				return true, nil
 			}
 			if !errors.IsNotFound(err) { // ignore NotFound
-				log.Info("Unexpected error while getting a TektonCluster to ensure a TektonCluster watcher can be created", "message", err.Error())
+				log.Info("Unexpected error while getting a TektonConfig to ensure a TektonConfig watcher can be created", "message", err.Error())
 				return false, err
 			}
 		}
-		if err := r.watchTektonCluster(); err != nil {
+		if err := r.watchTektonConfig(); err != nil {
 			log.Info("Unexpected error while creating a watcher on the Tekton resources", "message", err.Error())
 			return false, err
 		}
-		log.Info("Added a watcher on the TektonCluster resources")
-		r.watchTektonCluster = nil // make sure watchTektonCluster() should NOT be called afterwards
+		log.Info("Added a watcher on the TektonConfig resources")
+		r.watchTektonConfig = nil // make sure watchTektonConfig() should NOT be called afterwards
 	}
 	log.Info("Watcher on the Tekton resources already added")
 	return false, nil
 }
 
-func getTektonClusterStatus(cluster *config.Config) config.InstallStatus {
+func getTektonConfigStatus(cluster *config.Config) config.InstallStatus {
 	var status config.InstallStatus = "unknown"
 	for _, conditions := range cluster.Status.Conditions {
 		code := conditions.Code
