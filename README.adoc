@@ -42,8 +42,17 @@ There are a few more targets that you can find useful:
 
 
 === End-to-End tests
+==== OpenShift 4.2+ 
 
-TBD
+* Make sure you have set the `KUBECONFIG` variable: `export KUBECONFIG=<kubeconfig>` 
+
+* Make sure you have set the `QUAY_NAMESPACE` variable: `export QUAY_NAMESPACE=<quay-username>`
+
+* Log in to the quay.io using `docker login quay.io`
+
+* Make sure that the visibility of the repositories toolchain-operator in quay is set to public (https://quay.io/repository/<your-username>/toolchain-operator?tab=settings)
+
+* Run the make target for executing end-to-end tests: `make test-e2e`
 
 === Verifying the OpenShift CI configuration
 
