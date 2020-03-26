@@ -84,7 +84,7 @@ func TestTektonInstallationController(t *testing.T) {
 					Code: "validated-pipeline",
 				},
 			}
-			tektonCluster := NewTektonCluster(installedCode...)
+			tektonCluster := NewTektonConfig(installedCode...)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonCluster)
@@ -110,7 +110,7 @@ func TestTektonInstallationController(t *testing.T) {
 			installingCode := config.ConfigCondition{
 				Code: config.InstallingStatus,
 			}
-			tektonCluster := NewTektonCluster(installingCode)
+			tektonCluster := NewTektonConfig(installingCode)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonCluster)
@@ -136,7 +136,7 @@ func TestTektonInstallationController(t *testing.T) {
 			errorCode := config.ConfigCondition{
 				Code: config.ErrorStatus,
 			}
-			tektonCluster := NewTektonCluster(errorCode)
+			tektonCluster := NewTektonConfig(errorCode)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonCluster)
@@ -162,7 +162,7 @@ func TestTektonInstallationController(t *testing.T) {
 			unknownCode := config.ConfigCondition{
 				Code: "applied-addons",
 			}
-			tektonCluster := NewTektonCluster(unknownCode)
+			tektonCluster := NewTektonConfig(unknownCode)
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonCluster)

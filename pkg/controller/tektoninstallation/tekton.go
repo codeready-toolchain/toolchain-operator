@@ -97,8 +97,8 @@ func InstallationUnknown() toolchainv1alpha1.Condition {
 	}
 }
 
-// NewTektonCluster returns a new TektonCluster with the given conditions
-func NewTektonCluster(conditions ...config.ConfigCondition) *config.Config {
+// NewTektonConfig returns a new TektonCongif with the given conditions
+func NewTektonConfig(conditions ...config.ConfigCondition) *config.Config {
 	return &config.Config{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{

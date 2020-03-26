@@ -47,7 +47,7 @@ func TestToolchain(t *testing.T) {
 			Code: config.InstalledStatus,
 		},
 	}
-	tektoninstallation.NewTektonCluster(installedCode...)
+	tektoninstallation.NewTektonConfig(installedCode...)
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
 
 	f := framework.Global
