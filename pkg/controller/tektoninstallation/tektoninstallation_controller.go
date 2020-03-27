@@ -122,7 +122,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, tektonCfg)
 	if err != nil {
 		reqLogger.Info("requeue to retrieve config resource", "tektonconfigname", TektonConfigName)
-		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to add get TektonConfig")
 	}
 
 	switch getTektonConfigStatus(tektonCfg) {
