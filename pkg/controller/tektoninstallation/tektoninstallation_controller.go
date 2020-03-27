@@ -113,7 +113,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	}
 
 	if requeue, err := r.ensureWatchTektonConfig(); err != nil {
-		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to add watch for TektonConfig")
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to get TektonConfig")
 	} else if requeue {
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
@@ -121,8 +121,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	tektonCfg := &config.Config{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, tektonCfg)
 	if err != nil {
-		reqLogger.Info("requeue to retrieve config resource", "tektonconfigname", TektonConfigName)
-		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to add get TektonConfig")
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to get TektonConfig")
 	}
 
 	switch getTektonConfigStatus(tektonCfg) {
