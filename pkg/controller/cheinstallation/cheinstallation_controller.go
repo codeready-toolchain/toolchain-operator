@@ -83,7 +83,6 @@ func add(mgr manager.Manager, r *ReconcileCheInstallation) error {
 		return err
 	}
 
-	log.Info("configuring watcher on CheClusters (if applicable)")
 	r.watchCheCluster = func() error {
 		// make sure that there's a label with this key on the CheCluster in order to trigger a new reconcile loop
 		return c.Watch(&source.Kind{Type: &orgv1.CheCluster{}}, commoncontroller.MapToOwnerByLabel("", "provider"))
