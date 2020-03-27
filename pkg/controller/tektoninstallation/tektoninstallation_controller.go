@@ -120,14 +120,14 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
-	c := &config.Config{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, c)
+	tektonCfg := &config.Config{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, tektonCfg)
 	if err != nil {
 		reqLogger.Info("requeue to retrieve config resource", "tektonconfigname", TektonConfigName)
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
-	switch getTektonConfigStatus(c) {
+	switch getTektonConfigStatus(tektonCfg) {
 	case config.InstalledStatus:
 		reqLogger.Info("done with Tekton installation")
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "tekton installation succeeded")
@@ -195,9 +195,9 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 	return false, nil
 }
 
-func getTektonConfigStatus(cfg *config.Config) config.InstallStatus {
+func getTektonConfigStatus(tektonCfg *config.Config) config.InstallStatus {
 	var status config.InstallStatus = "unknown"
-	for _, conditions := range cfg.Status.Conditions {
+	for _, conditions := range tektonCfg.Status.Conditions {
 		code := conditions.Code
 		if code == config.InstalledStatus || code == config.InstallingStatus || code == config.ErrorStatus {
 			status = code
