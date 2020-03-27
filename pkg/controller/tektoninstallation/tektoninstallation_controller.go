@@ -5,8 +5,6 @@ import (
 	"sync"
 	"time"
 
-	commoncontroller "github.com/codeready-toolchain/toolchain-common/pkg/controller"
-
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
@@ -72,7 +70,7 @@ func add(mgr manager.Manager, r *ReconcileTektonInstallation) error {
 
 	r.watchTektonConfig = func() error {
 		// make sure that there's a label with this key on the TektonConfig in order to trigger a new reconcile loop
-		return c.Watch(&source.Kind{Type: &config.Config{}}, commoncontroller.MapToOwnerByLabel("", "provider"))
+		return c.Watch(&source.Kind{Type: &config.Config{}}, &handler.EnqueueRequestForObject{})
 	}
 
 	log.Info("TektonInstallation reconciler successfully added")
