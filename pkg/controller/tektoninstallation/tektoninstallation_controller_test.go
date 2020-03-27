@@ -49,7 +49,7 @@ func TestTektonInstallationController(t *testing.T) {
 				HasSpec(tektonSub.Spec)
 		})
 
-		t.Run("should requeue due to no cluster resource available", func(t *testing.T) {
+		t.Run("should requeue due to no config resource available", func(t *testing.T) {
 			// when
 			result, err := r.Reconcile(request)
 

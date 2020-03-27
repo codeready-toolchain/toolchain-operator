@@ -5,9 +5,10 @@ import (
 	"sync"
 	"time"
 
+	commoncontroller "github.com/codeready-toolchain/toolchain-common/pkg/controller"
+
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
-	commoncontroller "github.com/codeready-toolchain/toolchain-common/pkg/controller"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	toolchainv1alpha1 "github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 
@@ -91,7 +92,7 @@ type ReconcileTektonInstallation struct {
 	mu                sync.Mutex
 }
 
-// Reconcile reads that state of the cluster for a TektonInstallation object and makes changes based on the state read
+// Reconcile reads that state of the config for a TektonInstallation object and makes changes based on the state read
 // and what is in the TektonInstallation.Spec
 func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
@@ -119,14 +120,14 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
-	cluster := &config.Config{}
-	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, cluster)
+	c := &config.Config{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, c)
 	if err != nil {
-		reqLogger.Info("requeue to retrieve cluster resource", "tektonconfigname", TektonConfigName)
+		reqLogger.Info("requeue to retrieve config resource", "tektonconfigname", TektonConfigName)
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
 
-	switch getTektonConfigStatus(cluster) {
+	switch getTektonConfigStatus(c) {
 	case config.InstalledStatus:
 		reqLogger.Info("done with Tekton installation")
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "tekton installation succeeded")
@@ -135,7 +136,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	case config.ErrorStatus:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, "tekton installation failed with error")
 	default:
-		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationUnknown, "tekton installation status is unknown")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationUnknown, "tekton installation status is unknown")
 	}
 }
 
@@ -194,9 +195,9 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 	return false, nil
 }
 
-func getTektonConfigStatus(cluster *config.Config) config.InstallStatus {
+func getTektonConfigStatus(cfg *config.Config) config.InstallStatus {
 	var status config.InstallStatus = "unknown"
-	for _, conditions := range cluster.Status.Conditions {
+	for _, conditions := range cfg.Status.Conditions {
 		code := conditions.Code
 		if code == config.InstalledStatus || code == config.InstallingStatus || code == config.ErrorStatus {
 			status = code
