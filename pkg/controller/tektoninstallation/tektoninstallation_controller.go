@@ -173,8 +173,8 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.watchTektonConfig != nil {
-		configCondition := &config.Config{}
-		if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "default"}, configCondition); err != nil {
+		tektonCfg := &config.Config{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "default"}, tektonCfg); err != nil {
 			if meta.IsNoMatchError(err) {
 				log.Info("Tekton resource type does not exist yet", "message", err.Error())
 				return true, nil
