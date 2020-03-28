@@ -17,14 +17,6 @@ type TektonConfigAssertion struct {
 	tektonConfig   *config.Config
 }
 
-func AssertThatTektonConfig(t *testing.T, name string, client client.Reader) *TektonConfigAssertion {
-	return &TektonConfigAssertion{
-		t:              t,
-		client:         client,
-		namespacedName: types.NamespacedName{Name: name},
-	}
-}
-
 func (a *TektonConfigAssertion) Exists() *TektonConfigAssertion {
 	err := a.loadTektonConfigAssertion()
 	require.NoError(a.t, err)

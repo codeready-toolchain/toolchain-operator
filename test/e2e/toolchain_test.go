@@ -221,7 +221,6 @@ func checkTektonResources(t *testing.T, client client.Client, tektonSub *olmv1al
 	AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, client).
 		Exists().
 		HasSpec(tektonSub.Spec)
-	AssertThatTektonConfig(t, tektoninstallation.TektonConfigName, client)
 }
 
 func InitOperator(t *testing.T) (*framework.TestCtx, ToolchainAwaitility) {
