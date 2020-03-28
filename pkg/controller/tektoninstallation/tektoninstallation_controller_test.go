@@ -7,6 +7,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/test"
@@ -49,20 +52,40 @@ func TestTektonInstallationController(t *testing.T) {
 				HasSpec(tektonSub.Spec)
 		})
 
-		t.Run("should requeue due to no config resource available", func(t *testing.T) {
+		t.Run("should not requeue", func(t *testing.T) {
+			cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+				if _, ok := obj.(*config.Config); ok {
+					installedCode := []config.ConfigCondition{
+						config.ConfigCondition{
+							Code: "applied-addons",
+						},
+						config.ConfigCondition{
+							Code: config.InstalledStatus,
+						},
+						config.ConfigCondition{
+							Code: "validated-pipeline",
+						},
+					}
+					obj = NewTektonConfig(installedCode...)
+					return nil
+				}
+
+				return cl.Client.Get(ctx, key, obj)
+			}
+
 			// when
 			result, err := r.Reconcile(request)
 
 			// then
 			require.NoError(t, err)
 
-			assert.True(t, result.Requeue)
+			assert.False(t, result.Requeue)
 			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 				Exists().
 				HasSpec(tektonSub.Spec)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(InstallationSubscriptionCreated())
+				HasConditions(InstallationUnknown())
 		})
 
 	})
@@ -300,4 +323,21 @@ func newReconcileRequest(tektonInstallation *v1alpha1.TektonInstallation) reconc
 // generateName return the given name with a suffix based on the current time (UnixNano)
 func generateName(prefix string) string {
 	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
+}
+
+// NewTektonConfig returns a new TektonConfig with the given conditions
+func NewTektonConfig(conditions ...config.ConfigCondition) *config.Config {
+	return &config.Config{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   TektonConfigName,
+			Labels: toolchain.Labels(),
+		},
+		Spec: config.ConfigSpec{
+			TargetNamespace: "",
+		},
+		Status: config.ConfigStatus{
+			Conditions: conditions,
+		},
+	}
 }

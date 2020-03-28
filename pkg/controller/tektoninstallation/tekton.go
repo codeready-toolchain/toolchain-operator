@@ -4,8 +4,6 @@ import (
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
-	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
-
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -94,22 +92,5 @@ func InstallationUnknown() toolchainv1alpha1.Condition {
 		Type:   v1alpha1.TektonReady,
 		Status: corev1.ConditionFalse,
 		Reason: v1alpha1.UnknownReason,
-	}
-}
-
-// NewTektonConfig returns a new TektonCongif with the given conditions
-func NewTektonConfig(conditions ...config.ConfigCondition) *config.Config {
-	return &config.Config{
-		TypeMeta: metav1.TypeMeta{},
-		ObjectMeta: metav1.ObjectMeta{
-			Name:   TektonConfigName,
-			Labels: toolchain.Labels(),
-		},
-		Spec: config.ConfigSpec{
-			TargetNamespace: "",
-		},
-		Status: config.ConfigStatus{
-			Conditions: conditions,
-		},
 	}
 }
