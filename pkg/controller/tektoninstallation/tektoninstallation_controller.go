@@ -121,6 +121,9 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	tektonCfg := &config.Config{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, tektonCfg)
 	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, err, "TektonConfig is installing")
+		}
 		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to get TektonConfig")
 	}
 
