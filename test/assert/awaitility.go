@@ -23,7 +23,7 @@ import (
 const (
 	CheInstallationTimeout = time.Minute * 20
 	OperatorTimeout        = time.Second * 120
-	Timeout                = time.Second * 180 * 10
+	Timeout                = time.Second * 180
 	RetryInterval          = time.Second * 1
 	CleanupRetryInterval   = time.Second * 1
 	CleanupTimeout         = time.Second * 5
