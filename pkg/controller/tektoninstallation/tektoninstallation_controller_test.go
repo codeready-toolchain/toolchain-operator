@@ -45,7 +45,7 @@ func TestTektonInstallationController(t *testing.T) {
 			require.NoError(t, err)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(InstallationInstalling("Subscription created"))
+				HasConditions(InstallationInstalling("created tekton subscription"))
 
 			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 				Exists().

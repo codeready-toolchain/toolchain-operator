@@ -106,10 +106,10 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{}, err
 	}
 
-	if created, err := r.EnsureTektonSubscription(reqLogger, tektonInstallation); err != nil {
-		return reconcile.Result{}, err
+	if created, err := r.ensureTektonSubscription(reqLogger, tektonInstallation, SubscriptionNamespace); err != nil {
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", SubscriptionNamespace)
 	} else if created {
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, "Subscription created")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, "created tekton subscription")
 	}
 
 	if requeue, err := r.ensureWatchTektonConfig(); err != nil {
@@ -138,17 +138,6 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	default:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationUnknown, "tekton installation status is unknown")
 	}
-}
-
-// EnsureTektonSubscription ensures that there is an OLM Subscription resource for Tekton.
-// Returns boolean indicating whether or not the subscription was created.
-func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation) (bool, error) {
-	tektonSubNamespace := SubscriptionNamespace
-	created, err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace)
-	if err != nil {
-		return created, r.wrapErrorWithStatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
-	}
-	return created, nil
 }
 
 func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, ns string) (bool, error) {
