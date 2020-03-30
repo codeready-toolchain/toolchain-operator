@@ -109,7 +109,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	if created, err := r.EnsureTektonSubscription(reqLogger, tektonInstallation); err != nil {
 		return reconcile.Result{}, err
 	} else if created {
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonSubscriptionCreated, "created tekton subscription")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, "Subscription created")
 	}
 
 	if requeue, err := r.ensureWatchTektonConfig(); err != nil {
@@ -212,7 +212,7 @@ func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tekto
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonInstallationInstalling(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, InstallationInstalling())
+	return r.updateStatusConditions(tektonInstallation, InstallationInstalling(message))
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonInstallationFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
@@ -225,10 +225,6 @@ func (r *ReconcileTektonInstallation) setStatusTektonInstallationUnknown(tektonI
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
 	return r.updateStatusConditions(tektonInstallation, InstallationFailed(message))
-}
-
-func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionCreated(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, InstallationSubscriptionCreated())
 }
 
 func (r *ReconcileTektonInstallation) statusUpdate(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, statusUpdater func(tektonInstallation *v1alpha1.TektonInstallation, message string) error, msg string) error {

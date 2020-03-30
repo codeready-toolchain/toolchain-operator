@@ -59,20 +59,12 @@ func InstallationSucceeded() toolchainv1alpha1.Condition {
 }
 
 // InstallationInstalling returns a status condition for the case where the Tekton is installing
-func InstallationInstalling() toolchainv1alpha1.Condition {
-	return toolchainv1alpha1.Condition{
-		Type:   v1alpha1.TektonReady,
-		Status: corev1.ConditionFalse,
-		Reason: v1alpha1.InstallingReason,
-	}
-}
-
-func InstallationSubscriptionCreated() toolchainv1alpha1.Condition {
+func InstallationInstalling(message string) toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{
 		Type:    v1alpha1.TektonReady,
 		Status:  corev1.ConditionFalse,
 		Reason:  v1alpha1.InstallingReason,
-		Message: "Subscription created",
+		Message: message,
 	}
 }
 
