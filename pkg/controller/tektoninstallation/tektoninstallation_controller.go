@@ -127,14 +127,15 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to get TektonConfig")
 	}
 
-	switch getTektonConfigStatus(tektonCfg) {
+	code, details := getTektonConfigStatus(tektonCfg)
+	switch code {
 	case config.InstalledStatus:
 		reqLogger.Info("done with Tekton installation")
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "tekton installation succeeded")
 	case config.InstallingStatus:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, "tekton installation installing")
 	case config.ErrorStatus:
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, "tekton installation failed with error")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, "tekton installation failed with error: "+details)
 	default:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationUnknown, "tekton installation status is unknown")
 	}
@@ -184,14 +185,14 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 	return false, nil
 }
 
-func getTektonConfigStatus(tektonCfg *config.Config) config.InstallStatus {
+func getTektonConfigStatus(tektonCfg *config.Config) (config.InstallStatus, string) {
 	for _, conditions := range tektonCfg.Status.Conditions {
 		code := conditions.Code
 		if code == config.InstalledStatus || code == config.InstallingStatus || code == config.ErrorStatus {
-			return code
+			return code, conditions.Details
 		}
 	}
-	return "unknown"
+	return "unknown", ""
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
