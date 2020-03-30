@@ -185,15 +185,13 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 }
 
 func getTektonConfigStatus(tektonCfg *config.Config) config.InstallStatus {
-	var status config.InstallStatus = "unknown"
 	for _, conditions := range tektonCfg.Status.Conditions {
 		code := conditions.Code
 		if code == config.InstalledStatus || code == config.InstallingStatus || code == config.ErrorStatus {
-			status = code
-			break
+			return code
 		}
 	}
-	return status
+	return "unknown"
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
