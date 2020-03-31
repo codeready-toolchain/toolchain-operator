@@ -1,4 +1,4 @@
-= CodeReady Toolchain Operator
+= CodeReady Toolchain Operator Test
 
 image:https://goreportcard.com/badge/github.com/codeready-toolchain/toolchain-operator[Go Report Card, link="https://goreportcard.com/report/github.com/codeready-toolchain/toolchain-operator"]
 image:https://godoc.org/github.com/codeready-toolchain/toolchain-operator?status.png[GoDoc,link="https://godoc.org/github.com/codeready-toolchain/toolchain-operator"]
