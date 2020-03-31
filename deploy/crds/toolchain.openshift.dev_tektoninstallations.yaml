@@ -46,8 +46,8 @@ spec:
           description: TektonInstallationStatus defines the observed state of TektonInstallation
           properties:
             conditions:
-              description: 'Conditions is an array of current TektonInstallation conditions
-                Supported condition types: TektonReady'
+              description: 'Last known condition of the OpenShift Pipelines operator
+                installation. Supported condition types: TektonReady'
               items:
                 properties:
                   lastTransitionTime:

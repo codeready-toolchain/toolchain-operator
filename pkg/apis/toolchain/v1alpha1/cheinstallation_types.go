@@ -14,6 +14,9 @@ type CheInstallationSpec struct {
 
 type CheOperator struct {
 	// The namespace where the CodeReady Workspaces operator will be installed
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.displayName="Namespace"
+	// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors.x-descriptors="urn:alm:descriptor:com.tectonic.ui:label"
 	Namespace string `json:"namespace"`
 }
 
@@ -25,17 +28,23 @@ type CheInstallationStatus struct {
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 	// +optional
 
-	// CheServerURL the URL of the Che Server, once the installation completed
+	// Route to access CodeReady Workspaces
 	// +optional
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="CodeReady Workspaces URL"
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.x-descriptors="urn:alm:descriptor:org.w3:link"
 	CheServerURL string `json:"cheServerURL,omitempty"`
 
-	// Conditions is an array of current CheInstallation conditions
+	// Last known condition of the CodeReady Workspaces  operator installation.
 	// Supported condition types:
 	// CheReady
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="Conditions"
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes.conditions"
 	Conditions []toolchainv1alpha1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
@@ -50,6 +59,8 @@ type CheInstallationStatus struct {
 // +kubebuilder:printcolumn:name="Message",type="string",JSONPath=".status.conditions[?(@.type==\"CheReady\")].message",priority=1
 // +kubebuilder:validation:XPreserveUnknownFields
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="CodeReady Workspaces Installation"
+// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 type CheInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
