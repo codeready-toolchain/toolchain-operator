@@ -58,8 +58,8 @@ func InstallationSucceeded() toolchainv1alpha1.Condition {
 	}
 }
 
-// InstallationInstalling returns a status condition for the case where the Tekton is installing
-func InstallationInstalling(message string) toolchainv1alpha1.Condition {
+// Installing returns a status condition for the case where the Tekton is installing
+func Installing(message string) toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{
 		Type:    v1alpha1.TektonReady,
 		Status:  corev1.ConditionFalse,
@@ -78,8 +78,8 @@ func InstallationFailed(message string) toolchainv1alpha1.Condition {
 	}
 }
 
-// InstallationUnknown returns a status condition for the case where the Tekton installation status is unknown
-func InstallationUnknown() toolchainv1alpha1.Condition {
+// Unknown returns a status condition for the case where the Tekton installation status is unknown
+func Unknown() toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{
 		Type:   v1alpha1.TektonReady,
 		Status: corev1.ConditionFalse,

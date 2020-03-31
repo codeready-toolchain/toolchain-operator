@@ -69,7 +69,6 @@ func add(mgr manager.Manager, r *ReconcileTektonInstallation) error {
 	}
 
 	r.watchTektonConfig = func() error {
-		// make sure that there's a label with this key on the TektonConfig in order to trigger a new reconcile loop
 		return c.Watch(&source.Kind{Type: &config.Config{}}, &handler.EnqueueRequestForObject{})
 	}
 
@@ -109,7 +108,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	if created, err := r.ensureTektonSubscription(reqLogger, tektonInstallation, SubscriptionNamespace); err != nil {
 		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", SubscriptionNamespace)
 	} else if created {
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, "created tekton subscription")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, "created tekton subscription")
 	}
 
 	if requeue, err := r.ensureWatchTektonConfig(); err != nil {
@@ -122,7 +121,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, tektonCfg)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, err, "TektonConfig is installing")
+			return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, err, "TektonConfig is installing")
 		}
 		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to get TektonConfig")
 	}
@@ -133,11 +132,11 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		reqLogger.Info("done with Tekton installation")
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "tekton installation succeeded")
 	case config.InstallingStatus:
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationInstalling, "tekton installation installing: "+details)
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, "tekton installation installing: "+details)
 	case config.ErrorStatus:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, "tekton installation failed with error: "+details)
 	default:
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationUnknown, "tekton installation status is unknown")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonUnknown, "tekton installation status is unknown")
 	}
 }
 
@@ -170,12 +169,12 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 				return true, nil
 			}
 			if !errors.IsNotFound(err) { // ignore NotFound
-				log.Info("Unexpected error while getting a TektonConfig to ensure a TektonConfig watcher can be created", "message", err.Error())
+				log.Error(err, "Unexpected error while getting a TektonConfig to ensure a TektonConfig watcher can be created")
 				return false, err
 			}
 		}
 		if err := r.watchTektonConfig(); err != nil {
-			log.Info("Unexpected error while creating a watcher on the Tekton resources", "message", err.Error())
+			log.Error(err, "Unexpected error while creating a watcher on the Tekton resources", "message")
 			return false, err
 		}
 		log.Info("Added a watcher on the TektonConfig resources")
@@ -199,16 +198,16 @@ func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tekto
 	return r.updateStatusConditions(tektonInstallation, InstallationSucceeded())
 }
 
-func (r *ReconcileTektonInstallation) setStatusTektonInstallationInstalling(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, InstallationInstalling(message))
+func (r *ReconcileTektonInstallation) setStatusTektonInstalling(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
+	return r.updateStatusConditions(tektonInstallation, Installing(message))
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonInstallationFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
 	return r.updateStatusConditions(tektonInstallation, InstallationFailed(message))
 }
 
-func (r *ReconcileTektonInstallation) setStatusTektonInstallationUnknown(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
-	return r.updateStatusConditions(tektonInstallation, InstallationUnknown())
+func (r *ReconcileTektonInstallation) setStatusTektonUnknown(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
+	return r.updateStatusConditions(tektonInstallation, Unknown())
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
