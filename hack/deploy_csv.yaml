@@ -72,12 +72,11 @@ data:
                 description: CheInstallationStatus defines the observed state of CheInstallation
                 properties:
                   cheServerURL:
-                    description: CheServerURL the URL of the Che Server, once the installation
-                      completed
+                    description: Route to access CodeReady Workspaces
                     type: string
                   conditions:
-                    description: 'Conditions is an array of current CheInstallation conditions
-                      Supported condition types: CheReady'
+                    description: 'Last known condition of the CodeReady Workspaces  operator
+                      installation. Supported condition types: CheReady'
                     items:
                       properties:
                         lastTransitionTime:
@@ -165,8 +164,8 @@ data:
                 description: TektonInstallationStatus defines the observed state of TektonInstallation
                 properties:
                   conditions:
-                    description: 'Conditions is an array of current TektonInstallation conditions
-                      Supported condition types: TektonReady'
+                    description: 'Last known condition of the OpenShift Pipelines operator
+                      installation. Supported condition types: TektonReady'
                     items:
                       properties:
                         lastTransitionTime:
@@ -281,20 +280,21 @@ data:
             - description: The namespace where the CodeReady Workspaces operator will be
                 installed
               displayName: Namespace
-              path: namespace
+              path: cheOperatorSpec.namespace
               x-descriptors:
               - urn:alm:descriptor:com.tectonic.ui:label
             statusDescriptors:
-            - description: Last known condition of the CodeReady Workspaces  operator installation
+            - description: Route to access CodeReady Workspaces
+              displayName: CodeReady Workspaces URL
+              path: cheServerURL
+              x-descriptors:
+              - urn:alm:descriptor:org.w3:link
+            - description: 'Last known condition of the CodeReady Workspaces  operator installation.
+                Supported condition types: CheReady'
               displayName: Conditions
               path: conditions
               x-descriptors:
               - urn:alm:descriptor:io.kubernetes.conditions
-            - description: Route to access CodeReady Workspaces
-              displayName: CodeReady Workspaces URL
-              path: CheServerURL
-              x-descriptors:
-              - urn:alm:descriptor:org.w3:link
             version: v1alpha1
           - description: TektonInstallation defines how OpenShift Pipelines (Tekton) operator
               should be installed
@@ -302,7 +302,8 @@ data:
             kind: TektonInstallation
             name: tektoninstallations.toolchain.openshift.dev
             statusDescriptors:
-            - description: Last known condition of the tekton operator installation
+            - description: 'Last known condition of the OpenShift Pipelines operator installation.
+                Supported condition types: TektonReady'
               displayName: Conditions
               path: conditions
               x-descriptors:

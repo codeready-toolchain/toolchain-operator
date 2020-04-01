@@ -1,16 +1,12 @@
 module github.com/codeready-toolchain/toolchain-operator
 
 require (
-	github.com/codeready-toolchain/api v0.0.0-20200226022556-bb2d9dd17828
-	github.com/codeready-toolchain/toolchain-common v0.0.0-20200226024011-b46a241eee88
+	github.com/codeready-toolchain/api v0.0.0-20200331190106-9bee6c926e46
+	github.com/codeready-toolchain/toolchain-common v0.0.0-20200331061426-711ab83ff9b7
 	github.com/eclipse/che-operator v0.0.0-20191127094847-557860435bb4
-	github.com/emicklei/go-restful v2.11.2+incompatible // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/go-logr/logr v0.1.0
-	github.com/go-openapi/spec v0.19.6
-	github.com/go-openapi/swag v0.19.7 // indirect
-	github.com/google/gofuzz v1.1.0 // indirect
-	github.com/json-iterator/go v1.1.9 // indirect
+	github.com/go-openapi/spec v0.19.7
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20191115003340-16619cd27fa5
 	github.com/operator-framework/operator-sdk v0.15.2
@@ -20,21 +16,17 @@ require (
 	github.com/stretchr/testify v1.4.0
 	github.com/tektoncd/operator v0.0.0-20200309053747-ae9c052664d4
 	golang.org/x/mod v0.2.0 // indirect
-	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
-	golang.org/x/sys v0.0.0-20200212091648-12a6c2dcc1e4 // indirect
 	golang.org/x/tools v0.0.0-20200211205636-11eff242d136 // indirect
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71 // indirect
-	k8s.io/api v0.17.3
-	k8s.io/apiextensions-apiserver v0.17.3
-	k8s.io/apimachinery v0.17.3
+	k8s.io/api v0.17.4
+	k8s.io/apiextensions-apiserver v0.17.4
+	k8s.io/apimachinery v0.17.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/code-generator v0.17.3
 	k8s.io/gengo v0.0.0-20200205140755-e0e292d8aa12 // indirect
 	k8s.io/kube-openapi v0.0.0-20200204173128-addea2498afe
 	sigs.k8s.io/controller-runtime v0.5.0
 	sigs.k8s.io/controller-tools v0.2.4
-	sigs.k8s.io/yaml v1.2.0 // indirect
 )
 
 // Pinned to kubernetes-1.16.2

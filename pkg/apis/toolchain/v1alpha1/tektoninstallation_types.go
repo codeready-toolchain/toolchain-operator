@@ -17,13 +17,16 @@ type TektonInstallationStatus struct {
 	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
 	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
 
-	// Conditions is an array of current TektonInstallation conditions
+	// Last known condition of the OpenShift Pipelines operator installation.
 	// Supported condition types:
 	// TektonReady
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
 	// +listType
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="Conditions"
+	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes.conditions"
 	Conditions []toolchainv1alpha1.Condition `json:"conditions,omitempty" patchStrategy:"merge" patchMergeKey:"type"`
 }
 
@@ -37,6 +40,8 @@ type TektonInstallationStatus struct {
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type==\"TektonReady\")].reason"
 // +kubebuilder:validation:XPreserveUnknownFields
 // +operator-sdk:gen-csv:customresourcedefinitions.displayName="OpenShift Pipelines Installation"
+// +operator-sdk:gen-csv:customresourcedefinitions.specDescriptors=true
+// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 type TektonInstallation struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

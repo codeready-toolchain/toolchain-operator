@@ -111,7 +111,7 @@ func schema_pkg_apis_toolchain_v1alpha1_CheInstallationStatus(ref common.Referen
 				Properties: map[string]spec.Schema{
 					"cheServerURL": {
 						SchemaProps: spec.SchemaProps{
-							Description: "CheServerURL the URL of the Che Server, once the installation completed",
+							Description: "Route to access CodeReady Workspaces",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -125,7 +125,7 @@ func schema_pkg_apis_toolchain_v1alpha1_CheInstallationStatus(ref common.Referen
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Conditions is an array of current CheInstallation conditions Supported condition types: CheReady",
+							Description: "Last known condition of the CodeReady Workspaces  operator installation. Supported condition types: CheReady",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -215,7 +215,7 @@ func schema_pkg_apis_toolchain_v1alpha1_TektonInstallationStatus(ref common.Refe
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "Conditions is an array of current TektonInstallation conditions Supported condition types: TektonReady",
+							Description: "Last known condition of the OpenShift Pipelines operator installation. Supported condition types: TektonReady",
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
