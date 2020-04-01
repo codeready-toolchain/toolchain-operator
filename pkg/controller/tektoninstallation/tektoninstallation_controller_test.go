@@ -34,15 +34,7 @@ func TestTektonInstallationController(t *testing.T) {
 		// given
 		tektonSub := NewSubscription(SubscriptionNamespace)
 		tektonInstallation := NewInstallation()
-		installedCode := []config.ConfigCondition{
-			config.ConfigCondition{
-				Code: "applied-addons",
-			},
-			config.ConfigCondition{
-				Code: "validated-pipeline",
-			},
-		}
-		tektonConfig := NewTektonConfig(installedCode...)
+		tektonConfig := NewTektonConfig("applied-addons", "validated-pipeline")
 		cl, r := configureClient(t, tektonInstallation, tektonConfig)
 		request := newReconcileRequest(tektonInstallation)
 
@@ -85,18 +77,7 @@ func TestTektonInstallationController(t *testing.T) {
 		t.Run("installed tekton installation", func(t *testing.T) {
 			// given
 			tektonInstallation := NewInstallation()
-			installedCode := []config.ConfigCondition{
-				config.ConfigCondition{
-					Code: "applied-addons",
-				},
-				config.ConfigCondition{
-					Code: config.InstalledStatus,
-				},
-				config.ConfigCondition{
-					Code: "validated-pipeline",
-				},
-			}
-			tektonConfig := NewTektonConfig(installedCode...)
+			tektonConfig := NewTektonConfig("applied-addons", "installed", "validated-pipeline")
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonConfig)
@@ -118,10 +99,7 @@ func TestTektonInstallationController(t *testing.T) {
 		t.Run("installing tekton installation", func(t *testing.T) {
 			// given
 			tektonInstallation := NewInstallation()
-			installingCode := config.ConfigCondition{
-				Code: config.InstallingStatus,
-			}
-			tektonConfig := NewTektonConfig(installingCode)
+			tektonConfig := NewTektonConfig("installing")
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonConfig)
@@ -143,10 +121,7 @@ func TestTektonInstallationController(t *testing.T) {
 		t.Run("error with tekton installation", func(t *testing.T) {
 			// given
 			tektonInstallation := NewInstallation()
-			errorCode := config.ConfigCondition{
-				Code: config.ErrorStatus,
-			}
-			tektonConfig := NewTektonConfig(errorCode)
+			tektonConfig := NewTektonConfig("error")
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonConfig)
@@ -168,10 +143,7 @@ func TestTektonInstallationController(t *testing.T) {
 		t.Run("unknown status with tekton installation", func(t *testing.T) {
 			// given
 			tektonInstallation := NewInstallation()
-			unknownCode := config.ConfigCondition{
-				Code: "applied-addons",
-			}
-			tektonConfig := NewTektonConfig(unknownCode)
+			tektonConfig := NewTektonConfig("applied-addons")
 			cl, r := configureClient(t, tektonInstallation,
 				NewSubscription(SubscriptionNamespace),
 				tektonConfig)
@@ -311,7 +283,15 @@ func generateName(prefix string) string {
 }
 
 // NewTektonConfig returns a new TektonConfig with the given conditions
-func NewTektonConfig(conditions ...config.ConfigCondition) *config.Config {
+func NewTektonConfig(conditions ...string) *config.Config {
+	var codes []config.ConfigCondition
+	for _, code := range conditions {
+		condition := config.ConfigCondition{
+			Code: config.InstallStatus(code),
+		}
+		codes = append(codes, condition)
+	}
+
 	return &config.Config{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -322,7 +302,7 @@ func NewTektonConfig(conditions ...config.ConfigCondition) *config.Config {
 			TargetNamespace: "",
 		},
 		Status: config.ConfigStatus{
-			Conditions: conditions,
+			Conditions: codes,
 		},
 	}
 }
