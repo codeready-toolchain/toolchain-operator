@@ -112,7 +112,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	}
 
 	if requeue, err := r.ensureWatchTektonConfig(); err != nil {
-		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to get TektonConfig")
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to start watching TektonConfig CRD")
 	} else if requeue {
 		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
 	}
@@ -130,11 +130,11 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	switch code {
 	case config.InstalledStatus:
 		reqLogger.Info("done with Tekton installation")
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "tekton installation succeeded")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "")
 	case config.InstallingStatus:
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, "tekton installation installing: "+details)
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, details)
 	case config.ErrorStatus:
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, "tekton installation failed with error: "+details)
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, details)
 	default:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonUnknown, "tekton installation status is unknown")
 	}
@@ -194,7 +194,7 @@ func getTektonConfigStatus(tektonCfg *config.Config) (config.InstallStatus, stri
 	return "unknown", ""
 }
 
-func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
+func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tektonInstallation *v1alpha1.TektonInstallation, _ string) error {
 	return r.updateStatusConditions(tektonInstallation, InstallationSucceeded())
 }
 
@@ -206,7 +206,7 @@ func (r *ReconcileTektonInstallation) setStatusTektonInstallationFailed(tektonIn
 	return r.updateStatusConditions(tektonInstallation, InstallationFailed(message))
 }
 
-func (r *ReconcileTektonInstallation) setStatusTektonUnknown(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
+func (r *ReconcileTektonInstallation) setStatusTektonUnknown(tektonInstallation *v1alpha1.TektonInstallation, _ string) error {
 	return r.updateStatusConditions(tektonInstallation, Unknown())
 }
 
