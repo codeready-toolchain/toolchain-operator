@@ -34,7 +34,16 @@ func TestTektonInstallationController(t *testing.T) {
 		// given
 		tektonSub := NewSubscription(SubscriptionNamespace)
 		tektonInstallation := NewInstallation()
-		cl, r := configureClient(t, tektonInstallation)
+		installedCode := []config.ConfigCondition{
+			config.ConfigCondition{
+				Code: "applied-addons",
+			},
+			config.ConfigCondition{
+				Code: "validated-pipeline",
+			},
+		}
+		tektonConfig := NewTektonConfig(installedCode...)
+		cl, r := configureClient(t, tektonInstallation, tektonConfig)
 		request := newReconcileRequest(tektonInstallation)
 
 		t.Run("should create tekton subscription and requeue", func(t *testing.T) {
@@ -53,26 +62,6 @@ func TestTektonInstallationController(t *testing.T) {
 		})
 
 		t.Run("should not requeue", func(t *testing.T) {
-			cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
-				if _, ok := obj.(*config.Config); ok {
-					installedCode := []config.ConfigCondition{
-						config.ConfigCondition{
-							Code: "applied-addons",
-						},
-						config.ConfigCondition{
-							Code: config.InstalledStatus,
-						},
-						config.ConfigCondition{
-							Code: "validated-pipeline",
-						},
-					}
-					obj = NewTektonConfig(installedCode...)
-					return nil
-				}
-
-				return cl.Client.Get(ctx, key, obj)
-			}
-
 			// when
 			result, err := r.Reconcile(request)
 
