@@ -115,7 +115,7 @@ func TestTektonInstallationController(t *testing.T) {
 			require.NoError(t, err)
 			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(Installing(""))
+				HasConditions(Installing("tektoninstallation test"))
 		})
 
 		t.Run("error with tekton installation", func(t *testing.T) {
@@ -137,7 +137,7 @@ func TestTektonInstallationController(t *testing.T) {
 			require.NoError(t, err)
 			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(InstallationFailed(""))
+				HasConditions(InstallationFailed("tektoninstallation test"))
 		})
 
 		t.Run("unknown status with tekton installation", func(t *testing.T) {
@@ -287,7 +287,8 @@ func NewTektonConfig(conditions ...string) *config.Config {
 	var codes []config.ConfigCondition
 	for _, code := range conditions {
 		condition := config.ConfigCondition{
-			Code: config.InstallStatus(code),
+			Code:    config.InstallStatus(code),
+			Details: "tektoninstallation test",
 		}
 		codes = append(codes, condition)
 	}
