@@ -80,7 +80,7 @@ There are multiple makefile targets that will help you with releasing a new vers
 ==== Prerequisites
 
 * having https://github.com/operator-framework/operator-courier[operator-courier] installed
-* having https://github.com/operator-framework/operator-sdk[operator-sdk] of version v0.11.0 installed
+* having https://github.com/operator-framework/operator-sdk[operator-sdk] of version v0.16.0 installed
 * clone https://github.com/operator-framework/community-operators[community-operators] repo in `${GOPATH}/src/github.com/operator-framework/community-operators`
 
 
