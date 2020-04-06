@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
@@ -254,6 +255,59 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 			Exists().
 			HasSpec(tektonSub.Spec)
+	})
+}
+
+func TestEnsureWatchTektonCluster(t *testing.T) {
+
+	t.Run("add_watch_ok", func(t *testing.T) {
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return nil
+		}
+		r.watchTektonConfig = func() error {
+			return nil
+		}
+
+		// test
+		requeue, err := r.ensureWatchTektonConfig()
+
+		require.NoError(t, err)
+		assert.False(t, requeue)
+		assert.Nil(t, r.watchTektonConfig)
+	})
+
+	t.Run("add_watch_requeue_as_kind_not_found", func(t *testing.T) {
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return &meta.NoKindMatchError{}
+		}
+		r.watchTektonConfig = func() error {
+			return nil
+		}
+		// test
+		requeue, err := r.ensureWatchTektonConfig()
+
+		require.NoError(t, err)
+		assert.True(t, requeue)
+	})
+
+	t.Run("add_watch_failed_with_unknown_error", func(t *testing.T) {
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return nil
+		}
+		errMsg := "unknown"
+		r.watchTektonConfig = func() error {
+			return fmt.Errorf(errMsg)
+		}
+
+		// test
+		requeue, err := r.ensureWatchTektonConfig()
+
+		require.Error(t, err)
+		assert.EqualError(t, err, errMsg)
+		assert.False(t, requeue)
 	})
 }
 

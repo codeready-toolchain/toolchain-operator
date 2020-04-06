@@ -174,7 +174,7 @@ func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
 			}
 		}
 		if err := r.watchTektonConfig(); err != nil {
-			log.Error(err, "Unexpected error while creating a watcher on the Tekton resources", "message")
+			log.Error(err, "Unexpected error while creating a watcher on the Tekton resources", "message", err.Error())
 			return false, err
 		}
 		log.Info("Added a watcher on the TektonConfig resources")
