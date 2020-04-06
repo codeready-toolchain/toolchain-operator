@@ -145,7 +145,7 @@ ifneq ($(IS_OS_3),)
 	$(eval IMAGE_NAME := docker.io/${GO_PACKAGE_ORG_NAME}/${GO_PACKAGE_REPO_NAME}:${GIT_COMMIT_ID_SHORT})
 	$(MAKE) docker-image IMAGE=${IMAGE_NAME}
 else ifneq ($(IS_OS_CI),)
-	$(eval IMAGE_NAME := default-route-openshift-image-registry.apps.build01.ci.devcluster.openshift.com/${OPENSHIFT_BUILD_NAMESPACE}/stable:toolchain-operator)
+	$(eval IMAGE_NAME := ${IMAGE_FORMAT}toolchain-operator)
 else
 	# For OpenShift-4
 	$(eval IMAGE_NAME := quay.io/${QUAY_NAMESPACE}/${GO_PACKAGE_REPO_NAME}:${DATE_SUFFIX})

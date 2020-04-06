@@ -587,6 +587,8 @@ data:
           type: MultiNamespace
         - supported: true
           type: AllNamespaces
+        keywords:
+        - ""
         links:
         - name: CodeReady Toolchain Operator GitHub Repository
           url: https://github.com/codeready-toolchain/toolchain-operator

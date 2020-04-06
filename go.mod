@@ -1,15 +1,15 @@
 module github.com/codeready-toolchain/toolchain-operator
 
 require (
-	github.com/codeready-toolchain/api v0.0.0-20200331190106-9bee6c926e46
-	github.com/codeready-toolchain/toolchain-common v0.0.0-20200331061426-711ab83ff9b7
+	github.com/codeready-toolchain/api v0.0.0-20200402215020-c7a5434db5fb
+	github.com/codeready-toolchain/toolchain-common v0.0.0-20200403074820-4461b6d5a850
 	github.com/eclipse/che-operator v0.0.0-20191127094847-557860435bb4
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/go-logr/logr v0.1.0
 	github.com/go-openapi/spec v0.19.7
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/operator-framework/operator-lifecycle-manager v0.0.0-20191115003340-16619cd27fa5
-	github.com/operator-framework/operator-sdk v0.15.2
+	github.com/operator-framework/operator-sdk v0.16.0
 	github.com/pkg/errors v0.8.1
 	github.com/redhat-cop/operator-utils v0.0.0-20190827162636-51e6b0c32776
 	github.com/spf13/pflag v1.0.5
