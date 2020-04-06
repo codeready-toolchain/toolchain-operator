@@ -260,7 +260,7 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 
 func TestEnsureWatchTektonCluster(t *testing.T) {
 
-	t.Run("add_watch_ok", func(t *testing.T) {
+	t.Run("add watch ok", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 			return nil
@@ -277,7 +277,7 @@ func TestEnsureWatchTektonCluster(t *testing.T) {
 		assert.Nil(t, r.watchTektonConfig)
 	})
 
-	t.Run("add_watch_requeue_as_kind_not_found", func(t *testing.T) {
+	t.Run("add watch requeue as kind not found", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 			return &meta.NoKindMatchError{}
@@ -292,7 +292,7 @@ func TestEnsureWatchTektonCluster(t *testing.T) {
 		assert.True(t, requeue)
 	})
 
-	t.Run("add_watch_failed_with_unknown_error", func(t *testing.T) {
+	t.Run("add watch failed with unknown error", func(t *testing.T) {
 		cl, r := configureClient(t)
 		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
 			return nil
