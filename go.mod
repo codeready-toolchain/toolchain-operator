@@ -58,6 +58,7 @@ replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.0.0+incompatible
 	github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm (inderectly by operator-sdk)
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20190927182313-d4a64ec2cbd8 // Using openshift/api 4.3
+	github.com/prometheus/prometheus => github.com/prometheus/prometheus v2.3.2+incompatible
 )
 
 go 1.13
