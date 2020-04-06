@@ -136,7 +136,7 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 	case config.ErrorStatus:
 		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, details)
 	default:
-		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonUnknown, "tekton installation status is unknown")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonUnknown, "")
 	}
 }
 
