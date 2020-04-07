@@ -224,7 +224,7 @@ func checkTektonResources(t *testing.T, client client.Client, tektonSub *olmv1al
 		HasSpec(tektonSub.Spec)
 }
 
-func InitOperator(t *testing.T) (*framework.TestCtx, ToolchainAwaitility) {
+func InitOperator(t *testing.T) (*framework.Context, ToolchainAwaitility) {
 	icList := &v1alpha1.CheInstallationList{}
 	err := framework.AddToFrameworkScheme(apis.AddToScheme, icList)
 	require.NoError(t, err, "failed to add custom resource scheme to framework: %v", err)
@@ -252,6 +252,6 @@ func InitOperator(t *testing.T) (*framework.TestCtx, ToolchainAwaitility) {
 	return ctx, await
 }
 
-func cleanupOptions(ctx *framework.TestCtx) *framework.CleanupOptions {
+func cleanupOptions(ctx *framework.Context) *framework.CleanupOptions {
 	return &framework.CleanupOptions{TestContext: ctx, Timeout: CleanupTimeout, RetryInterval: CleanupRetryInterval}
 }
