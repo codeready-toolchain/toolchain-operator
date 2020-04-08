@@ -40,9 +40,8 @@ func TestToolchain(t *testing.T) {
 	cheOg := cheinstallation.NewOperatorGroup(cheOperatorNS)
 	cheSub := cheinstallation.NewSubscription(cheOperatorNS)
 	cheCluster := cheinstallation.NewCheCluster(cheOperatorNS)
+	tknInstallation := tektoninstallation.NewInstallation()
 	tektonSub := tektoninstallation.NewSubscription(tektoninstallation.SubscriptionNamespace)
-
-	tektonInstallation := tektoninstallation.NewInstallation()
 
 	f := framework.Global
 
@@ -133,7 +132,7 @@ func TestToolchain(t *testing.T) {
 		// given
 		// TektonInstallation should already exist
 		// when
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
+		err = await.WaitForTektonInstallConditions(tknInstallation.Name, UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
 		// then
 		require.NoError(t, err)
 
@@ -154,7 +153,7 @@ func TestToolchain(t *testing.T) {
 		err = await.WaitForSubscription(tektoninstallation.SubscriptionNamespace, tektoninstallation.SubscriptionName)
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallConditions(tektonInstallation.Name, UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
+		err = await.WaitForTektonInstallConditions(tknInstallation.Name, UntilHasTektonStatusCondition(tektoninstallation.InstallationSucceeded()))
 		require.NoError(t, err)
 
 		checkTektonResources(t, f.Client.Client, tektonSub)
@@ -163,12 +162,12 @@ func TestToolchain(t *testing.T) {
 	t.Run("should remove both Tekton and Che when CheInstallation and TektonInstallation are deleted", func(t *testing.T) {
 		// when
 		err = f.Client.Delete(context.TODO(), cheInstallation)
-		err = f.Client.Delete(context.TODO(), tektonInstallation)
+		err = f.Client.Delete(context.TODO(), tknInstallation)
 
 		// then
 		require.NoError(t, err)
 
-		err = await.WaitForTektonInstallationToBeDeleted(tektonInstallation.Name)
+		err = await.WaitForTektonInstallationToBeDeleted(tknInstallation.Name)
 		require.NoError(t, err)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, f.Client).

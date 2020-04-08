@@ -2,6 +2,8 @@ package tektoninstallation
 
 import (
 	"context"
+	"sync"
+	"time"
 
 	toolchainapiv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-common/pkg/condition"
@@ -11,7 +13,9 @@ import (
 	"github.com/go-logr/logr"
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	errs "github.com/pkg/errors"
+	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -34,12 +38,13 @@ func Add(mgr manager.Manager) error {
 }
 
 // newReconciler returns a new reconcile.Reconciler
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+func newReconciler(mgr manager.Manager) *ReconcileTektonInstallation {
+	log.Info("Adding new TektonInstallation reconciler")
 	return &ReconcileTektonInstallation{client: mgr.GetClient(), scheme: mgr.GetScheme()}
 }
 
 // add adds a new Controller to mgr with r as the reconcile.Reconciler
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
+func add(mgr manager.Manager, r *ReconcileTektonInstallation) error {
 	// Create a new controller
 	c, err := controller.New("tektoninstallation-controller", mgr, controller.Options{Reconciler: r})
 	if err != nil {
@@ -47,17 +52,28 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	}
 
 	// Watch for changes to primary resource TektonInstallation
+	log.Info("configuring watcher on TektonInstallations")
 	if err := c.Watch(&source.Kind{Type: &v1alpha1.TektonInstallation{}}, &handler.EnqueueRequestForObject{}, predicate.GenerationChangedPredicate{}); err != nil {
 		return err
 	}
 
 	// Watch for changes to secondary resource
+	log.Info("configuring watcher on Tekton Subscriptions")
 	enqueueRequestForOwner := &handler.EnqueueRequestForOwner{
 		IsController: true,
 		OwnerType:    &toolchainv1alpha1.TektonInstallation{},
 	}
 
-	return c.Watch(&source.Kind{Type: &olmv1alpha1.Subscription{}}, enqueueRequestForOwner)
+	if err := c.Watch(&source.Kind{Type: &olmv1alpha1.Subscription{}}, enqueueRequestForOwner); err != nil {
+		return err
+	}
+
+	r.watchTektonConfig = func() error {
+		return c.Watch(&source.Kind{Type: &config.Config{}}, &handler.EnqueueRequestForObject{})
+	}
+
+	log.Info("TektonInstallation reconciler successfully added")
+	return nil
 }
 
 // blank assignment to verify that ReconcileTektonInstallation implements reconcile.Reconciler
@@ -67,11 +83,13 @@ var _ reconcile.Reconciler = &ReconcileTektonInstallation{}
 type ReconcileTektonInstallation struct {
 	// This client, initialized using mgr.Client() above, is a split client
 	// that reads objects from the cache and writes to the apiserver
-	client client.Client
-	scheme *runtime.Scheme
+	client            client.Client
+	scheme            *runtime.Scheme
+	watchTektonConfig func() error
+	mu                sync.Mutex
 }
 
-// Reconcile reads that state of the cluster for a TektonInstallation object and makes changes based on the state read
+// Reconcile reads that state of the config for a TektonInstallation object and makes changes based on the state read
 // and what is in the TektonInstallation.Spec
 func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
@@ -87,35 +105,109 @@ func (r *ReconcileTektonInstallation) Reconcile(request reconcile.Request) (reco
 		return reconcile.Result{}, err
 	}
 
-	err := r.EnsureTektonSubscription(reqLogger, tektonInstallation)
-	return reconcile.Result{}, err
-}
-
-// EnsureTektonSubscription ensures that there is an OLM Subscription resource for Tekton
-func (r *ReconcileTektonInstallation) EnsureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation) error {
-	tektonSubNamespace := SubscriptionNamespace
-	if err := r.ensureTektonSubscription(logger, tektonInstallation, tektonSubNamespace); err != nil {
-		return r.wrapErrorWithStatusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", tektonSubNamespace)
+	if created, err := r.ensureTektonSubscription(reqLogger, tektonInstallation, SubscriptionNamespace); err != nil {
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonSubscriptionFailed, err, "failed to create tekton subscription in namespace %s", SubscriptionNamespace)
+	} else if created {
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, "created tekton subscription")
 	}
-	return r.statusUpdate(logger, tektonInstallation, r.setStatusTektonSubscriptionReady, "")
+
+	if requeue, err := r.ensureWatchTektonConfig(); err != nil {
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to start watching TektonConfig CRD")
+	} else if requeue {
+		return reconcile.Result{Requeue: true, RequeueAfter: 3 * time.Second}, nil
+	}
+
+	tektonCfg := &config.Config{}
+	err := r.client.Get(context.TODO(), types.NamespacedName{Name: TektonConfigName}, tektonCfg)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, err, "TektonConfig is installing")
+		}
+		return reconcile.Result{}, r.wrapErrorWithStatusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, err, "failed to get TektonConfig")
+	}
+
+	code, details := getTektonConfigStatus(tektonCfg)
+	switch code {
+	case config.InstalledStatus:
+		reqLogger.Info("done with Tekton installation")
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationSucceeded, "")
+	case config.InstallingStatus:
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstalling, details)
+	case config.ErrorStatus:
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonInstallationFailed, details)
+	default:
+		return reconcile.Result{}, r.statusUpdate(reqLogger, tektonInstallation, r.setStatusTektonUnknown, "")
+	}
 }
 
-func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, ns string) error {
+func (r *ReconcileTektonInstallation) ensureTektonSubscription(logger logr.Logger, tektonInstallation *v1alpha1.TektonInstallation, ns string) (bool, error) {
 	sub := &olmv1alpha1.Subscription{}
 	err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: ns, Name: SubscriptionName}, sub)
 	if err != nil && errors.IsNotFound(err) {
 		tektonSub := NewSubscription(ns)
 		logger.Info("Creating subscription for tekton", "Subscription.Namespace", ns, "Subscription.Name", tektonSub.Name)
 		if err := controllerutil.SetControllerReference(tektonInstallation, tektonSub, r.scheme); err != nil {
-			return err
+			return false, err
 		}
-		return r.client.Create(context.TODO(), tektonSub)
+		if err := r.client.Create(context.TODO(), tektonSub); err != nil {
+			return false, err
+		}
+		return true, nil
 	}
-	return err
+
+	return false, err
 }
 
-func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionReady(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
+func (r *ReconcileTektonInstallation) ensureWatchTektonConfig() (bool, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.watchTektonConfig != nil {
+		tektonCfg := &config.Config{}
+		if err := r.client.Get(context.TODO(), types.NamespacedName{Namespace: "default", Name: "default"}, tektonCfg); err != nil {
+			if meta.IsNoMatchError(err) {
+				log.Info("Tekton resource type does not exist yet", "message", err.Error())
+				return true, nil
+			}
+			if !errors.IsNotFound(err) { // ignore NotFound
+				log.Error(err, "Unexpected error while getting a TektonConfig to ensure a TektonConfig watcher can be created")
+				return false, err
+			}
+		}
+		if err := r.watchTektonConfig(); err != nil {
+			log.Error(err, "Unexpected error while creating a watcher on the Tekton resources", "message", err.Error())
+			return false, err
+		}
+		log.Info("Added a watcher on the TektonConfig resources")
+		r.watchTektonConfig = nil // make sure watchTektonConfig() should NOT be called afterwards
+	}
+	log.Info("Watcher on the Tekton resources already added")
+	return false, nil
+}
+
+func getTektonConfigStatus(tektonCfg *config.Config) (config.InstallStatus, string) {
+	for _, conditions := range tektonCfg.Status.Conditions {
+		code := conditions.Code
+		if code == config.InstalledStatus || code == config.InstallingStatus || code == config.ErrorStatus {
+			return code, conditions.Details
+		}
+	}
+	return "unknown", ""
+}
+
+func (r *ReconcileTektonInstallation) setStatusTektonInstallationSucceeded(tektonInstallation *v1alpha1.TektonInstallation, _ string) error {
 	return r.updateStatusConditions(tektonInstallation, InstallationSucceeded())
+}
+
+func (r *ReconcileTektonInstallation) setStatusTektonInstalling(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
+	return r.updateStatusConditions(tektonInstallation, Installing(message))
+}
+
+func (r *ReconcileTektonInstallation) setStatusTektonInstallationFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {
+	return r.updateStatusConditions(tektonInstallation, InstallationFailed(message))
+}
+
+func (r *ReconcileTektonInstallation) setStatusTektonUnknown(tektonInstallation *v1alpha1.TektonInstallation, _ string) error {
+	return r.updateStatusConditions(tektonInstallation, Unknown())
 }
 
 func (r *ReconcileTektonInstallation) setStatusTektonSubscriptionFailed(tektonInstallation *v1alpha1.TektonInstallation, message string) error {

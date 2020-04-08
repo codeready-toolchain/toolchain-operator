@@ -4,7 +4,6 @@ import (
 	toolchainv1alpha1 "github.com/codeready-toolchain/api/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
-
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,7 +17,9 @@ const (
 	// SubscriptionName the name for of TekTon Subscription resource
 	SubscriptionName = "openshift-pipelines-operator"
 	// StartingCSV keeps the CSV version the installation should start with
-	StartingCSV = "openshift-pipelines-operator.v0.8.2"
+	StartingCSV = "openshift-pipelines-operator.v0.10.7"
+	// TektonConfigName the name of the TektonConfig resource
+	TektonConfigName = "cluster"
 )
 
 // NewInstallation returns a new TektonInstallation resource
@@ -57,6 +58,16 @@ func InstallationSucceeded() toolchainv1alpha1.Condition {
 	}
 }
 
+// Installing returns a status condition for the case where the Tekton is installing
+func Installing(message string) toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:    v1alpha1.TektonReady,
+		Status:  corev1.ConditionFalse,
+		Reason:  v1alpha1.InstallingReason,
+		Message: message,
+	}
+}
+
 // InstallationFailed returns a status condition for the case where the Tekton installation failed
 func InstallationFailed(message string) toolchainv1alpha1.Condition {
 	return toolchainv1alpha1.Condition{
@@ -64,5 +75,14 @@ func InstallationFailed(message string) toolchainv1alpha1.Condition {
 		Status:  corev1.ConditionFalse,
 		Reason:  v1alpha1.FailedToInstallReason,
 		Message: message,
+	}
+}
+
+// Unknown returns a status condition for the case where the Tekton installation status is unknown
+func Unknown() toolchainv1alpha1.Condition {
+	return toolchainv1alpha1.Condition{
+		Type:   v1alpha1.TektonReady,
+		Status: corev1.ConditionFalse,
+		Reason: v1alpha1.UnknownReason,
 	}
 }

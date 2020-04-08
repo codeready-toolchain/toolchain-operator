@@ -14,6 +14,7 @@ require (
 	github.com/redhat-cop/operator-utils v0.0.0-20190827162636-51e6b0c32776
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.4.0
+	github.com/tektoncd/operator v0.0.0-20200309053747-ae9c052664d4
 	golang.org/x/mod v0.2.0 // indirect
 	golang.org/x/tools v0.0.0-20200211205636-11eff242d136 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71 // indirect
@@ -57,6 +58,7 @@ replace (
 	github.com/Azure/go-autorest => github.com/Azure/go-autorest v13.0.0+incompatible
 	github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503-38ab9da00309 // Required by Helm (inderectly by operator-sdk)
 	github.com/openshift/api => github.com/openshift/api v0.0.0-20190927182313-d4a64ec2cbd8 // Using openshift/api 4.3
+	github.com/prometheus/prometheus => github.com/prometheus/prometheus v2.3.2+incompatible
 )
 
 go 1.13

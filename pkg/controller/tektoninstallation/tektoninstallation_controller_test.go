@@ -7,6 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/codeready-toolchain/toolchain-operator/pkg/toolchain"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis"
 	"github.com/codeready-toolchain/toolchain-operator/pkg/apis/toolchain/v1alpha1"
 	"github.com/codeready-toolchain/toolchain-operator/test"
@@ -15,6 +19,7 @@ import (
 	olmv1alpha1 "github.com/operator-framework/operator-lifecycle-manager/pkg/api/apis/operators/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	config "github.com/tektoncd/operator/pkg/apis/operator/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
@@ -30,7 +35,8 @@ func TestTektonInstallationController(t *testing.T) {
 		// given
 		tektonSub := NewSubscription(SubscriptionNamespace)
 		tektonInstallation := NewInstallation()
-		cl, r := configureClient(t, tektonInstallation)
+		tektonConfig := newTektonConfig("applied-addons", "validated-pipeline")
+		cl, r := configureClient(t, tektonInstallation, tektonConfig)
 		request := newReconcileRequest(tektonInstallation)
 
 		t.Run("should create tekton subscription and requeue", func(t *testing.T) {
@@ -41,7 +47,7 @@ func TestTektonInstallationController(t *testing.T) {
 			require.NoError(t, err)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
-				HasConditions(InstallationSucceeded())
+				HasConditions(Installing("created tekton subscription"))
 
 			AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 				Exists().
@@ -61,9 +67,100 @@ func TestTektonInstallationController(t *testing.T) {
 				HasSpec(tektonSub.Spec)
 
 			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(Unknown())
+		})
+
+	})
+
+	// reconciling on tektonconfig resource watcher
+	t.Run("tektonconfig watcher", func(t *testing.T) {
+
+		t.Run("installed tekton installation", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			tektonConfig := newTektonConfig("applied-addons", config.InstalledStatus, "validated-pipeline")
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonConfig)
+			r.watchTektonConfig = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
 				HasConditions(InstallationSucceeded())
 		})
 
+		t.Run("installing tekton installation", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			tektonConfig := newTektonConfig(config.InstallingStatus)
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonConfig)
+			r.watchTektonConfig = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(Installing("tektoninstallation test"))
+		})
+
+		t.Run("error with tekton installation", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			tektonConfig := newTektonConfig(config.ErrorStatus)
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonConfig)
+			r.watchTektonConfig = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(InstallationFailed("tektoninstallation test"))
+		})
+
+		t.Run("unknown status with tekton installation", func(t *testing.T) {
+			// given
+			tektonInstallation := NewInstallation()
+			tektonConfig := newTektonConfig("applied-addons")
+			cl, r := configureClient(t, tektonInstallation,
+				NewSubscription(SubscriptionNamespace),
+				tektonConfig)
+			r.watchTektonConfig = func() error {
+				return nil
+			}
+			request := newReconcileRequest(tektonInstallation)
+
+			// when
+			_, err := r.Reconcile(request)
+
+			// then
+			require.NoError(t, err)
+			AssertThatSubscription(t, SubscriptionNamespace, SubscriptionName, cl).Exists()
+			AssertThatTektonInstallation(t, tektonInstallation.Namespace, tektonInstallation.Name, cl).
+				HasConditions(Unknown())
+		})
 	})
 }
 
@@ -108,10 +205,11 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		tektonSub := NewSubscription(tektonSubNs)
 
 		// when
-		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
+		created, err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
 
 		// then
 		require.NoError(t, err)
+		require.True(t, created)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 			Exists().
@@ -130,10 +228,11 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		tektonSub := NewSubscription(tektonSubNs)
 
 		// when
-		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
+		created, err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
 
 		// then
 		require.EqualError(t, err, errMsg)
+		require.False(t, created)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 			DoesNotExist()
@@ -147,14 +246,68 @@ func TestCreateSubscriptionForTekton(t *testing.T) {
 		cl, r := configureClient(t, tektonInstallation, tektonSub)
 
 		// when
-		err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
+		created, err := r.ensureTektonSubscription(testLogger, tektonInstallation, tektonSubNs)
 
 		// then
 		require.NoError(t, err)
+		require.False(t, created)
 
 		AssertThatSubscription(t, tektonSub.Namespace, tektonSub.Name, cl).
 			Exists().
 			HasSpec(tektonSub.Spec)
+	})
+}
+
+func TestEnsureWatchTektonCluster(t *testing.T) {
+
+	t.Run("add watch ok", func(t *testing.T) {
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return nil
+		}
+		r.watchTektonConfig = func() error {
+			return nil
+		}
+
+		// test
+		requeue, err := r.ensureWatchTektonConfig()
+
+		require.NoError(t, err)
+		assert.False(t, requeue)
+		assert.Nil(t, r.watchTektonConfig)
+	})
+
+	t.Run("add watch requeue as kind not found", func(t *testing.T) {
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return &meta.NoKindMatchError{}
+		}
+		r.watchTektonConfig = func() error {
+			return nil
+		}
+		// test
+		requeue, err := r.ensureWatchTektonConfig()
+
+		require.NoError(t, err)
+		assert.True(t, requeue)
+	})
+
+	t.Run("add watch failed with unknown error", func(t *testing.T) {
+		cl, r := configureClient(t)
+		cl.MockGet = func(ctx context.Context, key client.ObjectKey, obj runtime.Object) error {
+			return nil
+		}
+		errMsg := "unknown"
+		r.watchTektonConfig = func() error {
+			return fmt.Errorf(errMsg)
+		}
+
+		// test
+		requeue, err := r.ensureWatchTektonConfig()
+
+		require.Error(t, err)
+		assert.EqualError(t, err, errMsg)
+		assert.False(t, requeue)
 	})
 }
 
@@ -180,4 +333,30 @@ func newReconcileRequest(tektonInstallation *v1alpha1.TektonInstallation) reconc
 // generateName return the given name with a suffix based on the current time (UnixNano)
 func generateName(prefix string) string {
 	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
+}
+
+// newTektonConfig returns a new TektonConfig with the given conditions
+func newTektonConfig(conditions ...config.InstallStatus) *config.Config {
+	var codes []config.ConfigCondition
+	for _, code := range conditions {
+		condition := config.ConfigCondition{
+			Code:    config.InstallStatus(code),
+			Details: "tektoninstallation test",
+		}
+		codes = append(codes, condition)
+	}
+
+	return &config.Config{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   TektonConfigName,
+			Labels: toolchain.Labels(),
+		},
+		Spec: config.ConfigSpec{
+			TargetNamespace: "",
+		},
+		Status: config.ConfigStatus{
+			Conditions: codes,
+		},
+	}
 }

@@ -16,4 +16,5 @@ const (
 	TerminatingReason     = "Terminating"
 	FailedToInstallReason = "FailedToInstall"
 	InstalledReason       = "Installed"
+	UnknownReason         = "Unknown"
 )

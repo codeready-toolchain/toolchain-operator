@@ -83,6 +83,7 @@ IS_KUBE_ADMIN := $(shell oc whoami | grep "kube:admin")
 test-e2e-keep-resources: e2e-setup e2e-run
 
 .PHONY: test-e2e
+## runs the e2e tests 
 test-e2e: test-e2e-keep-resources clean-e2e-resources
 
 .PHONY: e2e-run
