@@ -23,7 +23,7 @@ type TektonInstallationStatus struct {
 	// +optional
 	// +patchMergeKey=type
 	// +patchStrategy=merge
-	// +listType
+	// +listType=set
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors=true
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.displayName="Conditions"
 	// +operator-sdk:gen-csv:customresourcedefinitions.statusDescriptors.x-descriptors="urn:alm:descriptor:io.kubernetes.conditions"
