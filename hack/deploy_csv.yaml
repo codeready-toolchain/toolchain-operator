@@ -102,7 +102,6 @@ data:
                       - type
                       type: object
                     type: array
-                    x-kubernetes-list-type: set
                 type: object
             type: object
             x-kubernetes-preserve-unknown-fields: true
@@ -192,7 +191,6 @@ data:
                       - type
                       type: object
                     type: array
-                    x-kubernetes-list-type: set
                 type: object
             type: object
             x-kubernetes-preserve-unknown-fields: true
