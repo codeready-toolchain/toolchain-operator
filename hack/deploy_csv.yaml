@@ -102,6 +102,9 @@ data:
                       - type
                       type: object
                     type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
                 type: object
             type: object
             x-kubernetes-preserve-unknown-fields: true
@@ -191,6 +194,9 @@ data:
                       - type
                       type: object
                     type: array
+                    x-kubernetes-list-map-keys:
+                    - type
+                    x-kubernetes-list-type: map
                 type: object
             type: object
             x-kubernetes-preserve-unknown-fields: true
