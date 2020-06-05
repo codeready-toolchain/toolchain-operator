@@ -1,6 +1,0 @@
-operator-path: deploy/operator.yaml
-role-paths:
-- deploy/cluster_role.yaml
-crd-cr-paths:
-- deploy/crds
-- examples
