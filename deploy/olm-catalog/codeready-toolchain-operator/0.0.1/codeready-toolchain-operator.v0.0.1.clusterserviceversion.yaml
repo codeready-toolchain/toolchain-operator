@@ -6,24 +6,6 @@ metadata:
       [
         {
           "apiVersion": "toolchain.openshift.dev/v1alpha1",
-          "kind": "TektonInstallation",
-          "metadata": {
-            "name": "tekton-installation"
-          },
-          "spec": {},
-          "status": {
-            "conditions": [
-              {
-                "lastTransitionTime": "2019-12-16T09:20:19Z",
-                "reason": "Installed",
-                "status": "True",
-                "type": "TektonReady"
-              }
-            ]
-          }
-        },
-        {
-          "apiVersion": "toolchain.openshift.dev/v1alpha1",
           "kind": "CheInstallation",
           "metadata": {
             "name": "toolchain-cheinstallation"
@@ -40,6 +22,24 @@ metadata:
                 "reason": "Installed",
                 "status": "True",
                 "type": "CheReady"
+              }
+            ]
+          }
+        },
+        {
+          "apiVersion": "toolchain.openshift.dev/v1alpha1",
+          "kind": "TektonInstallation",
+          "metadata": {
+            "name": "tekton-installation"
+          },
+          "spec": {},
+          "status": {
+            "conditions": [
+              {
+                "lastTransitionTime": "2019-12-16T09:20:19Z",
+                "reason": "Installed",
+                "status": "True",
+                "type": "TektonReady"
               }
             ]
           }
@@ -291,84 +291,6 @@ spec:
                 name: toolchain-operator
                 resources: {}
               serviceAccountName: toolchain-operator
-      permissions:
-      - rules:
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          - services
-          - services/finalizers
-          - endpoints
-          - persistentvolumeclaims
-          - events
-          - configmaps
-          - secrets
-          verbs:
-          - '*'
-        - apiGroups:
-          - apps
-          resources:
-          - deployments
-          - daemonsets
-          - replicasets
-          - statefulsets
-          verbs:
-          - '*'
-        - apiGroups:
-          - monitoring.coreos.com
-          resources:
-          - servicemonitors
-          verbs:
-          - get
-          - create
-        - apiGroups:
-          - apps
-          resourceNames:
-          - toolchain-operator
-          resources:
-          - deployments/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - ""
-          resources:
-          - pods
-          verbs:
-          - get
-        - apiGroups:
-          - apps
-          resources:
-          - replicasets
-          verbs:
-          - get
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - subscriptions
-          - operatorgroups
-          verbs:
-          - get
-          - create
-          - list
-          - watch
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - subscriptions/finalizers
-          verbs:
-          - update
-        - apiGroups:
-          - operators.coreos.com
-          resources:
-          - catalogsources
-          - clusterserviceversions
-          - installplans
-          verbs:
-          - get
-          - list
-          - watch
-        serviceAccountName: toolchain-operator
     strategy: deployment
   installModes:
   - supported: false

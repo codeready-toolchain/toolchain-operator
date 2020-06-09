@@ -31,8 +31,13 @@ generate-crds: vendor
 		crd:trivialVersions=true \
 		paths=./pkg/apis/... \
 		output:dir=deploy/crds
-	# Delete two first lines of the CRD ("\n----\n") to make a single manifest file out of the original multiple manifest file
-	@find deploy/crds -name "toolchain.*.yaml" -exec sed -i '' -e '1,2d' '{}' \; 
+	for CRD_FILE in `find deploy/crds -name "toolchain.*.yaml" | grep -v "_cr.*\.yaml"`; do \
+      CRD_NAME=`echo $${CRD_FILE} | sed -e 's/.*dev_\(.*\)s\.yaml/\1/'`; \
+      echo "$$CRD_NAME"; \
+      # Delete two first lines of the CRD ("\n----\n") to make a single manifest file out of the original multiple manifest file \
+      sed -e '1,2d' $$CRD_FILE > deploy/crds/$(API_GROUPNAME)_$(API_VERSION)_$${CRD_NAME}_crd.yaml; \
+      rm $$CRD_FILE; \
+    done
 
 PATH_TO_GENERATE_FILE=../api/scripts/olm-catalog-generate.sh
 
