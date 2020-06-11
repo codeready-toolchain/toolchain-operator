@@ -10,7 +10,7 @@ PATH_TO_PUSH_NIGHTLY_FILE=scripts/push-to-quay-nightly.sh
 PHONY: create-release-manifest
 ## Creates release manifest in ./manifest/ directory
 create-release-manifest:
-	$(eval CREATE_PARAMS = -pr ../toolchain-operator -on codeready-toolchain-operator  --next-version ${CSV_VERSION_TO_GENERATE} --quay-namespace codeready-toolchain)
+	$(eval CREATE_PARAMS = -pr ../toolchain-operator -on codeready-toolchain-operator  --next-version ${CSV_VERSION_TO_GENERATE} --quay-namespace codeready-toolchain -ch alpha)
 ifneq ("$(wildcard ../api/$(PATH_TO_CREATE_RELEASE_FILE))","")
 	@echo "creating release manifest in ./manifest/ directory using script from local api repo..."
 	../api/${PATH_TO_CREATE_RELEASE_FILE} ${CREATE_PARAMS}
@@ -62,7 +62,7 @@ endif
 .PHONY: push-to-quay-nightly
 ## Creates a new version of CSV and pushes it to quay
 push-to-quay-nightly:
-	$(eval PUSH_PARAMS = -pr ../toolchain-operator/ -on codeready-toolchain-operator -qn ${QUAY_NAMESPACE})
+	$(eval PUSH_PARAMS = -pr ../toolchain-operator/ -on codeready-toolchain-operator -qn ${QUAY_NAMESPACE} -ch nightly)
 ifneq ("$(wildcard ../api/$(PATH_TO_PUSH_NIGHTLY_FILE))","")
 	@echo "pushing to quay in nightly channel using script from local api repo..."
 	../api/${PATH_TO_PUSH_NIGHTLY_FILE} ${PUSH_PARAMS}
