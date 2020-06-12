@@ -112,7 +112,7 @@ endif
 .PHONY: recover-operator-dir
 ## Recovers the operator directory from the backup folder
 recover-operator-dir:
-	$(eval RECOVERY_PARAMS = -pr ../toolchain-operator/)
+	$(eval RECOVERY_PARAMS = -pr ../toolchain-operator/ -td ${TMP_DIR})
 ifneq ("$(wildcard ../api/$(PATH_TO_RECOVERY_FILE))","")
 	@echo "recovering the operator directory from the backup folder using script from local api repo..."
 	../api/${PATH_TO_RECOVERY_FILE} ${RECOVERY_PARAMS}
