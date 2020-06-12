@@ -91,3 +91,5 @@ atlassian-ide-plugin.xml
 
 /vendor
 /out
+
+/tmp
