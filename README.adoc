@@ -113,6 +113,7 @@ EOF
 To delete the CSVs from the cluster, you can run `make delete-release-manifest-from-os`.
 
 If you want to also try to install it from the quay.io using the `OperatorSource` you can push the bundle into your quay namespace using `make push-latest-release-manifest`
+Note: You must `export QUAY_NAMESPACE=<your quay namespace>` before running the script. If you get authorization errors when trying to push the release to quay, you may need to https://github.com/operator-framework/community-operators/blob/master/docs/testing-operators.md#quay-login[retrieve and set the quay token manually] and make the repository public.
 
 ===== 3. Create PR in community-operators
 As soon as you verify that the release is working correctly, you can create a PR with a new release in https://github.com/operator-framework/community-operators[community-operators] repo.

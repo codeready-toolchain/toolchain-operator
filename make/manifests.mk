@@ -1,4 +1,4 @@
-CSV_VERSION_TO_GENERATE := 0.1.3
+CSV_VERSION_TO_GENERATE := 0.1.4
 DATE_SUFFIX := $(shell date +'%d%H%M%S')
 COMMUNITY_OPERATORS_DIR=../../operator-framework/community-operators/community-operators/codeready-toolchain-operator
 
