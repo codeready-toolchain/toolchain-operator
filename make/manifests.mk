@@ -5,10 +5,8 @@ COMMUNITY_OPERATORS_DIR=../../operator-framework/community-operators/community-o
 # For final releases
 PATH_TO_CREATE_RELEASE_FILE= scripts/create-release-bundle.sh
 PATH_TO_CREATE_HACK_FILE= scripts/generate-deploy-hack.sh
-PATH_TO_PUSH_NIGHTLY_FILE=scripts/push-to-quay-nightly.sh
 
 # For CD
-PATH_TO_PUSH_NIGHTLY_FILE=scripts/push-to-quay-nightly.sh
 PATH_TO_CD_GENERATE_FILE=scripts/generate-cd-release-manifests.sh
 PATH_TO_PUSH_APP_FILE=scripts/push-manifests-as-app.sh
 PATH_TO_BUNDLE_FILE=scripts/push-bundle-and-index-image.sh
@@ -74,6 +72,10 @@ endif
 .PHONY: push-to-quay-nightly
 ## Creates a new version of CSV and pushes it to quay
 push-to-quay-nightly: generate-cd-release-manifests push-manifests-as-app recover-operator-dir
+
+.PHONY: push-to-quay-staging
+## Creates a new version of operator bundle, adds it into an index and pushes it to quay
+push-to-quay-staging: generate-cd-release-manifests push-bundle-and-index-image recover-operator-dir
 
 .PHONY: generate-cd-release-manifests
 ## Generates a new version of operator manifests
