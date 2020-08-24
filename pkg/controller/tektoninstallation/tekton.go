@@ -15,9 +15,9 @@ const (
 	// SubscriptionNamespace the namespace of the TekTon Subscription resource
 	SubscriptionNamespace = "openshift-operators"
 	// SubscriptionName the name for of TekTon Subscription resource
-	SubscriptionName = "openshift-pipelines-operator"
+	SubscriptionName = "openshift-pipelines-operator-rh"
 	// StartingCSV keeps the CSV version the installation should start with
-	StartingCSV = "openshift-pipelines-operator.v0.10.7"
+	StartingCSV = "openshift-pipelines-operator.v1.0.1"
 	// TektonConfigName the name of the TektonConfig resource
 	TektonConfigName = "cluster"
 )
@@ -40,10 +40,10 @@ func NewSubscription(ns string) *olmv1alpha1.Subscription {
 			Labels:    toolchain.Labels(),
 		},
 		Spec: &olmv1alpha1.SubscriptionSpec{
-			Channel:                "dev-preview",
-			Package:                "openshift-pipelines-operator",
+			Channel:                "ocp-4.4",
+			Package:                SubscriptionName,
 			StartingCSV:            StartingCSV,
-			CatalogSource:          "community-operators",
+			CatalogSource:          "redhat-operators",
 			CatalogSourceNamespace: "openshift-marketplace",
 		},
 	}
